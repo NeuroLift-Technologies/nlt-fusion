@@ -1,0 +1,2449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232fb39b'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='14' font-weight='700' fill='%2304211d' text-anchor='middle'%3EN%3C/text%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NLT World Engine — NeuroLift Technologies Simulation Environment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0d1113;
+    --glass:rgba(14,19,21,.74);
+    --glass-2:rgba(20,27,30,.82);
+    --line:rgba(255,255,255,.10);
+    --line-2:rgba(255,255,255,.18);
+    --fg:#e9eeec;
+    --fg-dim:#9aa6a3;
+    --fg-faint:#6b7774;
+    --agent:#2fb39b;      /* cool — Avatar / Aide / agent layer */
+    --agent-dim:#1c6a62;
+    --human:#e0a35a;      /* warm — Advocate / human observation */
+    --stop:#e0685a;       /* escalation / critical need */
+    --advocate:#8b9dfb;
+    --maxw:420px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;overflow:hidden;background:#05080a;}
+  body{
+    font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+    color:var(--fg);-webkit-font-smoothing:antialiased;
+  }
+  canvas#scene{position:fixed;inset:0;display:block;width:100%;height:100%;}
+
+  /* ---------------- HUD shell ---------------- */
+  .hud{position:fixed;inset:0;pointer-events:none;z-index:10;}
+  .hud.hidden{opacity:0;visibility:hidden;}
+  .hud{transition:opacity .25s ease;}
+  .panel{
+    pointer-events:auto;
+    background:var(--glass);
+    backdrop-filter:blur(14px) saturate(1.2);
+    -webkit-backdrop-filter:blur(14px) saturate(1.2);
+    border:1px solid var(--line);
+    border-radius:12px;
+  }
+  .panel h2{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:.63rem;font-weight:600;letter-spacing:.17em;text-transform:uppercase;
+    color:var(--fg-dim);margin:0;padding:11px 14px 9px;
+    border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;gap:8px;
+  }
+  .panel h2 .tag{color:var(--fg-faint);letter-spacing:.08em;font-weight:400;}
+
+  /* ---------------- top bar ---------------- */
+  #topbar{
+    position:absolute;top:14px;left:14px;right:14px;
+    display:flex;gap:12px;align-items:stretch;flex-wrap:wrap;
+  }
+  #brand{padding:10px 16px;display:flex;align-items:center;gap:14px;}
+  #brand .mark{
+    width:30px;height:30px;border-radius:8px;flex:0 0 auto;
+    background:linear-gradient(145deg,var(--agent),#0e5f74);
+    display:grid;place-items:center;
+    font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:.72rem;color:#04211d;
+    box-shadow:0 0 18px rgba(47,179,155,.35);
+  }
+  #brand .txt b{
+    display:block;font-family:"Fraunces",Georgia,serif;font-weight:600;
+    font-size:.98rem;letter-spacing:-.005em;line-height:1.15;
+  }
+  #brand .txt span{
+    display:block;font-family:"IBM Plex Mono",monospace;
+    font-size:.6rem;letter-spacing:.1em;color:var(--fg-faint);text-transform:uppercase;
+  }
+  #stats{
+    padding:10px 14px;display:flex;gap:20px;align-items:center;flex-wrap:wrap;
+    font-family:"IBM Plex Mono",monospace;font-size:.68rem;color:var(--fg-dim);
+  }
+  #stats b{display:block;color:var(--fg);font-weight:500;font-size:.78rem;letter-spacing:.01em;}
+  #stats .k{font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-faint);}
+  #clockbar{
+    padding:10px 14px;display:flex;align-items:center;gap:14px;min-width:210px;
+  }
+  #daybar{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.10);overflow:hidden;position:relative;}
+  #dayfill{position:absolute;top:0;bottom:0;width:0%;background:linear-gradient(90deg,#2fb39b,#e0a35a,#e0685a);}
+  .btns{display:flex;gap:5px;}
+  .btn{
+    pointer-events:auto;cursor:pointer;
+    font-family:"IBM Plex Mono",monospace;font-size:.64rem;letter-spacing:.06em;
+    color:var(--fg-dim);background:rgba(255,255,255,.05);
+    border:1px solid var(--line);border-radius:6px;padding:6px 9px;
+    transition:.15s ease;
+  }
+  .btn:hover{background:rgba(255,255,255,.11);color:var(--fg);border-color:var(--line-2);}
+  .btn.on{background:var(--agent-dim);border-color:var(--agent);color:#dffaf3;}
+
+  /* ---------------- side columns ---------------- */
+  /* Columns are fixed to the viewport height and the population list flexes, so
+     the minimap below it can never be pushed off-screen by a large roster. */
+  #left{position:absolute;top:78px;bottom:78px;left:14px;width:var(--maxw);display:flex;flex-direction:column;gap:12px;min-height:0;}
+  #right{position:absolute;top:78px;bottom:78px;right:14px;width:var(--maxw);display:flex;flex-direction:column;gap:12px;min-height:0;}
+  #left > .panel:first-child{flex:1 1 auto;min-height:120px;display:flex;flex-direction:column;}
+  #left > .panel:first-child #roster{flex:1 1 auto;min-height:0;}
+  #minimap{flex:0 0 auto;}
+  /* Right column: the agent detail panel keeps its natural height but is allowed
+     to shrink and scroll on short screens, so the Advocate log is never pushed
+     off the bottom of the viewport. */
+  /* The Advocate log is the reason a human is watching, so it keeps a usable
+     height; the agent detail above it scrolls instead. */
+  #right > .panel:first-child{flex:0 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+  #right > .panel:first-child .body{flex:0 1 auto;min-height:0;overflow-y:auto;}
+/* Fade the clipped edge of the scrollable detail body so it reads as
+     "there is more below" rather than as a cut-off row. */
+  #right > .panel:first-child::after{
+    content:"";position:absolute;left:1px;right:1px;bottom:1px;height:22px;
+    background:linear-gradient(to bottom, rgba(14,19,21,0), rgba(14,19,21,.92));
+    pointer-events:none;border-radius:0 0 11px 11px;
+  }
+  #log{flex:1 1 auto;display:flex;flex-direction:column;min-height:150px;}
+  #log .body{flex:1 1 auto;min-height:0;}
+  .scroll{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent;}
+  .scroll::-webkit-scrollbar{width:6px;}
+  .scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:3px;}
+
+  /* roster */
+  #roster{padding:6px 0;}
+  .agent-row{
+    display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;
+    padding:7px 14px;cursor:pointer;border-left:2px solid transparent;transition:.12s;
+    width:100%;text-align:left;background:none;border-top:0;border-right:0;border-bottom:0;color:inherit;font:inherit;
+  }
+  .agent-row:hover{background:rgba(255,255,255,.055);}
+  .agent-row.sel{background:rgba(47,179,155,.13);border-left-color:var(--agent);}
+  .agent-row .who{display:flex;align-items:center;gap:8px;min-width:0;}
+  .agent-row .role{
+    font-family:"IBM Plex Mono",monospace;font-size:.53rem;letter-spacing:.1em;
+    text-transform:uppercase;padding:2px 5px;border-radius:3px;flex:0 0 auto;
+  }
+  .role.avatar{background:rgba(47,179,155,.18);color:#7fe3d0;border:1px solid rgba(47,179,155,.4);}
+  .role.aide{background:rgba(224,163,90,.18);color:#f0c58c;border:1px solid rgba(224,163,90,.4);}
+  .role.resident{background:rgba(255,255,255,.06);color:var(--fg-dim);border:1px solid var(--line);}
+  .agent-row .nm{font-size:.85rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .agent-row .act{
+    font-family:"IBM Plex Mono",monospace;font-size:.6rem;color:var(--fg-faint);
+    text-align:right;white-space:nowrap;
+  }
+  .agent-row .act .alert{color:var(--stop);}
+  .needrow{display:flex;gap:3px;margin-top:6px;grid-column:1/-1;}
+  .needrow i{flex:1;display:block;height:3px;border-radius:2px;background:rgba(255,255,255,.10);overflow:hidden;}
+  .needrow b{display:block;height:100%;min-width:2px;border-radius:2px;}
+
+  /* detail */
+  #detail .body{padding:12px 14px;}
+  #detail .dname{font-family:"Fraunces",Georgia,serif;font-size:1.15rem;font-weight:600;line-height:1.1;}
+  #detail .dsub{font-family:"IBM Plex Mono",monospace;font-size:.6rem;letter-spacing:.09em;color:var(--fg-faint);text-transform:uppercase;margin-top:4px;}
+  .sect{margin-top:14px;}
+  .sect .lab{
+    font-family:"IBM Plex Mono",monospace;font-size:.56rem;letter-spacing:.15em;
+    text-transform:uppercase;color:var(--fg-faint);margin-bottom:7px;
+  }
+  .bar-item{display:grid;grid-template-columns:88px 1fr 34px;gap:8px;align-items:center;margin-bottom:6px;}
+  .bar-item .bl{font-family:"IBM Plex Mono",monospace;font-size:.62rem;color:var(--fg-dim);line-height:1.4;}
+  .bar-item .bt{display:block;height:5px;border-radius:3px;background:rgba(255,255,255,.09);overflow:hidden;}
+  .bar-item .bf{display:block;height:100%;min-width:2px;border-radius:3px;transition:width .2s ease;}
+  .bar-item .bv{font-family:"IBM Plex Mono",monospace;font-size:.6rem;color:var(--fg-faint);text-align:right;line-height:1.4;}
+  .kv{display:flex;justify-content:space-between;gap:10px;font-family:"IBM Plex Mono",monospace;font-size:.66rem;padding:3px 0;border-bottom:1px dashed rgba(255,255,255,.07);}
+  .kv:last-child{border-bottom:none;}
+  .kv .k{color:var(--fg-faint);letter-spacing:.05em;}
+  .kv .v{color:var(--fg);}
+  .hint{font-size:.72rem;color:var(--fg-faint);line-height:1.5;margin-top:8px;}
+
+  /* advocate log */
+  #log .body{padding:4px 0;}
+  .ev{display:grid;grid-template-columns:52px 1fr;gap:9px;padding:7px 14px;border-bottom:1px solid rgba(255,255,255,.055);font-size:.76rem;line-height:1.4;}
+  .ev:last-child{border-bottom:none;}
+  .ev .t{font-family:"IBM Plex Mono",monospace;font-size:.58rem;color:var(--fg-faint);padding-top:2px;}
+  .ev .m b{font-weight:600;}
+  .ev.coaching .m b{color:var(--agent);}
+  .ev.escalation .m b{color:var(--stop);}
+  .ev.observation .m b{color:var(--advocate);}
+  .ev.scenario .m b{color:var(--human);}
+  .ev.interaction .m b{color:#9ad7f0;}
+  .ev .m{color:#c3ccc9;}
+  .ev .m em{font-style:normal;color:var(--fg-faint);font-family:"IBM Plex Mono",monospace;font-size:.62rem;}
+
+  /* ---------------- bottom bar ---------------- */
+  /* The scenario bar sits in the bottom gutter between the two side columns, so
+   it can never overlap them however narrow the window gets. */
+  #bottom{
+    position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+    max-width:calc(100vw - var(--maxw) * 2 - 68px);
+  }
+  #scenarios{padding:9px 11px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center;}
+  #scenarios .cap{
+    font-family:"IBM Plex Mono",monospace;font-size:.56rem;letter-spacing:.15em;
+    text-transform:uppercase;color:var(--fg-faint);padding:0 6px 0 2px;
+  }
+  .scn{
+    pointer-events:auto;cursor:pointer;text-align:left;
+    background:rgba(255,255,255,.04);border:1px solid var(--line);
+    border-radius:8px;padding:7px 10px;color:var(--fg-dim);
+    transition:.15s ease;min-width:118px;
+  }
+  .scn b{
+    display:block;font-family:"IBM Plex Sans",sans-serif;font-size:.78rem;
+    font-weight:600;color:var(--fg);letter-spacing:-.005em;
+  }
+  .scn span{
+    display:block;font-family:"IBM Plex Mono",monospace;font-size:.55rem;
+    letter-spacing:.05em;color:var(--fg-faint);margin-top:2px;
+  }
+  .scn:hover{border-color:var(--line-2);background:rgba(255,255,255,.09);}
+  .scn.on{border-color:var(--human);background:rgba(224,163,90,.16);}
+  .scn.on span{color:var(--human);}
+
+  /* minimap */
+  /* On short viewports the map is the first thing to go — the population list
+     matters more for reading agent state. */
+  @media (max-height:720px){ #minimap{display:none;} }
+  #minimap{padding:9px;}
+  #minimap .mm{width:150px;height:150px;border-radius:7px;display:block;background:#0a1214;border:1px solid var(--line);}
+  #minimap .cap{
+    font-family:"IBM Plex Mono",monospace;font-size:.56rem;letter-spacing:.15em;
+    text-transform:uppercase;color:var(--fg-faint);margin-bottom:7px;display:flex;justify-content:space-between;
+  }
+
+  /* info sheet — must stack above the HUD, which sits at z-index 10 */
+  #info{
+    position:fixed;inset:0;z-index:20;
+    display:none;place-items:center;
+    background:rgba(3,6,8,.72);backdrop-filter:blur(6px);pointer-events:auto;padding:24px;
+  }
+  #info.open{display:grid;}
+  #info .sheet{
+    position:relative;max-width:760px;max-height:84vh;overflow-y:auto;
+    background:var(--glass-2);border:1px solid var(--line-2);border-radius:14px;padding:30px 34px;
+  }
+  #info h3{font-family:"Fraunces",Georgia,serif;font-size:1.5rem;font-weight:600;margin:0 0 6px;}
+  #info .eyebrow{
+    font-family:"IBM Plex Mono",monospace;font-size:.62rem;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--agent);margin-bottom:10px;
+  }
+  #info p{font-size:.9rem;line-height:1.62;color:#c3ccc9;margin:0 0 14px;}
+  #info .grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:18px 0;}
+  #info .cell{background:#12191c;padding:16px 18px;}
+  #info .cell b{display:block;font-family:"IBM Plex Mono",monospace;font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;margin-bottom:7px;}
+  #info .cell.own b{color:var(--agent);}
+  #info .cell.ext b{color:var(--human);}
+  #info .cell p{font-size:.82rem;margin:0;color:#aab4b1;}
+  #info code{
+    font-family:"IBM Plex Mono",monospace;font-size:.8em;
+    background:rgba(255,255,255,.07);padding:1px 5px;border-radius:3px;color:#8fe6d5;
+  }
+  #info .keys{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px;}
+  #info kbd{
+    font-family:"IBM Plex Mono",monospace;font-size:.63rem;
+    background:rgba(255,255,255,.08);border:1px solid var(--line-2);
+    border-radius:4px;padding:3px 6px;color:var(--fg-dim);
+  }
+  /* Close control is part of the scroll flow so it can never be clipped off the
+     top of a long sheet. */
+  #info .closewrap{display:flex;justify-content:flex-end;margin:-12px -14px 12px 0;}
+
+  /* loading */
+  #boot{
+    position:fixed;inset:0;z-index:50;display:grid;place-items:center;
+    background:#05080a;transition:opacity .5s ease;
+    font-family:"IBM Plex Mono",monospace;font-size:.7rem;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--agent);
+  }
+  #boot.gone{opacity:0;pointer-events:none;}
+  #boot .inner{text-align:center;}
+  #boot .bar{width:180px;height:2px;background:rgba(255,255,255,.1);margin:14px auto 0;overflow:hidden;}
+  #boot .bar i{display:block;height:100%;width:40%;background:var(--agent);animation:sweep 1.1s ease-in-out infinite;}
+  @keyframes sweep{0%{transform:translateX(-100%);}100%{transform:translateX(350%);}}
+
+  /* Interaction hint. Anchored to the viewport edge rather than the column, so
+     it never collides with the centred scenario bar. Hidden before the columns
+     narrow enough that the bar reaches it. */
+  #pick{
+    position:absolute;bottom:14px;left:14px;
+    width:var(--maxw);max-width:calc(50vw - 28px);
+    font-family:"IBM Plex Mono",monospace;font-size:.6rem;letter-spacing:.06em;
+    color:var(--fg-faint);padding:7px 11px;
+  }
+
+  @media (max-width:1180px){
+    :root{--maxw:300px;}
+    #stats{gap:14px;}
+  }
+  /* Too narrow for two columns: drop the panels rather than overlap them.
+     The hint goes too, since the scenario bar then spans the full width. */
+  @media (max-width:900px){
+    #left,#right,#pick{display:none;}
+    #bottom{max-width:calc(100vw - 28px);left:14px;transform:none;}
+    .scn{min-width:0;flex:1 1 130px;}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+
+<div class="hud" id="hud">
+
+  <div id="topbar">
+    <div class="panel" id="brand">
+      <div class="mark">NLT</div>
+      <div class="txt">
+        <b>World Engine</b>
+        <span>Simulation Environment</span>
+      </div>
+    </div>
+
+    <div class="panel" id="stats">
+      <div><span class="k">Simulation</span><b id="s-tick">tick 0</b></div>
+      <div><span class="k">Seed</span><b id="s-seed">—</b></div>
+      <div><span class="k">Residents</span><b id="s-pop">—</b></div>
+      <div><span class="k">Coaching</span><b id="s-coach">0</b></div>
+      <div><span class="k">Escalations</span><b id="s-esc">0</b></div>
+      <div><span class="k">FPS</span><b id="s-fps">—</b></div>
+    </div>
+
+    <div class="panel" id="clockbar">
+      <div style="min-width:74px">
+        <span class="k" style="font-family:'IBM Plex Mono',monospace;font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-faint)">Daylight</span>
+        <b id="s-time" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:.78rem;font-weight:500">—</b>
+      </div>
+      <div id="daybar"><i id="dayfill"></i></div>
+      <div class="btns">
+        <button class="btn" id="b-pause" title="Pause / resume (Space)">❚❚</button>
+        <button class="btn" id="b-reset" title="Re-run from seed (R)">↻</button>
+        <button class="btn" id="b-info" title="About this environment (I)">?</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="left">
+    <div class="panel">
+      <h2>Population <span class="tag" id="r-tag">click to inspect</span></h2>
+      <div id="roster" class="scroll"></div>
+    </div>
+    <div class="panel" id="minimap">
+      <div class="cap"><span>Local World</span><span id="mm-coord">0, 0</span></div>
+      <canvas class="mm" id="mm" width="300" height="300"></canvas>
+    </div>
+  </div>
+
+  <div id="right">
+    <div class="panel" id="detail">
+      <h2>Selected Agent <span class="tag" id="d-tag">—</span></h2>
+      <div class="body">
+        <div class="dname" id="d-name">No agent selected</div>
+        <div class="dsub" id="d-sub">Click a resident in the world or the population list</div>
+
+        <div class="sect">
+          <div class="lab">Needs — authoritative world state</div>
+          <div id="d-needs"></div>
+        </div>
+
+        <div class="sect" id="d-traits-sect">
+          <div class="lab">Trait profile</div>
+          <div id="d-traits"></div>
+        </div>
+
+        <div class="sect">
+          <div class="lab">Decision &amp; embodiment</div>
+          <div id="d-kv"></div>
+        </div>
+        <div class="hint" id="d-hint"></div>
+      </div>
+    </div>
+
+    <div class="panel" id="log">
+      <h2>Advocate Observations <span class="tag">deterministic event stream</span></h2>
+      <div class="body scroll" id="log-body"></div>
+    </div>
+  </div>
+
+  <div id="bottom">
+    <div class="panel" id="scenarios">
+      <span class="cap">Scenario</span>
+    </div>
+  </div>
+
+  <div class="panel" id="pick">Drag to orbit · scroll to zoom · click an agent to inspect · <b>H</b> hides HUD</div>
+</div>
+
+<div id="info">
+  <div class="sheet">
+    <div class="closewrap"><button class="btn" id="b-close" aria-label="Close">Close ✕</button></div>
+    <div class="eyebrow">NeuroLift Technologies</div>
+    <h3>Simulation Environment</h3>
+    <p>This page is a live, deterministic rendering of the <b>NLT World Engine</b>: an embodied multi-agent
+    simulation where machine learning models inhabit a persistent world, control their characters, interact with
+    environments and other agents, and transition between meaningful life scenarios.</p>
+    <p>The runtime below owns the physical simulation layer — world state, space, time, objects, needs, NPCs and
+    scenario instantiation. Everything you see is generated at load from a single integer seed: procedural terrain,
+    an inland lake, a settlement, vegetation, articulated bodies with animated walk cycles, and a fixed-timestep
+    tick. Same seed plus same tick count always yields the same world.</p>
+
+    <div class="grid">
+      <div class="cell own">
+        <b>This repo — physical layer</b>
+        <p>World state, space, time, objects, needs, NPCs, scenario instantiation, and the authoritative
+        Unreal&nbsp;Engine&nbsp;5.8 simulation.</p>
+      </div>
+      <div class="cell ext">
+        <b>neurolift-ai-fusion — intelligence</b>
+        <p>ADHD trait modelling, coaching expertise, the training loop and fusion. It connects through the agent
+        interface, not through the renderer.</p>
+      </div>
+    </div>
+
+    <p><b>Avatar · Aide · Advocate.</b> Avatars carry ADHD traits, which are not cosmetic: impulsivity raises
+    decision noise and triggers interrupts, inattention shortens focus runs and causes task drift, hyperactivity
+    raises movement speed and locomotion need, and dysregulation accumulates stress that only an Aide's coaching
+    clears. The Advocate is the human oversight layer — it never acts in the world, it only observes and logs.</p>
+
+    <p><b>Controls</b></p>
+    <div class="keys">
+      <kbd>Drag</kbd><kbd>Scroll</kbd><kbd>Click agent</kbd><kbd>Space</kbd><kbd>1 – 6 scenarios</kbd>
+      <kbd>F focus selected</kbd><kbd>R reset from seed</kbd><kbd>H toggle HUD</kbd><kbd>I this sheet</kbd>
+    </div>
+  </div>
+</div>
+
+<div id="boot"><div class="inner">Compiling world<div class="bar"><i></i></div></div></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+
+/* ============================================================================
+   0 — DETERMINISM
+   Every stochastic decision in this environment draws from a seeded stream, so
+   a given (seed, tick) pair always produces the same world.
+   ========================================================================== */
+
+const SEED = 20260401;
+const TICK = 1 / 60;
+const DAY_LEN = 260;          // seconds of sim time per in-world day
+
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+const clamp   = (v,a,b) => v < a ? a : v > b ? b : v;
+const clamp01 = v => clamp(v,0,1);
+const lerp    = (a,b,t) => a + (b-a)*t;
+const smooth  = t => t*t*(3-2*t);
+const smoothstep = (e0,e1,x) => { const t = clamp01((x-e0)/(e1-e0)); return t*t*(3-2*t); };
+
+function hash2(x, y, seed){
+  let h = seed | 0;
+  h = Math.imul(h ^ Math.imul(x | 0, 374761393), 668265263);
+  h = Math.imul(h ^ Math.imul(y | 0, 2246822519), 3266489917);
+  h ^= h >>> 13; h = Math.imul(h, 1274126177);
+  return ((h ^ h >>> 16) >>> 0) / 4294967296;
+}
+
+function valueNoise(x, y, seed){
+  const xi = Math.floor(x), yi = Math.floor(y);
+  const xf = x - xi, yf = y - yi;
+  const u = smooth(xf), v = smooth(yf);
+  const a = hash2(xi,   yi,   seed);
+  const b = hash2(xi+1, yi,   seed);
+  const c = hash2(xi,   yi+1, seed);
+  const d = hash2(xi+1, yi+1, seed);
+  return lerp(lerp(a,b,u), lerp(c,d,u), v);
+}
+
+function fbm(x, y, octaves, seed){
+  let sum = 0, amp = 0.5, freq = 1, norm = 0;
+  for (let i = 0; i < octaves; i++){
+    sum += valueNoise(x*freq, y*freq, seed + i*7919) * amp;
+    norm += amp;
+    amp *= 0.5; freq *= 2.03;
+  }
+  return sum / norm;
+}
+
+/* ============================================================================
+   1 — WORLD GEOMETRY (pure functions — safe to call from any system)
+   ========================================================================== */
+
+const WORLD   = 460;          // terrain extent, metres
+const WATER   = 0;            // sea level
+const LAKE    = { x: 82, z: -58, r: 34 };
+const SETTLE  = { x: -66, z: 46, r: 38, y: 7.2 };
+
+function rawHeight(x, z){
+  let h = fbm(x*0.0072, z*0.0072, 5, SEED) * 24 - 6;
+
+  // ridged hills, only where already above the waterline
+  const ridge = 1 - Math.abs(fbm(x*0.0155 + 31.7, z*0.0155 - 12.3, 4, SEED+13) * 2 - 1);
+  h += ridge * ridge * 11 * smoothstep(-2, 9, h);
+
+  // island falloff -> ocean surrounds the landmass
+  const r = Math.hypot(x, z) / (WORLD * 0.43);
+  const island = 1 - smoothstep(0.60, 1.06, r);
+  h = h * island - 9 * (1 - island);
+
+  // inland lake: first sink the whole region into a shallow bowl, then cut the
+  // basin itself to an absolute depth so the lake is guaranteed submerged
+  const lakeD = Math.hypot(x - LAKE.x, z - LAKE.z);
+  const region = 1 - smoothstep(0, LAKE.r * 3.2, lakeD);
+  h -= region * 10;
+  const lake = 1 - smoothstep(0, LAKE.r, lakeD);
+  h = lerp(h, -5, Math.pow(lake, 1.2));
+
+  // flattened settlement terrace
+  const sd = Math.hypot(x - SETTLE.x, z - SETTLE.z);
+  const flat = 1 - smoothstep(SETTLE.r * 0.55, SETTLE.r, sd);
+  h = lerp(h, SETTLE.y, flat * 0.94);
+
+  return h;
+}
+
+const heightAt = rawHeight;   // single source of truth for ground queries
+
+function slopeAt(x, z){
+  const e = 2.2;
+  const hx = heightAt(x+e, z) - heightAt(x-e, z);
+  const hz = heightAt(x, z+e) - heightAt(x, z-e);
+  return Math.hypot(hx, hz) / (2*e);
+}
+
+function walkable(x, z){
+  return heightAt(x, z) > WATER + 0.55 && slopeAt(x, z) < 0.62;
+}
+
+/** Walk from a point outward until the ground climbs past the waterline. */
+function shorePoint(cx, cz, angle){
+  for (let r = 2; r < LAKE.r + 22; r += 1.5){
+    const x = cx + Math.cos(angle)*r, z = cz + Math.sin(angle)*r;
+    if (heightAt(x, z) > WATER + 1.1) return { x, z };
+  }
+  return { x: cx + 30, z: cz };
+}
+
+/* ============================================================================
+   2 — SCENARIO LIBRARY  (meaningful life scenarios the world can enter)
+   ========================================================================== */
+
+const SCENARIOS = [
+  { id:'baseline', name:'Baseline Day', blurb:'unhurried routine',
+    pressure:0.62, crowd:0, stress:0.03,
+    weights:{ rest:1, hydration:1, nutrition:1, social:1, focus:1, calm:1, wander:1 } },
+
+  { id:'deadline', name:'Task Deadline', blurb:'focus under pressure',
+    pressure:1.35, crowd:0, stress:0.20,
+    weights:{ rest:0.7, hydration:0.9, nutrition:1.0, social:0.45, focus:2.0, calm:0.8, wander:0.35 } },
+
+  { id:'spiral', name:'Distraction Spiral', blurb:'impulsivity compounds',
+    pressure:1.15, crowd:9, stress:0.26,
+    weights:{ rest:0.9, hydration:0.9, nutrition:1.0, social:1.1, focus:0.28, calm:0.7, wander:2.6 } },
+
+  { id:'recharge', name:'Social Recharge', blurb:'low demand, high contact',
+    pressure:0.6, crowd:4, stress:0.02,
+    weights:{ rest:1.2, hydration:1.0, nutrition:1.0, social:2.4, focus:0.5, calm:1.3, wander:0.9 } },
+
+  { id:'overload', name:'Sensory Overload', blurb:'regulation is the bottleneck',
+    pressure:1.55, crowd:14, stress:0.30,
+    weights:{ rest:0.9, hydration:0.9, nutrition:1.0, social:0.6, focus:0.45, calm:3.0, wander:0.7 } },
+
+  { id:'overnight', name:'Overnight Drift', blurb:'unmet needs accumulate',
+    pressure:2.2, crowd:0, stress:0.10,
+    weights:{ rest:0.30, hydration:0.5, nutrition:0.55, social:0.25, focus:0.22, calm:0.30, wander:0.25 } },
+];
+
+/* ============================================================================
+   3 — AGENT FACTORIES
+   ========================================================================== */
+
+const AVATAR_NAMES  = ['Mira','Kade','Ines','Rafi','Noor','Tavi'];
+const AIDE_NAMES    = ['Sable','Orin','Wren','Lys'];
+const RESIDENT_NAMES= ['Bo','Ada','Cy','Veda','Ilo','Mox','Pell','Rue','Sena','Tarn'];
+
+const NEEDS = ['energy','hydration','nutrition','social','focus','calm'];
+const NEED_LABEL = {
+  energy:'Energy', hydration:'Hydration', nutrition:'Nutrition',
+  social:'Social', focus:'Focus', calm:'Regulation'
+};
+// needs where LOW is urgent (all of them are drive-style, so invert for display)
+const NEED_COLOR = {
+  energy:'#e0a35a', hydration:'#5bb8e8', nutrition:'#c9a227',
+  social:'#e08ab0', focus:'#8b9dfb', calm:'#2fb39b'
+};
+
+const ACTIONS = {
+  rest:     { label:'Resting',        poi:['home','bench'],   dur:[7,16], restore:{ energy:.085, calm:.030 } },
+  drink:    { label:'Drinking',       poi:['well','shore'],   dur:[9,16], restore:{ hydration:.075 } },
+  eat:      { label:'Eating',         poi:['market','home'],  dur:[5,11], restore:{ nutrition:.19 } },
+  social:   { label:'Socialising',    poi:['plaza','garden'], dur:[12,26],restore:{ social:.105, calm:.040 } },
+  focus:    { label:'Focused work',   poi:['desk'],           dur:[18,38],restore:{ focus:.058, calm:-.008 } },
+  calm:     { label:'Regulating',     poi:['garden','bench'], dur:[9,18], restore:{ calm:.075 } },
+  wander:   { label:'Wandering',      poi:['any'],            dur:[6,15], restore:{ calm:.038 } },
+};
+
+/* ============================================================================
+   4 — ENGINE
+   ========================================================================== */
+
+class Engine {
+  constructor(seed){
+    this.seed = seed;
+    this.rand = mulberry32(seed);
+    this.agents = [];
+    this.buildings = [];
+    this.pois = [];
+    this.events = [];
+    this.eventSeq = 0;
+    this.stats = { coaching:0, escalations:0, interactions:0 };
+    this.scenario = SCENARIOS[0];
+    this.simTime = 0;
+  }
+
+  randRange(a,b){ return a + (b-a)*this.rand(); }
+  log(kind, text, who){
+    this.events.unshift({ t:this.simTime, kind, text, who });
+    this.eventSeq++;
+    if (this.events.length > 140) this.events.pop();
+  }
+
+  /* ---------------- world construction ---------------- */
+
+  buildSettlement(){
+    const placed = [];
+    const count = 19;
+    let guard = 0;
+    while (placed.length < count && guard++ < 900){
+      const a = this.rand() * Math.PI * 2;
+      const r = 7 + Math.sqrt(this.rand()) * (SETTLE.r - 11);
+      const x = SETTLE.x + Math.cos(a)*r;
+      const z = SETTLE.z + Math.sin(a)*r;
+      if (Math.hypot(x-SETTLE.x, z-SETTLE.z) > SETTLE.r - 6) continue;
+      if (!walkable(x, z)) continue;
+      const rad = this.randRange(4.2, 6.4);
+      if (placed.some(p => Math.hypot(p.x-x, p.z-z) < p.rad + rad + 3.4)) continue;
+      placed.push({ x, z, rad, r:this.rand(), rot:this.rand()*Math.PI, kind:this.rand() });
+    }
+    return placed;
+  }
+
+  buildPOIs(){
+    const pois = [];
+    this.buildings.forEach((b, i) => {
+      pois.push({ type:'home', x:b.x + Math.cos(b.rot)*b.rad*0.9, z:b.z + Math.sin(b.rot)*b.rad*0.9, y:b.y, ref:b });
+      if (b.kind < 0.22) pois.push({ type:'market', x:b.x, z:b.z, y:b.y, ref:b });
+    });
+    // plaza at the terrace centre
+    pois.push({ type:'plaza', x:SETTLE.x, z:SETTLE.z, y:SETTLE.y });
+    pois.push({ type:'well',  x:SETTLE.x + 9, z:SETTLE.z - 11, y:SETTLE.y });
+    // work desks ringed around the plaza
+    for (let i = 0; i < 4; i++){
+      const a = (i/4)*Math.PI*2 + 0.6;
+      pois.push({ type:'desk', x:SETTLE.x + Math.cos(a)*11, z:SETTLE.z + Math.sin(a)*11, y:SETTLE.y });
+    }
+    // benches on the terrace lip
+    for (let i = 0; i < 3; i++){
+      const a = (i/3)*Math.PI*2 + 1.9;
+      pois.push({ type:'bench', x:SETTLE.x + Math.cos(a)*(SETTLE.r-13), z:SETTLE.z + Math.sin(a)*(SETTLE.r-13), y:SETTLE.y });
+    }
+    // a garden patch
+    pois.push({ type:'garden', x:SETTLE.x - 20, z:SETTLE.z + 19, y:SETTLE.y });
+    // lake shore
+    const sp = shorePoint(LAKE.x, LAKE.z, -2.35);
+    pois.push({ type:'shore', x:sp.x, z:sp.z, y:heightAt(sp.x, sp.z) });
+    return pois;
+  }
+
+  /* ---------------- agents ---------------- */
+
+  makeAgent(name, role, opts = {}){
+    const t = opts.traits || { inattention:.2, impulsivity:.2, hyperactivity:.2, dysregulation:.2 };
+    const a = {
+      id: this.agents.length,
+      name, role, traits: t,
+      needs: {}, stress: opts.stress ?? this.randRange(0.02, 0.16),
+      coachings: 0, aide: null, coachUntil: 0, coachTarget: null,
+      pos: new THREE.Vector3(), vel: new THREE.Vector3(),
+      heading: this.rand()*Math.PI*2, phase: this.rand()*Math.PI*2,
+      speed: 0, gait: 1,
+      action: null, target: null, targetPOI: null, timer: 0, thinking: 0,
+      fidget: 0, sway: this.randRange(0, 6.28),
+      busyCoaching: 0,
+      partner: null,
+      pos3: new THREE.Vector3(),
+      rig: null, label: null,
+    };
+    NEEDS.forEach(n => a.needs[n] = this.randRange(0.55, 0.95));
+    a.needs.focus = this.randRange(0.3, 0.8);
+
+    if (role === 'avatar'){
+      a.aide = opts.aideName || AIDE_NAMES[this.agents.filter(x=>x.role==='avatar').length % AIDE_NAMES.length];
+    }
+    this.agents.push(a);
+    return a;
+  }
+
+  populate(){
+    this.agents.length = 0;
+
+    AIDE_NAMES.forEach(n => this.makeAgent(n, 'aide', {
+      traits: { inattention:.08, impulsivity:.1, hyperactivity:.25, dysregulation:.1 },
+      stress: this.randRange(0.02, 0.1)
+    }));
+
+    AVATAR_NAMES.forEach((n, i) => {
+      // trait spread — some avatars sit well above the mean on specific axes
+      const hi = i % 3;
+      this.makeAgent(n, 'avatar', {
+        traits: {
+          inattention:   clamp01(0.28 + hi*0.24 + this.randRange(-.1,.14)),
+          impulsivity:   clamp01(0.22 + (hi===1?0.3:0.04) + this.randRange(-.1,.14)),
+          hyperactivity:   clamp01(0.26 + (hi===2?0.3:0.04) + this.randRange(-.1,.14)),
+          dysregulation: clamp01(0.24 + this.randRange(-.08,.26)),
+        },
+        stress: this.randRange(0.05, 0.22)
+      });
+    });
+
+    RESIDENT_NAMES.forEach(n => this.makeAgent(n, 'resident', {
+      traits: { inattention:.15, impulsivity:.15, hyperactivity:.2, dysregulation:.12 },
+      stress: this.randRange(0.01, 0.08)
+    }));
+
+    this.layoutPopulation();
+  }
+
+  layoutPopulation(){
+    // homes are the settlement buildings, one resident unit per building
+    const homes = this.pois.filter(p => p.type === 'home');
+    this.agents.forEach((a, i) => {
+      const home = homes[i % homes.length];
+      const ang = hash2(i, 7, SEED) * Math.PI * 2;
+      const r = 1.6 + hash2(i, 19, SEED) * 7;
+      let x = home.x + Math.cos(ang)*r;
+      let z = home.z + Math.sin(ang)*r;
+      if (!walkable(x, z)) { x = SETTLE.x + Math.cos(ang)*20; z = SETTLE.z + Math.sin(ang)*20; }
+      a.pos.set(x, heightAt(x, z), z);
+      a.home = { x, z };
+      a.acting = false;
+      this.chooseAction(a, true);
+    });
+  }
+
+  /* Scenario-driven environmental pressure: extra residents milling about.
+     Bodies are created by the renderer through these hooks, because the
+     simulation layer must stay independent of the view. */
+  spawnDistractions(n){
+    for (let i = 0; i < n; i++){
+      if (this.agents.filter(a => a.role === 'resident').length >= 18) break;
+      const name = 'Res-' + String(this.agents.length).padStart(2,'0');
+      const a = this.makeAgent(name, 'resident', {
+        traits: { inattention:.3, impulsivity:.45, hyperactivity:.5, dysregulation:.2 }
+      });
+      const ang = this.rand()*Math.PI*2, r = this.randRange(4, SETTLE.r - 6);
+      const x = SETTLE.x + Math.cos(ang)*r, z = SETTLE.z + Math.sin(ang)*r;
+      a.pos.set(x, heightAt(x,z), z);
+      a.home = { x, z };
+      this.chooseAction(a, true);
+      if (this.onSpawn) this.onSpawn(a);
+    }
+  }
+
+  /* ---------------- utility-based decision ---------------- */
+
+  /* Needs are stored as SATISFACTION in [0,1]: 1 is fully met, 0 is critical.
+     Utility therefore rises as satisfaction falls. */
+  utilities(a){
+    const n = a.needs, t = a.traits, w = this.scenario.weights;
+    const u = {};
+    const lack = v => 1 - v;
+
+    u.rest   = lack(n.energy)    * 1.18 * w.rest;
+    u.drink  = lack(n.hydration) * 0.72 * w.hydration;
+    u.eat    = lack(n.nutrition) * 1.06 * w.nutrition;
+    u.social = lack(n.social)    * (1.05 + 0.30*t.dysregulation) * w.social;
+    u.focus  = lack(n.focus)     * (0.55 + 0.80*t.inattention)     * w.focus;
+    u.calm   = lack(n.calm)      * (0.72 + 0.95*t.dysregulation)     * w.calm;
+    /* Locomotion is the default state, not a last resort: it only needs to
+       outrank the other drives when they are all adequately met. Hyperactivity
+       raises that floor, so a hyperactive Avatar with nothing urgent keeps
+       moving rather than standing still. */
+    u.wander = (0.30 + 0.42*t.hyperactivity) * (1 - 0.45 * lack(n.energy));
+
+    // urgency multipliers — critical needs shout over preferences
+    if (n.energy    < 0.28) u.rest   *= 2.4;
+    if (n.hydration < 0.28) u.drink  *= 2.5;
+    if (n.nutrition < 0.28) u.eat    *= 2.3;
+    if (n.social    < 0.22) u.social *= 2.2;
+    if (n.focus     < 0.20) u.focus  *= 1.9;
+    if (n.calm      < 0.25) u.calm   *= 2.2;
+
+    // ADHD trait effects: impulsivity is literally decision noise
+    const noise = 0.10 + 0.90 * t.impulsivity;
+    for (const k in u) u[k] *= 1 + (this.rand() - 0.5) * noise;
+
+    // stress suppresses everything except regulation
+    const stressMul = 1 - 0.45 * clamp01(a.stress);
+    for (const k in u) if (k !== 'calm') u[k] *= stressMul;
+
+    return u;
+  }
+
+  pickPOI(a, action){
+    const spec = ACTIONS[action];
+    let candidates = this.pois.filter(p => spec.poi.includes(p.type));
+    if (!candidates.length || action === 'wander') candidates = this.pois;
+    // prefer the nearest reachable point of interest
+    let best = null, bestScore = Infinity;
+    for (const p of candidates){
+      const d = Math.hypot(p.x - a.pos.x, p.z - a.pos.z);
+      const score = d + this.rand() * 26;
+      if (score < bestScore){ bestScore = score; best = p; }
+    }
+    if (!best) return null;
+    const jitter = best.type === 'home' ? 3 : 5;
+    let x = best.x + (this.rand()-0.5)*jitter;
+    let z = best.z + (this.rand()-0.5)*jitter;
+    if (!walkable(x, z)){ x = best.x; z = best.z; }
+    return { poi: best, x, z };
+  }
+
+  chooseAction(a, silent){
+    const u = this.utilities(a);
+    let bestKey = null, bestVal = -Infinity;
+    for (const k in u) if (u[k] > bestVal){ bestVal = u[k]; bestKey = k; }
+
+    const target = this.pickPOI(a, bestKey);
+    if (!target) return;
+
+    const changed = a.action !== bestKey;
+    a.action = bestKey;
+    a.targetPOI = target.poi;
+    a.target = { x: target.x, z: target.z };
+    a.timer = this.randRange(ACTIONS[bestKey].dur[0], ACTIONS[bestKey].dur[1]);
+    a.thinking = 0;
+    a.acting = false;
+
+    if (changed && !silent && bestKey === 'calm' && a.stress > 0.4){
+      this.log('observation', `${a.name} self-regulating (stress ${a.stress.toFixed(2)})`, a);
+    }
+  }
+
+  
+
+  /* ---------------- scenario transitions ---------------- */
+
+  setScenario(id, announce = true){
+    const s = SCENARIOS.find(x => x.id === id) || SCENARIOS[0];
+    this.scenario = s;
+
+    // retire scenario-only residents
+    const extras = this.agents.filter(a => a.name.startsWith('Res-'));
+    extras.forEach(a => {
+      if (this.onDespawn) this.onDespawn(a);
+      this.agents.splice(this.agents.indexOf(a), 1);
+    });
+    this.agents.forEach((a, i) => a.id = i);
+    this.spawnDistractions(s.crowd);
+
+    // re-weight the world's needs so the transition is felt immediately
+    this.agents.forEach(a => {
+      NEEDS.forEach(n => {
+        if (n === 'focus') a.needs.focus = clamp01(a.needs.focus * (s.weights.focus / s.weights.calm) * 0.9 + 0.1);
+        else a.needs[n] = clamp01(a.needs[n] * 0.92 + this.rand() * 0.08);
+      });
+      a.stress = clamp01(a.stress * 0.55 + s.stress);
+      this.chooseAction(a, true);
+    });
+
+    if (announce){
+      this.log('scenario', `entered "${s.name}" — ${s.blurb}. Population ${this.agents.length}.`, null);
+    }
+  }
+
+  /* ---------------- steering ---------------- */
+
+  steer(a, dt){
+    if (!a.target) return;
+    let dx = a.target.x - a.pos.x;
+    let dz = a.target.z - a.pos.z;
+    let dist = Math.hypot(dx, dz);
+
+    if (dist < 1.6){
+      a.acting = true;
+      a.target = null;
+      return;
+    }
+    dx /= dist; dz /= dist;
+
+    // --- obstacle avoidance: push out of buildings ---
+    for (const b of this.buildings){
+      const bx = a.pos.x - b.x, bz = a.pos.z - b.z;
+      const bd = Math.hypot(bx, bz);
+      const safe = b.rad + 1.5;
+      if (bd < safe && bd > 0.001){
+        const push = (safe - bd) / safe;
+        dx += (bx/bd) * push * 2.4;
+        dz += (bz/bd) * push * 2.4;
+      }
+    }
+
+    // --- water avoidance: if the step ahead is submerged, slide along shore ---
+    const step = 4.5;
+    if (heightAt(a.pos.x + dx*step, a.pos.z + dz*step) < WATER + 0.35){
+      let bestA = null, bestH = -Infinity;
+      for (let i = 0; i < 12; i++){
+        const ang = Math.atan2(dz, dx) + (i - 6) * 0.26;
+        const cx = Math.cos(ang), cz = Math.sin(ang);
+        const h = heightAt(a.pos.x + cx*step, a.pos.z + cz*step);
+        if (h > bestH){ bestH = h; bestA = ang; }
+      }
+      if (bestA !== null){
+        dx = Math.cos(bestA); dz = Math.sin(bestA);
+      }
+    }
+
+    // --- local separation so bodies don't interpenetrate ---
+    for (const o of this.agents){
+      if (o === a) continue;
+      const ox = a.pos.x - o.pos.x, oz = a.pos.z - o.pos.z;
+      const od = Math.hypot(ox, oz);
+      if (od < 2.1 && od > 0.001){
+        const push = (2.1 - od) / 2.1;
+        dx += (ox/od) * push * 1.5;
+        dz += (oz/od) * push * 1.5;
+      }
+    }
+
+    const dl = Math.hypot(dx, dz) || 1;
+    dx /= dl; dz /= dl;
+
+    // hyperactivity literally shows up as gait
+    const base = a.role === 'aide' ? 3.0 : 2.5;
+    const maxSpeed = base * (1 + 0.55 * a.traits.hyperactivity) *
+                     (a.acting ? 0 : 1) * (1 - 0.35*clamp01(a.stress));
+    const desired = Math.min(maxSpeed, dist * 1.4);
+    a.speed = lerp(a.speed, desired, 1 - Math.pow(0.001, dt));
+
+    a.pos.x += dx * a.speed * dt;
+    a.pos.z += dz * a.speed * dt;
+
+    // never let the simulation place a body under water
+    const h = heightAt(a.pos.x, a.pos.z);
+    if (h < WATER + 0.2){
+      a.pos.x -= dx * a.speed * dt * 1.4;
+      a.pos.z -= dz * a.speed * dt * 1.4;
+    }
+    a.pos.y = heightAt(a.pos.x, a.pos.z);
+
+    // heading interpolation
+    const want = Math.atan2(dx, dz);
+    let diff = want - a.heading;
+    while (diff > Math.PI) diff -= Math.PI*2;
+    while (diff < -Math.PI) diff += Math.PI*2;
+    a.heading += diff * Math.min(1, dt * 7);
+  }
+
+  /* ---------------- needs / stress / coaching ---------------- */
+
+  updateNeeds(a, dt){
+    const s = this.scenario, t = a.traits, p = s.pressure;
+    const rates = {
+      energy:    -0.0062 * p * (1 + 0.45*t.hyperactivity),
+      hydration: -0.0090 * p,
+      nutrition: -0.0040 * p,
+      social:    -0.0034 * p * (1 - 0.25*t.inattention),
+      focus:     -0.0082 * p * (1 + 0.80*t.inattention),
+      calm:      -0.0075 * p * (1 + 1.10*t.dysregulation),
+    };
+    if (a.acting){
+      const r = ACTIONS[a.action].restore;
+      for (const k in r) rates[k] = (rates[k] || 0) + r[k];
+    }
+    for (const k in rates) a.needs[k] = clamp01(a.needs[k] + rates[k]*dt);
+
+    /* Stress accumulates under unmet regulation, low social contact and
+       scenario pressure. Sustained calm — or a completed coaching session —
+       drives it back down. The two rates are tuned so that stress has a
+       reachable equilibrium instead of saturating: an Avatar left alone in
+       the overload scenario genuinely degrades, and a coached one recovers. */
+    const decay = 0.070 * a.needs.calm + (a.action === 'calm' ? 0.050 : 0);
+    const gain = 0.028 * s.pressure * (0.40 + 1.15*t.dysregulation)
+               + 0.020 * (1 - a.needs.social)
+               + 0.012 * (1 - a.needs.focus) * t.inattention;
+    a.stress = clamp01(a.stress + (gain - decay) * dt);
+  }
+
+  runCoaching(dt){
+    for (const aide of this.agents){
+      if (aide.role !== 'aide') continue;
+
+      if (aide.busyCoaching > 0){
+        aide.busyCoaching -= dt;
+        const av = this.agents.find(x => x.coachTarget === aide);
+        if (av){
+          // walk into conversational range, then stand and face the Avatar
+          const dx = av.pos.x - aide.pos.x, dz = av.pos.z - aide.pos.z;
+          const d = Math.hypot(dx, dz);
+          if (d > 2.8){
+            const sp = Math.min(2.2 * dt, d - 2.8);
+            aide.pos.x += (dx/d) * sp;
+            aide.pos.z += (dz/d) * sp;
+            aide.pos.y = heightAt(aide.pos.x, aide.pos.z);
+          } else {
+            // in range: regulation is transferred over time
+            av.stress = clamp01(av.stress - 0.130 * dt);
+            av.needs.calm = clamp01(av.needs.calm + 0.048 * dt);
+            av.needs.social = clamp01(av.needs.social + 0.010 * dt);
+          }
+          aide.heading = Math.atan2(dx, dz);
+          av.heading = Math.atan2(-dx, -dz);
+          aide.speed = d > 2.8 ? 2.2 : 0;
+          aide.needs.social = clamp01(aide.needs.social + 0.020 * dt);
+          aide.stress = clamp01(aide.stress + 0.004 * dt);
+        }
+        if (aide.busyCoaching <= 0){
+          const av2 = this.agents.find(x => x.coachTarget === aide);
+          if (av2){
+            av2.coachTarget = null;
+            av2.needs.social = clamp01(av2.needs.social + 0.24);
+            av2.needs.focus = clamp01(av2.needs.focus + 0.10);
+            // refractory period — an Avatar is not re-engaged the instant the
+            // session ends, so coaching is a real intervention not a loop
+            av2.coachUntil = this.simTime + this.randRange(26, 50);
+            this.chooseAction(av2, true);
+          }
+          this.chooseAction(aide, true);
+        }
+        continue;
+      }
+
+      // look for the most stressed Avatar this Aide is responsible for
+      let target = null, worst = 0.42;
+      for (const av of this.agents){
+        if (av.role !== 'avatar') continue;
+        if (av.aide !== aide.name) continue;
+        if (av.coachTarget) continue;
+        if ((av.coachUntil || 0) > this.simTime) continue;
+        const d = Math.hypot(av.pos.x - aide.pos.x, av.pos.z - aide.pos.z);
+        const score = av.stress - d * 0.004;
+        if (score > worst){ worst = score; target = av; }
+      }
+      if (target){
+        const d = Math.hypot(target.pos.x - aide.pos.x, target.pos.z - aide.pos.z);
+        if (d < 42){
+          aide.busyCoaching = 5.5;
+          target.coachTarget = aide;
+          target.stress = Math.max(0, target.stress - 0.10);
+          target.coachings++;
+          aide.target = null; aide.acting = false;
+          target.target = null; target.acting = false;
+          this.stats.coaching++;
+          this.log('coaching', `Aide <b>${aide.name}</b> began a coaching session with Avatar <b>${target.name}</b> (stress ${target.stress.toFixed(2)})`, aide);
+          target.acting = false;
+          target.timer = 0;
+        }
+      }
+    }
+  }
+
+  runSocial(dt){
+    // agents sharing a POI make contact
+    for (const a of this.agents){
+      if (!a.acting || (a.action !== 'social' && a.action !== 'wander')) continue;
+      for (const o of this.agents){
+        if (o === a || !o.acting) continue;
+        const d = Math.hypot(a.pos.x - o.pos.x, a.pos.z - o.pos.z);
+        if (d > 3.4) continue;
+        if (this.simTime - (a.lastSocial || 0) < 6) continue;
+        a.lastSocial = this.simTime;
+        const kinds = [[a,o],[o,a]];
+        for (const [x,y] of kinds){
+          if (x.action === 'social') x.needs.social = clamp01(x.needs.social + 0.14);
+          x.needs.calm = clamp01(x.needs.calm + 0.012);
+        }
+        if (a.role === 'avatar' || o.role === 'avatar'){
+          this.stats.interactions++;
+          const av = a.role === 'avatar' ? a : o;
+          const ot = a.role === 'avatar' ? o : a;
+          if (this.simTime - (av.lastAdv || 0) > 25){
+            av.lastAdv = this.simTime;
+            this.log('observation', `Avatar <b>${av.name}</b> initiated contact with <b>${ot.name}</b>. Social need ${(av.needs.social*100).toFixed(0)}%.`, av);
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  runAdvocate(dt){
+    // the Advocate never acts — it only watches, then records
+    for (const a of this.agents){
+      if (a.role !== 'avatar') continue;
+
+      if (a.needs.calm < 0.12 && this.simTime - (a.lastCalm || 0) > 30){
+        a.lastCalm = this.simTime;
+        this.log('observation', `Avatar <b>${a.name}</b> regulation critically low. No Aide engaged.`, a);
+      }
+      if (a.stress > 0.85 && this.simTime - (a.lastEsc || 0) > 22){
+        a.lastEsc = this.simTime;
+        this.stats.escalations++;
+        this.log('escalation', `Avatar <b>${a.name}</b> stress ${(a.stress*100).toFixed(0)}% — advocate review recommended.`, a);
+      }
+      if (a.needs.hydration < 0.14 && this.simTime - (a.lastNeed || 0) > 40){
+        a.lastNeed = this.simTime;
+        this.log('observation', `Avatar <b>${a.name}</b> hydration ${(a.needs.hydration*100).toFixed(0)}% — unmet need persisted ${Math.floor(this.simTime - a.lastHydr)}s.`, a);
+      }
+      a.lastHydr = a.lastHydr ?? this.simTime;
+      if (a.needs.hydration > 0.9) a.lastHydr = this.simTime;
+    }
+  }
+
+  /* ---------------- per-tick ---------------- */
+
+  step(dt){
+    this.simTime += dt;
+    const s = this.scenario;
+
+    for (const a of this.agents){
+      // impulsive interrupt — attention capture, mid-task
+      if (a.target && a.traits.impulsivity > 0.25){
+        const impulse = 0.020 * a.traits.impulsivity * dt * (1 + s.pressure * 0.5);
+        if (this.rand() < impulse){
+          const prev = a.action;
+          this.chooseAction(a, true);
+          if (prev === 'focus' && this.simTime - (a.lastDrift || 0) > 20){
+            a.lastDrift = this.simTime;
+            this.log('observation', `Avatar <b>${a.name}</b> abandoned focused work — impulsivity interrupt (trait ${(a.traits.impulsivity*100).toFixed(0)}%).`, a);
+          }
+        }
+      }
+
+      // inattention drift out of a long focus run
+      // inattention drift out of a long focus run — a per-SECOND hazard rate,
+      // so higher inattention means more lost focus runs, not instant failure
+      if (a.acting && a.action === 'focus'){
+        const drift = 0.055 * a.traits.inattention * dt;
+        if (this.rand() < drift){
+          a.acting = false;
+          this.chooseAction(a, true);
+        }
+      }
+
+      if (a.acting){
+        a.timer -= dt;
+        if (a.timer <= 0){
+          a.acting = false;
+          this.chooseAction(a, true);
+        }
+      } else {
+        this.steer(a, dt);
+      }
+
+      this.updateNeeds(a, dt);
+    }
+
+    this.runCoaching(dt);
+    this.runSocial(dt);
+    this.runAdvocate(dt);
+  }
+}
+
+/* ============================================================================
+   5 — RENDERER
+   ========================================================================== */
+
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, powerPreference:'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.06;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x9fb6c4, 0.0016);
+
+/* Open framed on the settlement, where the agents are — not on empty ocean. */
+const camera = new THREE.PerspectiveCamera(52, innerWidth/innerHeight, 0.5, 2400);
+camera.position.set(SETTLE.x + 46, SETTLE.y + 30, SETTLE.z + 62);
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.maxPolarAngle = Math.PI * 0.487;
+controls.minDistance = 8;
+controls.maxDistance = 340;
+controls.target.set(SETTLE.x, SETTLE.y + 2, SETTLE.z);
+
+/* Sky and ground bounce. Ground colour is warm so undersides pick up terrain
+   bounce rather than going blue-black. */
+const hemi = new THREE.HemisphereLight(0xbcd6e6, 0x6b5f42, 0.75);
+scene.add(hemi);
+
+/* A small floor of flat light: without it, surfaces turned away from the sun
+   silhouette to black, which reads as missing geometry rather than shade. */
+const ambient = new THREE.AmbientLight(0xa8bcc8, 0.34);
+scene.add(ambient);
+
+const sun = new THREE.DirectionalLight(0xfff0d8, 2.3);
+sun.position.set(120, 160, 80);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.near = 20;
+sun.shadow.camera.far = 620;
+sun.shadow.camera.left = -105;
+sun.shadow.camera.right = 105;
+sun.shadow.camera.top = 105;
+sun.shadow.camera.bottom = -105;
+sun.shadow.bias = -0.0009;
+sun.shadow.normalBias = 0.5;
+scene.add(sun);
+scene.add(sun.target);
+sun.target.position.set(0, 0, 0);
+
+/* ---------------- sky ---------------- */
+
+const SKY_VERT = `
+varying vec3 vDir;
+void main(){
+  vDir = position;
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  gl_Position = projectionMatrix * mv;
+}`;
+
+const SKY_FRAG = `
+varying vec3 vDir;
+uniform vec3 uTop, uHorizon, uGround, uSunColor;
+uniform vec3 uSunDir;
+void main(){
+  vec3 d = normalize(vDir);
+  float h = d.y;
+  vec3 col;
+  if (h >= 0.0) {
+    col = mix(uHorizon, uTop, pow(clamp(h, 0.0, 1.0), 0.42));
+  } else {
+    col = mix(uHorizon, uGround, pow(clamp(-h, 0.0, 1.0), 0.35));
+  }
+  float sd = max(dot(d, normalize(uSunDir)), 0.0);
+  col += uSunColor * pow(sd, 900.0) * 6.0;              // disc
+  col += uSunColor * pow(sd, 14.0) * 0.35;              // bloom
+  col += uSunColor * pow(sd, 3.0) * 0.07;               // wide scatter
+  gl_FragColor = vec4(col, 1.0);
+}`;
+
+const skyUniforms = {
+  uTop:      { value: new THREE.Color(0x2f6ea8) },
+  uHorizon:  { value: new THREE.Color(0xc3d4dd) },
+  uGround:   { value: new THREE.Color(0x2a2b28) },
+  uSunColor: { value: new THREE.Color(0xfff2d6) },
+  uSunDir:   { value: new THREE.Vector3(0.5, 0.7, 0.4) },
+};
+const sky = new THREE.Mesh(
+  new THREE.SphereGeometry(1500, 32, 20),
+  new THREE.ShaderMaterial({ vertexShader: SKY_VERT, fragmentShader: SKY_FRAG, uniforms: skyUniforms, side: THREE.BackSide, depthWrite:false, fog:false })
+);
+sky.frustumCulled = false;
+scene.add(sky);
+
+/* ---------------- terrain ---------------- */
+
+const TERRAIN_SEG = 208;
+const terrainGeo = new THREE.PlaneGeometry(WORLD, WORLD, TERRAIN_SEG, TERRAIN_SEG);
+terrainGeo.rotateX(-Math.PI/2);
+{
+  const pos = terrainGeo.attributes.position;
+  const colors = new Float32Array(pos.count * 3);
+  const c = new THREE.Color();
+
+  const SAND  = new THREE.Color(0xc9b48c);
+  const GRASS = new THREE.Color(0x5c7444);
+  const GRASS2= new THREE.Color(0x48603a);
+  const ROCK  = new THREE.Color(0x7b7468);
+  const DARK  = new THREE.Color(0x4c4740);
+
+  for (let i = 0; i < pos.count; i++){
+    const x = pos.getX(i), z = pos.getZ(i);
+    const h = heightAt(x, z);
+    pos.setY(i, h);
+
+    const slope = slopeAt(x, z);
+    const grain = fbm(x*0.06, z*0.06, 3, SEED+991);
+
+    if (h < WATER - 2.6)      c.copy(DARK);
+    else if (h < WATER + 1.5) c.copy(SAND);
+    else {
+      c.copy(GRASS).lerp(GRASS2, grain);
+      c.lerp(ROCK, smoothstep(0.28, 0.72, slope));
+      c.lerp(SAND, smoothstep(2.4, 0.9, h) * 0.25);
+      c.multiplyScalar(0.86 + grain * 0.30);
+    }
+    const shade = 0.94 + fbm(x*0.012, z*0.012, 2, SEED+77) * 0.14;
+    colors[i*3]   = c.r * shade;
+    colors[i*3+1] = c.g * shade;
+    colors[i*3+2] = c.b * shade;
+  }
+  terrainGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  terrainGeo.computeVertexNormals();
+}
+
+const terrain = new THREE.Mesh(
+  terrainGeo,
+  new THREE.MeshStandardMaterial({ vertexColors:true, roughness:0.97, metalness:0.0 })
+);
+terrain.receiveShadow = true;
+scene.add(terrain);
+
+/* ---------------- water ---------------- */
+
+const WATER_VERT = `
+varying vec3 vWorld;
+varying vec2 vUv2;
+void main(){
+  vUv2 = uv;
+  vec4 wp = modelMatrix * vec4(position, 1.0);
+  vWorld = wp.xyz;
+  gl_Position = projectionMatrix * viewMatrix * wp;
+}`;
+
+const WATER_FRAG = `
+varying vec3 vWorld;
+varying vec2 vUv2;
+uniform float uTime;
+uniform vec3 uDeep, uShallow, uSky, uSunColor, uSunDir, uCam;
+uniform float uFogDensity;
+uniform vec3 uFogColor;
+
+float wave(vec2 p, vec2 dir, float freq, float speed){
+  return sin(dot(p, dir) * freq + uTime * speed);
+}
+
+float waves(vec2 p){
+  float s = 0.0;
+  s += wave(p, normalize(vec2( 1.00, 0.32)), 0.052, 1.15) * 0.30;
+  s += wave(p, normalize(vec2(-0.42, 1.00)), 0.081, 0.95) * 0.17;
+  s += wave(p, normalize(vec2( 0.72,-0.68)), 0.173, 1.70) * 0.08;
+  s += wave(p, normalize(vec2(-0.86,-0.51)), 0.290, 2.35) * 0.04;
+  return s;
+}
+
+void main(){
+  vec2 p = vWorld.xz;
+
+  // Sum of directional sines, used for both displacement and the normal.
+  // Amplitudes are deliberately small: large ones alias into visible moire
+  // banding at grazing angles across a 2600-unit plane.
+  float h = waves(p);
+  float e = 1.6;
+  float hx = waves(p + vec2(e, 0.0)) - waves(p - vec2(e, 0.0));
+  float hz = waves(p + vec2(0.0, e)) - waves(p - vec2(0.0, e));
+
+  vec3 N = normalize(vec3(-hx * 0.85, 1.0, -hz * 0.85));
+  vec3 V = normalize(uCam - vWorld);
+  vec3 L = normalize(uSunDir);
+
+  float fres = pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 4.2);
+  float spec = pow(max(dot(reflect(-L, N), V), 0.0), 180.0);
+  float glitter = pow(max(dot(reflect(-L, N), V), 0.0), 28.0) * 0.14;
+
+  vec3 col = mix(uDeep, uShallow, clamp(h * 0.35 + 0.5, 0.0, 1.0));
+  col = mix(col, uSky, clamp(fres * 0.85, 0.0, 1.0));
+  col += uSunColor * (spec * 1.3 + glitter);
+
+  float alpha = mix(0.86, 0.97, fres);
+  gl_FragColor = vec4(col, alpha);
+
+  // match scene fog
+  float d = length(uCam - vWorld);
+  float f = 1.0 - exp(-uFogDensity * uFogDensity * d * d);
+  gl_FragColor.rgb = mix(gl_FragColor.rgb, uFogColor, clamp(f, 0.0, 1.0));
+}`;
+
+const waterUniforms = {
+  uTime:      { value: 0 },
+  uDeep:      { value: new THREE.Color(0x16323d) },
+  uShallow:   { value: new THREE.Color(0x2f6f74) },
+  uSky:       { value: new THREE.Color(0xc3d4dd) },
+  uSunColor:  { value: new THREE.Color(0xfff2d6) },
+  uSunDir:    { value: new THREE.Vector3(0.5,0.7,0.4) },
+  uCam:       { value: new THREE.Vector3() },
+  uFogColor:  { value: scene.fog.color },
+  uFogDensity:{ value: scene.fog.density },
+};
+
+const water = new THREE.Mesh(
+  new THREE.PlaneGeometry(2600, 2600, 1, 1).rotateX(-Math.PI/2),
+  new THREE.ShaderMaterial({
+    vertexShader: WATER_VERT, fragmentShader: WATER_FRAG, uniforms: waterUniforms,
+    transparent: true, depthWrite: false
+  })
+);
+water.position.y = WATER;
+water.renderOrder = 1;
+scene.add(water);
+
+/* ---------------- wind sway (injected into standard materials) ---------------- */
+
+const timeUniform = { value: 0 };
+function addSway(material, strength, speed){
+  material.onBeforeCompile = (sh) => {
+    sh.uniforms.uTime = timeUniform;
+    sh.vertexShader = 'uniform float uTime;\n' + sh.vertexShader;
+    sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', `
+      #include <begin_vertex>
+      #ifdef USE_INSTANCING
+        vec3 iw = vec3(instanceMatrix[3][0], instanceMatrix[3][1], instanceMatrix[3][2]);
+        float bend = clamp(transformed.y * 0.16, 0.0, 1.0);
+        float s = sin(uTime * ${speed.toFixed(2)} + iw.x * 0.24 + iw.z * 0.19);
+        float s2 = cos(uTime * ${(speed*0.71).toFixed(2)} + iw.x * 0.11 - iw.z * 0.31);
+        transformed.x += (s * ${(strength*0.85).toFixed(3)} + s2 * ${(strength*0.35).toFixed(3)}) * bend;
+        transformed.z += (s * ${(strength*0.55).toFixed(3)} - s2 * ${(strength*0.28).toFixed(3)}) * bend;
+      #endif
+    `);
+  };
+  material.needsUpdate = true;
+}
+
+/* ---------------- settlement plan ----------------
+   The layout is decided before anything is built, because vegetation placement
+   needs to know where the buildings are in order to avoid them. */
+
+const engine = new Engine(SEED);
+engine.buildings.length = 0;
+const plans = engine.buildSettlement();
+
+/* ---------------- vegetation ---------------- */
+
+function seededPlacement(count, test){
+  const out = [];
+  const r = mulberry32(SEED + 4242);
+  let guard = 0;
+  while (out.length < count && guard++ < count * 60){
+    const a = r() * Math.PI * 2;
+    const rad = Math.sqrt(r()) * (WORLD * 0.42);
+    const x = Math.cos(a) * rad, z = Math.sin(a) * rad;
+    if (!test(x, z, r)) continue;
+    let ok = true;
+    for (const o of out){
+      if ((o.x-x)*(o.x-x) + (o.z-z)*(o.z-z) < 16){ ok = false; break; }
+    }
+    if (ok) out.push({ x, z, y: heightAt(x,z), scale: r(), rot: r(), tint: r() });
+  }
+  return out;
+}
+
+/* --- trees ---
+   Parts are tinted before merging. Tinting after the merge by world Y would
+   misclassify the lowest canopy cone, which overlaps the trunk in height. */
+function tintGeom(geo, hex, variance = 0){
+  const n = geo.attributes.position.count;
+  const c = new THREE.Color(hex);
+  const arr = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++){
+    const k = 1 + (Math.random() - 0.5) * variance;
+    arr[i*3] = c.r * k; arr[i*3+1] = c.g * k; arr[i*3+2] = c.b * k;
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(arr, 3));
+  return geo;
+}
+
+const treeGeo = (() => {
+  const trunk = new THREE.CylinderGeometry(0.16, 0.30, 2.6, 6);
+  trunk.translate(0, 1.3, 0);
+  const c1 = new THREE.ConeGeometry(1.35, 2.9, 8); c1.translate(0, 3.2, 0);
+  const c2 = new THREE.ConeGeometry(1.05, 2.4, 8); c2.translate(0, 4.5, 0);
+  const c3 = new THREE.ConeGeometry(0.68, 1.8, 8); c3.translate(0, 5.7, 0);
+  return mergeGeometries([
+    tintGeom(trunk, 0x5a4534, 0.35),
+    tintGeom(c1, 0x3d5c36, 0.30),
+    tintGeom(c2, 0x4a7038, 0.30),
+    tintGeom(c3, 0x5c8440, 0.30),
+  ]);
+})();
+
+const treeMat = new THREE.MeshStandardMaterial({ vertexColors:true, roughness:0.92, metalness:0 });
+addSway(treeMat, 0.11, 1.25);
+
+/* Trees grow across the island including inside the settlement, but never on
+   the plaza, the roads or a building footprint. */
+const BUILDING_KEEPOUT = plans.map(b => ({ x:b.x, z:b.z, r:b.rad + 3.5 }));
+function clearOfSettlement(x, z, pad = 0){
+  if (Math.hypot(x - SETTLE.x, z - SETTLE.z) < 15 + pad) return false;   // plaza
+  for (const b of BUILDING_KEEPOUT){
+    if (Math.hypot(x - b.x, z - b.z) < b.r + pad) return false;
+  }
+  return true;
+}
+
+const treeSpots = seededPlacement(620, (x,z,r) => {
+  const h = heightAt(x,z);
+  return h > WATER + 1.6 && slopeAt(x,z) < 0.42 && clearOfSettlement(x, z, 1.5);
+});
+const trees = new THREE.InstancedMesh(treeGeo, treeMat, treeSpots.length);
+trees.castShadow = true;
+trees.receiveShadow = true;
+{
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3();
+  treeSpots.forEach((t, i) => {
+    p.set(t.x, t.y - 0.2, t.z);
+    q.setFromAxisAngle(new THREE.Vector3(0,1,0), t.rot * Math.PI * 2);
+    const sc = 0.72 + t.scale * 0.85;
+    s.set(sc, sc * (0.85 + t.tint * 0.4), sc);
+    m.compose(p, q, s);
+    trees.setMatrixAt(i, m);
+  });
+  trees.instanceMatrix.needsUpdate = true;
+}
+scene.add(trees);
+
+// --- rocks ---
+const rockGeo = new THREE.DodecahedronGeometry(1, 0);
+const rockMat = new THREE.MeshStandardMaterial({ color:0x7d776c, roughness:0.98, flatShading:true });
+const rockSpots = seededPlacement(190, (x,z,r) => {
+  const h = heightAt(x,z);
+  return h > WATER + 0.6 && slopeAt(x,z) > 0.16 && clearOfSettlement(x, z, 0.5);
+});
+const rocks = new THREE.InstancedMesh(rockGeo, rockMat, rockSpots.length);
+rocks.castShadow = true; rocks.receiveShadow = true;
+{
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3();
+  rockSpots.forEach((t, i) => {
+    p.set(t.x, t.y - 0.25, t.z);
+    q.setFromEuler(new THREE.Euler(t.tint*3, t.rot*6, t.tint*2));
+    const sc = 0.5 + t.scale * 1.5;
+    s.set(sc, sc * (0.6 + t.rot*0.5), sc * (0.8 + t.tint*0.4));
+    m.compose(p, q, s);
+    rocks.setMatrixAt(i, m);
+  });
+  rocks.instanceMatrix.needsUpdate = true;
+}
+scene.add(rocks);
+
+// --- grass tufts ---
+const grassGeo = (() => {
+  const a = new THREE.ConeGeometry(0.075, 0.62, 3);
+  a.translate(0, 0.31, 0);
+  const b = new THREE.ConeGeometry(0.06, 0.48, 3);
+  b.rotateZ(0.4); b.translate(0.14, 0.24, 0.05);
+  const c = new THREE.ConeGeometry(0.06, 0.52, 3);
+  c.rotateZ(-0.35); c.rotateY(1.1); c.translate(-0.12, 0.26, -0.08);
+  return mergeGeometries([a,b,c]);
+})();
+const grassMat = new THREE.MeshStandardMaterial({ vertexColors:true, roughness:1, metalness:0 });
+tintGeom(grassGeo, 0x7d9c4e, 0.55);
+addSway(grassMat, 0.26, 2.4);
+const grassSpots = seededPlacement(3400, (x,z,r) => {
+  const h = heightAt(x,z);
+  // thinner over the plaza and roads so the settlement surface stays readable
+  const dPlaza = Math.hypot(x - SETTLE.x, z - SETTLE.z);
+  if (dPlaza < 14 && r() < 0.85) return false;
+  return h > WATER + 0.9 && slopeAt(x,z) < 0.45;
+});
+const grass = new THREE.InstancedMesh(grassGeo, grassMat, grassSpots.length);
+grass.receiveShadow = true;
+{
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3();
+  const up = new THREE.Vector3(0,1,0);
+  grassSpots.forEach((t, i) => {
+    p.set(t.x, t.y - 0.05, t.z);
+    q.setFromAxisAngle(up, t.rot * Math.PI * 2);
+    const sc = 0.7 + t.scale * 0.9;
+    s.set(sc, sc * (0.7 + t.tint*0.8), sc);
+    m.compose(p, q, s);
+    grass.setMatrixAt(i, m);
+  });
+  grass.instanceMatrix.needsUpdate = true;
+}
+scene.add(grass);
+
+/* ---------------- settlement geometry ---------------- */
+
+const wallMat  = new THREE.MeshStandardMaterial({ vertexColors:true, roughness:0.85 });
+const roofMat  = new THREE.MeshStandardMaterial({ vertexColors:true, roughness:0.78 });
+const glassMat = new THREE.MeshStandardMaterial({ color:0xffe0b0, emissive:0xffc478, emissiveIntensity:0.85, roughness:0.3 });
+const pathMat  = new THREE.MeshStandardMaterial({ color:0x8a8377, roughness:0.98 });
+
+const WALL_COLS = [0xd9cdb8, 0xc9bfa9, 0xe0d4c0, 0xbfae96, 0xcfc4ae, 0xc4b49c];
+const ROOF_COLS = [0x7a4a3c, 0x6b5340, 0x8a5a44, 0x5f4a3e, 0x74503f];
+
+function tint(geo, hex){
+  const n = geo.attributes.position.count;
+  const c = new THREE.Color(hex);
+  const arr = new Float32Array(n*3);
+  for (let i = 0; i < n; i++){ arr[i*3]=c.r; arr[i*3+1]=c.g; arr[i*3+2]=c.b; }
+  geo.setAttribute('color', new THREE.BufferAttribute(arr, 3));
+  return geo;
+}
+
+const settlement = new THREE.Group();
+scene.add(settlement);
+
+plans.forEach((plan, i) => {
+  const y = heightAt(plan.x, plan.z);
+  const g = new THREE.Group();
+  const w = plan.rad * 1.5;
+  const d = plan.rad * 1.25;
+  const wallH = 4.2 + plan.r * 3.4;
+  const roofH = 2.4 + plan.r * 1.4;
+
+  const wall = new THREE.Mesh(tint(new THREE.BoxGeometry(w, wallH, d).translate(0, wallH/2, 0), WALL_COLS[i % WALL_COLS.length]), wallMat);
+  wall.castShadow = true; wall.receiveShadow = true;
+  g.add(wall);
+
+  const roof = new THREE.Mesh(tint(new THREE.ConeGeometry(Math.max(w,d)*0.78, roofH, 4).rotateY(Math.PI/4).translate(0, wallH + roofH/2 - 0.15, 0), ROOF_COLS[i % ROOF_COLS.length]), roofMat);
+  roof.castShadow = true;
+  g.add(roof);
+
+  const chimney = new THREE.Mesh(tint(new THREE.BoxGeometry(0.7, 1.9, 0.7).translate(w*0.22, wallH + roofH*0.55, -d*0.2), 0x6a5b52), wallMat);
+  chimney.castShadow = true;
+  g.add(chimney);
+
+  const door = new THREE.Mesh(new THREE.BoxGeometry(1.15, 2.1, 0.14).translate(0, 1.05, d/2 + 0.02), new THREE.MeshStandardMaterial({ color:0x54402f, roughness:0.8 }));
+  g.add(door);
+
+  for (let s = 0; s < 2; s++){
+    for (let f = 0; f < 2; f++){
+      const win = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.8, 0.1).translate((s?1:-1) * w*0.29, 1.9 + f*1.5, d/2 + 0.02), glassMat);
+      g.add(win);
+    }
+  }
+
+  g.position.set(plan.x, y, plan.z);
+  g.rotation.y = plan.rot;
+  settlement.add(g);
+  engine.buildings.push({ x: plan.x, z: plan.z, y, rad: Math.max(w,d)*0.5, rot: plan.rot, kind: plan.kind });
+});
+
+// roads / plaza
+{
+  const plaza = new THREE.Mesh(
+    new THREE.CylinderGeometry(13, 13, 0.22, 40).translate(SETTLE.x, SETTLE.y + 0.11, SETTLE.z),
+    pathMat
+  );
+  plaza.receiveShadow = true;
+  settlement.add(plaza);
+
+  for (let i = 0; i < 5; i++){
+    const a = (i/5)*Math.PI*2 + 0.4;
+    const len = SETTLE.r * 0.9;
+    const road = new THREE.Mesh(
+      new THREE.BoxGeometry(2.5, 0.2, len).translate(0, 0, len/2).rotateY(a).translate(SETTLE.x, SETTLE.y + 0.10, SETTLE.z),
+      pathMat
+    );
+    road.receiveShadow = true;
+    settlement.add(road);
+  }
+
+  // well
+  const well = new THREE.Group();
+  well.add(new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.25, 1.0, 14).translate(0, 0.5, 0), new THREE.MeshStandardMaterial({ color:0x9a9186, roughness:0.9 })));
+  well.add(new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 0.1, 14).translate(0, 1.02, 0), new THREE.MeshStandardMaterial({ color:0x1b3a44, roughness:0.15, metalness:0.2 })));
+  well.position.set(SETTLE.x + 9, SETTLE.y, SETTLE.z - 11);
+  well.traverse(o => { o.castShadow = true; o.receiveShadow = true; });
+  settlement.add(well);
+
+  // work desks
+  for (let i = 0; i < 4; i++){
+    const a = (i/4)*Math.PI*2 + 0.6;
+    const x = SETTLE.x + Math.cos(a)*11, z = SETTLE.z + Math.sin(a)*11;
+    const desk = new THREE.Group();
+    const top = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.14, 1.2).translate(0, 0.95, 0), new THREE.MeshStandardMaterial({ color:0x8a6a4a, roughness:0.85 }));
+    desk.add(top);
+    for (const [lx, lz] of [[-0.85,-0.45],[0.85,-0.45],[-0.85,0.45],[0.85,0.45]]){
+      desk.add(new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.9, 0.1).translate(lx, 0.45, lz), new THREE.MeshStandardMaterial({ color:0x5d4a3a, roughness:0.9 })));
+    }
+    // a glowing screen — the only "digital" artefact in the world
+    desk.add(new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.5, 0.06).translate(0, 1.32, -0.35), glassMat));
+    desk.position.set(x, heightAt(x,z), z);
+    desk.rotation.y = -a + Math.PI/2;
+    desk.traverse(o => { o.castShadow = true; o.receiveShadow = true; });
+    settlement.add(desk);
+  }
+
+  // benches
+  for (let i = 0; i < 3; i++){
+    const a = (i/3)*Math.PI*2 + 1.9;
+    const x = SETTLE.x + Math.cos(a)*(SETTLE.r-13), z = SETTLE.z + Math.sin(a)*(SETTLE.r-13);
+    const bench = new THREE.Group();
+    bench.add(new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.16, 0.7).translate(0, 0.55, 0), new THREE.MeshStandardMaterial({ color:0x9a7548, roughness:0.9 })));
+    bench.add(new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.7, 0.14).translate(0, 0.9, -0.3), new THREE.MeshStandardMaterial({ color:0x9a7548, roughness:0.9 })));
+    for (const lx of [-1.0, 1.0]) bench.add(new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.55, 0.6).translate(lx, 0.28, 0), new THREE.MeshStandardMaterial({ color:0x4d4a46, roughness:0.9 })));
+    bench.position.set(x, heightAt(x,z), z);
+    bench.rotation.y = -a;
+    bench.traverse(o => { o.castShadow = true; o.receiveShadow = true; });
+    settlement.add(bench);
+  }
+}
+
+engine.pois = engine.buildPOIs();
+
+/* ============================================================================
+   6 — ARTICULATED BODIES
+   ========================================================================== */
+
+const SKIN = {
+  avatar:   [0x3f8f80, 0x4f7fb0, 0x8a6fbf, 0xb07a4a, 0x5f9e6a, 0x4a8f96],
+  aide:     [0xc98f4e, 0xb87a5e, 0xd0a05c, 0xa8845c],
+  resident: [0x7d8790, 0x8b8073, 0x6f7f86, 0x94826f, 0x77726b, 0x88907a],
+};
+const ROLE_LABEL = { avatar:'Avatar', aide:'Aide', resident:'Resident' };
+
+const geo = {
+  torso: new THREE.BoxGeometry(0.56, 0.72, 0.30),
+  hips:  new THREE.BoxGeometry(0.48, 0.26, 0.28),
+  head:  new THREE.BoxGeometry(0.32, 0.36, 0.30),
+  limb:  new THREE.CapsuleGeometry(0.095, 0.42, 4, 8),
+  limbL: new THREE.CapsuleGeometry(0.075, 0.38, 4, 8),
+  shoe:  new THREE.BoxGeometry(0.15, 0.10, 0.26),
+};
+
+const sharedGeo = new Set(Object.values(geo));
+
+function mat(hex, rough = 0.78){ return new THREE.MeshStandardMaterial({ color:hex, roughness:rough, metalness:0.02 }); }
+
+function makeLabelSprite(text, sub, accent){
+  const cv = document.createElement('canvas');
+  cv.width = 320; cv.height = 96;
+  const g = cv.getContext('2d');
+
+  g.fillStyle = 'rgba(10,15,17,0.78)';
+  roundRect(g, 6, 18, 308, 56, 12); g.fill();
+  g.strokeStyle = accent; g.lineWidth = 2;
+  roundRect(g, 6, 18, 308, 56, 12); g.stroke();
+
+  g.fillStyle = accent;
+  roundRect(g, 16, 30, 8, 32, 4); g.fill();
+
+  g.textBaseline = 'middle';
+  g.fillStyle = '#f2f6f4';
+  g.font = '600 30px "IBM Plex Sans", system-ui, sans-serif';
+  g.fillText(text, 36, 40);
+  g.fillStyle = accent;
+  g.font = '500 17px "IBM Plex Mono", monospace';
+  g.fillText(sub.toUpperCase(), 36, 64);
+
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map:tex, transparent:true, depthWrite:false, depthTest:true }));
+  sp.scale.set(2.0, 0.6, 1);
+  sp.renderOrder = 5;
+  return sp;
+}
+
+function roundRect(g, x, y, w, h, r){
+  g.beginPath();
+  g.moveTo(x+r, y);
+  g.arcTo(x+w, y, x+w, y+h, r);
+  g.arcTo(x+w, y+h, x, y+h, r);
+  g.arcTo(x, y+h, x, y, r);
+  g.arcTo(x, y, x+w, y, r);
+  g.closePath();
+}
+
+function makeRig(a){
+  const idx = engine.agents.length;
+  const palette = SKIN[a.role] || SKIN.resident;
+  const body = palette[idx % palette.length];
+  const accent = a.role === 'avatar' ? '#2fb39b' : a.role === 'aide' ? '#e0a35a' : '#9aa6a3';
+
+  const bodyMat = mat(body, 0.72);
+  const darkMat = mat(new THREE.Color(body).multiplyScalar(0.6).getHex(), 0.8);
+  const skinMat = mat(0xd8b394, 0.85);
+
+  const root = new THREE.Group();
+
+  const hips = new THREE.Mesh(geo.hips, darkMat);
+  hips.position.y = 0.92;
+  hips.castShadow = true;
+  root.add(hips);
+
+  const torso = new THREE.Mesh(geo.torso, bodyMat);
+  torso.position.y = 0.36;
+  torso.castShadow = true;
+  hips.add(torso);
+  torso.userData.agent = a;
+
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.09, 0.14, 6), skinMat);
+  neck.position.y = 0.80;
+  torso.add(neck);
+
+  const head = new THREE.Group();
+  head.position.y = 0.88;
+  const headMesh = new THREE.Mesh(geo.head, skinMat);
+  headMesh.castShadow = true;
+  head.add(headMesh);
+  // simple face marker so heading is readable at a distance
+  const nose = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.09, 0.10), mat(0xc49a7c));
+  nose.position.set(0, 0, 0.19);
+  head.add(nose);
+  const hair = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.11, 0.32), darkMat);
+  hair.position.y = 0.20;
+  head.add(hair);
+  torso.add(head);
+
+  function arm(side){
+    const shoulder = new THREE.Group();
+    shoulder.position.set(side * 0.34, 0.62, 0);
+    torso.add(shoulder);
+    const upper = new THREE.Mesh(geo.limb, bodyMat);
+    upper.position.y = -0.24;
+    upper.castShadow = true;
+    shoulder.add(upper);
+    const elbow = new THREE.Group();
+    elbow.position.y = -0.48;
+    shoulder.add(elbow);
+    const lower = new THREE.Mesh(geo.limbL, skinMat);
+    lower.position.y = -0.22;
+    lower.castShadow = true;
+    elbow.add(lower);
+    return { shoulder, elbow };
+  }
+  function leg(side){
+    const hip = new THREE.Group();
+    hip.position.set(side * 0.15, -0.13, 0);
+    hips.add(hip);
+    const upper = new THREE.Mesh(geo.limb, darkMat);
+    upper.position.y = -0.26;
+    upper.castShadow = true;
+    hip.add(upper);
+    const knee = new THREE.Group();
+    knee.position.y = -0.52;
+    hip.add(knee);
+    const lower = new THREE.Mesh(geo.limbL, darkMat);
+    lower.position.y = -0.24;
+    lower.castShadow = true;
+    knee.add(lower);
+    const shoe = new THREE.Mesh(geo.shoe, mat(0x33302c));
+    shoe.position.set(0, -0.46, 0.05);
+    knee.add(shoe);
+    return { hip, knee };
+  }
+
+  const armL = arm(-1), armR = arm(1), legL = leg(-1), legR = leg(1);
+
+  // role marker floating above
+  const marker = new THREE.Mesh(
+    new THREE.TorusGeometry(0.20, 0.045, 8, 20),
+    new THREE.MeshBasicMaterial({ color: a.role === 'avatar' ? 0x2fb39b : a.role === 'aide' ? 0xe0a35a : 0x8f9a98, transparent:true, opacity:0.9 })
+  );
+  marker.rotation.x = Math.PI/2;
+  marker.position.y = 1.32;
+  torso.add(marker);
+
+  const label = makeLabelSprite(a.name, ROLE_LABEL[a.role], accent);
+  label.position.y = 1.62;
+  torso.add(label);
+
+  a.rig = { root, hips, torso, head, armL, armR, legL, legR, marker, label, markerMat: marker.material };
+  a.pickTarget = torso;
+
+  // ground ring for selection
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.75, 0.95, 32).rotateX(-Math.PI/2),
+    new THREE.MeshBasicMaterial({ color:0x2fb39b, transparent:true, opacity:0.85, side:THREE.DoubleSide })
+  );
+  ring.position.y = 0.06;
+  ring.visible = false;
+  scene.add(ring);
+  a.ring = ring;
+
+  scene.add(root);
+}
+
+engine.populate();
+engine.agents.forEach(makeRig);
+
+let selected = engine.agents.find(a => a.role === 'avatar');
+
+/* Scenario population changes flow through these hooks so the view creates and
+   disposes bodies without the simulation layer knowing what a mesh is. */
+engine.onSpawn = makeRig;
+engine.onDespawn = a => {
+  if (!a.rig) return;
+  scene.remove(a.rig.root);
+  scene.remove(a.ring);
+  if (a.rig.label.material.map) a.rig.label.material.map.dispose();
+  a.rig.label.material.dispose();
+  a.rig.root.traverse(o => {
+    if (o.geometry && !sharedGeo.has(o.geometry)) o.geometry.dispose();
+    if (o.material && o.material !== a.rig.label.material) o.material.dispose();
+  });
+  a.ring.geometry.dispose();
+  a.ring.material.dispose();
+  if (selected === a) selected = null;
+  a.rig = null;
+};
+
+engine.setScenario('baseline');
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+let downPos = null;
+
+canvas.addEventListener('pointerdown', e => { downPos = { x:e.clientX, y:e.clientY }; });
+canvas.addEventListener('pointerup', e => {
+  if (!downPos) return;
+  const moved = Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y);
+  downPos = null;
+  if (moved > 5) return;
+  pointer.x = (e.clientX / innerWidth) * 2 - 1;
+  pointer.y = -(e.clientY / innerHeight) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const hits = raycaster.intersectObjects(engine.agents.map(a => a.pickTarget));
+  for (const h of hits){
+    let o = h.object;
+    while (o && !o.userData.agent) o = o.parent;
+    if (o){ select(o.userData.agent); break; }
+  }
+});
+
+function select(a){
+  if (selected && selected.ring) selected.ring.visible = false;
+  selected = a;
+  if (a && a.ring) a.ring.visible = true;
+  refreshAll();
+}
+
+/* ---------------- walk cycle ---------------- */
+
+const _v = new THREE.Vector3();
+
+function animateAgent(a, dt){
+  const r = a.rig;
+  const moving = a.speed > 0.12;
+
+  a.phase += dt * (moving ? a.speed * 2.5 : 1.4);
+  // ADHD traits are legible in the body, not just the numbers
+  a.gait = 1 + a.traits.hyperactivity * 0.55;
+
+  r.root.position.set(a.pos.x, a.pos.y, a.pos.z);
+  r.root.rotation.y = a.heading;
+
+  if (moving){
+    const s = Math.sin(a.phase) * 0.62 * a.gait;
+    const c = Math.cos(a.phase * 2);
+    r.legL.hip.rotation.x = s;
+    r.legR.hip.rotation.x = -s;
+    r.legL.knee.rotation.x = Math.max(0, -Math.sin(a.phase - 0.7)) * 0.85 * a.gait;
+    r.legR.knee.rotation.x = Math.max(0, -Math.sin(a.phase + Math.PI - 0.7)) * 0.85 * a.gait;
+    r.armL.shoulder.rotation.x = -s * 0.72;
+    r.armR.shoulder.rotation.x = s * 0.72;
+    r.armL.elbow.rotation.x = -0.25 - Math.max(0, s) * 0.4;
+    r.armR.elbow.rotation.x = -0.25 - Math.max(0, -s) * 0.4;
+    r.hips.position.y = 0.92 + Math.abs(c) * 0.045;
+    r.torso.rotation.x = 0.06 + a.traits.hyperactivity * 0.05;
+    r.torso.rotation.z = Math.sin(a.phase) * 0.035;
+    r.head.rotation.y = Math.sin(a.phase * 0.5) * 0.12;
+  } else {
+    const b = Math.sin(performance.now() * 0.0016 + a.sway);
+    r.legL.hip.rotation.x = lerp(r.legL.hip.rotation.x, 0, 0.15);
+    r.legR.hip.rotation.x = lerp(r.legR.hip.rotation.x, 0, 0.15);
+    r.legL.knee.rotation.x = lerp(r.legL.knee.rotation.x, 0, 0.15);
+    r.legR.knee.rotation.x = lerp(r.legR.knee.rotation.x, 0, 0.15);
+    r.armL.shoulder.rotation.x = lerp(r.armL.shoulder.rotation.x, b * 0.04, 0.1);
+    r.armR.shoulder.rotation.x = lerp(r.armR.shoulder.rotation.x, -b * 0.04, 0.1);
+    r.armL.elbow.rotation.x = lerp(r.armL.elbow.rotation.x, -0.18, 0.1);
+    r.armR.elbow.rotation.x = lerp(r.armR.elbow.rotation.x, -0.18, 0.1);
+    r.hips.position.y = lerp(r.hips.position.y, 0.92 + b * 0.012, 0.12);
+    r.torso.rotation.x = lerp(r.torso.rotation.x, 0.02, 0.1);
+    r.torso.rotation.z = lerp(r.torso.rotation.z, 0, 0.1);
+    r.head.rotation.y = lerp(r.head.rotation.y, b * 0.18, 0.06);
+  }
+
+  // fidgeting: inattention and impulsivity both produce stray movement
+  if (a.traits.inattention + a.traits.impulsivity > 0.5){
+    a.fidget -= dt;
+    if (a.fidget <= 0){
+      a.fidget = 0.5 + Math.random() * 2.6 * (1 - a.traits.hyperactivity * 0.4);
+      const amp = (a.traits.impulsivity * 0.5 + 0.2) * (moving ? 0.4 : 1);
+      r.armR.shoulder.rotation.z = (Math.random() - 0.5) * 1.5 * amp;
+      r.head.rotation.z = (Math.random() - 0.5) * 0.5 * amp;
+    }
+  } else {
+    r.armR.shoulder.rotation.z = lerp(r.armR.shoulder.rotation.z, 0, 0.1);
+    r.head.rotation.z = lerp(r.head.rotation.z, 0, 0.1);
+  }
+
+  // marker pulse encodes stress
+  const pulse = 0.5 + 0.5 * Math.sin(performance.now() * 0.004 + a.sway);
+  if (a.role === 'avatar'){
+    r.markerMat.opacity = 0.35 + 0.6 * (1 - a.stress);
+    r.markerMat.color.setHSL(lerp(0.02, 0.46, a.stress), 0.72, 0.55);
+    const sc = 1 + a.stress * 0.5 + pulse * 0.06;
+    r.marker.scale.setScalar(sc);
+  } else {
+    r.marker.scale.setScalar(1);
+    r.markerMat.opacity = 0.4;
+  }
+
+  // selection ring lives on the agent, not the rig, so it survives rig rebuilds
+  if (selected === a && a.ring) a.ring.position.set(a.pos.x, a.pos.y + 0.08, a.pos.z);
+}
+
+/* ============================================================================
+   7 — DAY / NIGHT
+   ========================================================================== */
+
+const PALETTES = [
+  { t:0.00, top:0x101b34, hor:0x2a3550, gnd:0x1c2026, sun:0x6f7fa8, i:0.30, amb:0.38, exp:0.94, fog:0x2a3550, fd:0.0028 },
+  { t:0.20, top:0x2a4a72, hor:0xd08a58, gnd:0x4a4034, sun:0xffb06a, i:1.45, amb:0.55, exp:1.02, fog:0x9d7c66, fd:0.0022 },
+  { t:0.32, top:0x2f6ea8, hor:0xc3d4dd, gnd:0x6b5f42, sun:0xfff2d6, i:2.10, amb:0.60, exp:1.06, fog:0x9fb6c4, fd:0.0016 },
+  { t:0.68, top:0x2f6ea8, hor:0xc3d4dd, gnd:0x6b5f42, sun:0xfff2d6, i:2.10, amb:0.60, exp:1.06, fog:0x9fb6c4, fd:0.0016 },
+  { t:0.80, top:0x27395e, hor:0xc9693f, gnd:0x4a3c30, sun:0xff9a5c, i:1.35, amb:0.52, exp:1.01, fog:0x94675a, fd:0.0022 },
+  { t:1.00, top:0x101b34, hor:0x2a3550, gnd:0x1c2026, sun:0x6f7fa8, i:0.30, amb:0.38, exp:0.94, fog:0x2a3550, fd:0.0028 },
+];
+
+const _cA = new THREE.Color(), _cB = new THREE.Color(), _sunDir = new THREE.Vector3();
+
+function updateDaylight(simT){
+  // start mid-morning rather than at midnight, so the world is legible on load
+  const dayT = (((simT / DAY_LEN) + 0.32) % 1 + 1) % 1;
+  let i = 0;
+  while (i < PALETTES.length - 2 && PALETTES[i+1].t <= dayT) i++;
+  const p0 = PALETTES[i], p1 = PALETTES[i+1];
+  const f = smooth(clamp01((dayT - p0.t) / (p1.t - p0.t)));
+
+  const lerpHex = (a, b, out) => out.setHex(a).lerp(_cB.setHex(b), f);
+
+  lerpHex(p0.top, p1.top, skyUniforms.uTop.value);
+  lerpHex(p0.hor, p1.hor, skyUniforms.uHorizon.value);
+  lerpHex(p0.gnd, p1.gnd, skyUniforms.uGround.value);
+  lerpHex(p0.sun, p1.sun, skyUniforms.uSunColor.value);
+  lerpHex(p0.fog, p1.fog, scene.fog.color);
+
+  lerpHex(p0.sun, p1.sun, sun.color);
+  lerpHex(p0.hor, p1.hor, waterUniforms.uSky.value);
+  lerpHex(p0.sun, p1.sun, waterUniforms.uSunColor.value);
+
+  const ang = (dayT - 0.25) * Math.PI * 2;
+  const elev = Math.sin(ang);
+
+  sun.intensity = lerp(p0.i, p1.i, f);
+  hemi.intensity = lerp(p0.amb, p1.amb, f) * 1.35;
+  hemi.color.copy(skyUniforms.uHorizon.value);
+  // keep a flat light floor so shaded faces read as shade, not as holes
+  ambient.intensity = lerp(0.34, 0.16, smoothstep(-0.05, 0.30, elev));
+  ambient.color.copy(skyUniforms.uHorizon.value);
+  renderer.toneMappingExposure = lerp(p0.exp, p1.exp, f);
+  waterUniforms.uFogColor.value.copy(scene.fog.color);
+  waterUniforms.uFogDensity.value = lerp(p0.fd, p1.fd, f);
+  scene.fog.density = lerp(p0.fd, p1.fd, f);
+
+  _sunDir.set(Math.cos(ang) * 0.75, Math.max(elev, -0.15), 0.45).normalize();
+  skyUniforms.uSunDir.value.copy(_sunDir);
+  waterUniforms.uSunDir.value.copy(_sunDir);
+  // keep the shadow frustum centred on the settlement, not the origin
+  sun.target.position.set(SETTLE.x, SETTLE.y, SETTLE.z);
+  sun.position.copy(_sunDir).multiplyScalar(200).add(sun.target.position);
+  glassMat.emissiveIntensity = lerp(1.5, 0.15, smoothstep(-0.05, 0.25, elev));
+
+  // advance the daylight bar
+  document.getElementById('dayfill').style.width = (dayT * 100).toFixed(1) + '%';
+  const hours = (dayT * 24) % 24;
+  document.getElementById('s-time').textContent =
+    String(Math.floor(hours)).padStart(2,'0') + ':' + String(Math.floor((hours%1)*60)).padStart(2,'0');
+}
+
+/* ============================================================================
+   8 — MINIMAP
+   ========================================================================== */
+
+const MM = document.getElementById('mm');
+const mmCtx = MM.getContext('2d');
+const MM_BASE = document.createElement('canvas');
+MM_BASE.width = MM.width; MM_BASE.height = MM.height;
+{
+  const g = MM_BASE.getContext('2d');
+  const img = g.createImageData(MM.width, MM.height);
+  const half = WORLD * 0.47;
+  for (let py = 0; py < MM.height; py++){
+    for (let px = 0; px < MM.width; px++){
+      const x = (px / MM.width - 0.5) * 2 * half;
+      const z = (py / MM.height - 0.5) * 2 * half;
+      const h = heightAt(x, z);
+      let r, gg, b;
+      if (h < WATER - 3)      { r = 14;  gg = 30;  b = 40; }
+      else if (h < WATER)      { r = 34;  gg = 78;  b = 92; }
+      else if (h < WATER + 1.6){ r = 168; gg = 148; b = 108; }
+      else if (h < 12)         { r = 76;  gg = 98;  b = 60; }
+      else if (h < 22)         { r = 96;  gg = 108; b = 70; }
+      else                     { r = 126; gg = 126; b = 116; }
+      // hillshade from the north-west
+      const hx = heightAt(x + 3, z) - heightAt(x - 3, z);
+      const hz = heightAt(x, z + 3) - heightAt(x, z - 3);
+      const sh = clamp(1 + (-hx - hz) * 0.045, 0.55, 1.45);
+      const i = (py * MM.width + px) * 4;
+      img.data[i]   = clamp(r*sh, 0, 255);
+      img.data[i+1] = clamp(gg*sh, 0, 255);
+      img.data[i+2] = clamp(b*sh, 0, 255);
+      img.data[i+3] = 255;
+    }
+  }
+  g.putImageData(img, 0, 0);
+}
+const mmHalf = WORLD * 0.47;
+
+function drawMinimap(){
+  mmCtx.clearRect(0,0,MM.width,MM.height);
+  mmCtx.drawImage(MM_BASE, 0, 0);
+  const toPx = v => (v / (mmHalf*2) + 0.5) * MM.width;
+
+  // points of interest
+  mmCtx.fillStyle = 'rgba(224,163,90,0.55)';
+  for (const p of engine.pois){
+    if (p.type === 'home') continue;
+    mmCtx.beginPath();
+    mmCtx.arc(toPx(p.x), toPx(p.z), p.type === 'plaza' ? 5 : 3, 0, 7);
+    mmCtx.fill();
+  }
+
+  for (const a of engine.agents){
+    const px = toPx(a.pos.x), py = toPx(a.pos.z);
+    mmCtx.beginPath();
+    mmCtx.arc(px, py, a.role === 'avatar' ? 4.6 : a.role === 'aide' ? 4 : 3, 0, 7);
+    mmCtx.fillStyle = a.role === 'avatar'
+      ? `hsl(${(1-a.stress)*160}, 62%, 58%)`
+      : a.role === 'aide' ? '#e0a35a' : 'rgba(190,200,196,0.75)';
+    mmCtx.fill();
+    if (a === selected){
+      mmCtx.strokeStyle = '#2fb39b'; mmCtx.lineWidth = 2.4;
+      mmCtx.beginPath(); mmCtx.arc(px, py, 8, 0, 7); mmCtx.stroke();
+    }
+  }
+
+  // camera frustum hint
+  const cx = toPx(controls.target.x), cy = toPx(controls.target.z);
+  mmCtx.strokeStyle = 'rgba(255,255,255,0.5)'; mmCtx.lineWidth = 1.5;
+  mmCtx.beginPath(); mmCtx.arc(cx, cy, 7, 0, 7); mmCtx.stroke();
+
+  document.getElementById('mm-coord').textContent =
+    `${Math.round(controls.target.x)}, ${Math.round(controls.target.z)}`;
+}
+
+/* ============================================================================
+   9 — HUD
+   ========================================================================== */
+
+const $ = id => document.getElementById(id);
+const el = {
+  roster: $('roster'), rTag: $('r-tag'),
+  dName: $('d-name'), dSub: $('d-sub'), dTag: $('d-tag'),
+  dNeeds: $('d-needs'), dTraits: $('d-traits'), dKv: $('d-kv'), dHint: $('d-hint'),
+  dTraitsSect: $('d-traits-sect'),
+  log: $('log-body'),
+  tick: $('s-tick'), seed: $('s-seed'), pop: $('s-pop'),
+  coach: $('s-coach'), esc: $('s-esc'), fps: $('s-fps'),
+};
+
+el.seed.textContent = SEED.toString(36).toUpperCase();
+
+const TRAIT_LABEL = {
+  inattention:'Inattention', impulsivity:'Impulsivity',
+  hyperactivity:'Hyperactivity', dysregulation:'Dysregulation',
+};
+
+function barItem(label, v, color){
+  return `<div class="bar-item">
+    <span class="bl">${label}</span>
+    <span class="bt"><span class="bf" style="width:${(v*100).toFixed(0)}%;background:${color}"></span></span>
+    <span class="bv">${Math.round(v*100)}</span>
+  </div>`;
+}
+
+/* The roster updates several times a second. Rebuilding it with innerHTML would
+   detach rows between mousedown and mouseup and silently swallow clicks, so
+   rows are created once and mutated in place. */
+const rosterRows = new Map();   // agent.id -> { root, nm, act, bars[] }
+
+function rosterOrder(a, b){
+  const order = { avatar:0, aide:1, resident:2 };
+  return order[a.role] - order[b.role] || a.name.localeCompare(b.name);
+}
+
+function buildRosterRow(a){
+  const root = document.createElement('button');
+  root.type = 'button';
+  root.className = 'agent-row';
+  root.dataset.id = a.id;
+
+  const who = document.createElement('div');
+  who.className = 'who';
+  const role = document.createElement('span');
+  role.className = 'role ' + a.role;
+  role.textContent = ROLE_LABEL[a.role];
+  const nm = document.createElement('span');
+  nm.className = 'nm';
+  nm.textContent = a.name;
+  who.append(role, nm);
+
+  const act = document.createElement('div');
+  act.className = 'act';
+
+  const needrow = document.createElement('div');
+  needrow.className = 'needrow';
+  const bars = NEEDS.map(() => {
+    const i = document.createElement('i');
+    const b = document.createElement('b');
+    i.appendChild(b);
+    needrow.appendChild(i);
+    return b;
+  });
+
+  root.append(who, act, needrow);
+  return { root, act, bars };
+}
+
+function renderRoster(){
+  const sorted = [...engine.agents].sort(rosterOrder);
+
+  // create/remove rows to match the population exactly
+  const live = new Set(sorted.map(a => a.id));
+  for (const [id, row] of rosterRows){
+    if (!live.has(id)){ row.root.remove(); rosterRows.delete(id); }
+  }
+
+  let prev = null;
+  for (const a of sorted){
+    let row = rosterRows.get(a.id);
+    if (!row){ row = buildRosterRow(a); rosterRows.set(a.id, row); }
+
+    const coaching = a.coachTarget || a.busyCoaching > 0;
+    const label = coaching ? 'coaching' : (ACTIONS[a.action]?.label || '—');
+    row.act.textContent = label;
+    row.act.classList.toggle('alert', a.stress > 0.6);
+    row.root.classList.toggle('sel', a === selected);
+
+    NEEDS.forEach((n, i) => {
+      const v = a.needs[n];
+      row.bars[i].style.width = (v * 100).toFixed(0) + '%';
+      row.bars[i].style.background = v < 0.28 ? '#e0685a' : v < 0.5 ? '#e0a35a' : NEED_COLOR[n];
+    });
+
+    // keep DOM order in sync with sort order
+    const want = prev ? prev.root.nextSibling : el.roster.firstChild;
+    if (want !== row.root) el.roster.insertBefore(row.root, want);
+    prev = row;
+  }
+
+  el.rTag.textContent = `${engine.agents.length} agents`;
+}
+
+el.roster.addEventListener('click', e => {
+  const row = e.target.closest('.agent-row');
+  if (!row) return;
+  const a = engine.agents.find(x => x.id === +row.dataset.id);
+  if (a) select(a);
+});
+
+
+
+function renderDetail(){
+  const a = selected;
+  if (!a){
+    el.dName.textContent = 'No agent selected';
+    el.dSub.textContent = 'Click a resident in the world or the population list';
+    el.dNeeds.innerHTML = ''; el.dTraits.innerHTML = ''; el.dKv.innerHTML = '';
+    el.dTag.textContent = '—'; el.dHint.textContent = '';
+    return;
+  }
+  el.dTag.textContent = 'id ' + a.id;
+  el.dName.textContent = a.name;
+  el.dSub.textContent = `${ROLE_LABEL[a.role]} · ${a.aide ? 'Aide: ' + a.aide : 'no assigned Aide'}`;
+
+  el.dNeeds.innerHTML = NEEDS.map(n => {
+    const v = a.needs[n];
+    const c = v < 0.28 ? '#e0685a' : v < 0.5 ? '#e0a35a' : NEED_COLOR[n];
+    return barItem(NEED_LABEL[n], v, c);
+  }).join('');
+
+  const hasTraits = a.role !== 'resident';
+  el.dTraitsSect.style.display = hasTraits ? '' : 'none';
+  if (hasTraits){
+    el.dTraits.innerHTML = Object.keys(TRAIT_LABEL)
+      .map(k => barItem(TRAIT_LABEL[k], a.traits[k], k === 'impulsivity' ? '#e0a35a' : '#8b9dfb')).join('');
+  }
+
+  const action = a.coachTarget ? 'Coaching session' : (a.acting ? (ACTIONS[a.action]?.label || a.action) : 'Travelling → ' + (ACTIONS[a.action]?.label || '—'));
+  el.dKv.innerHTML = `
+    <div class="kv"><span class="k">ACTION</span><span class="v">${action}</span></div>
+    <div class="kv"><span class="k">TARGET</span><span class="v">${a.targetPOI ? a.targetPOI.type : '—'}</span></div>
+    <div class="kv"><span class="k">STRESS</span><span class="v" style="color:${a.stress>0.6?'#e0685a':'#e9eeec'}">${Math.round(a.stress*100)}%</span></div>
+    <div class="kv"><span class="k">GAIT</span><span class="v">${(a.gait).toFixed(2)}×</span></div>
+    <div class="kv"><span class="k">SPEED</span><span class="v">${a.speed.toFixed(2)} m/s</span></div>
+    <div class="kv"><span class="k">POSITION</span><span class="v">${a.pos.x.toFixed(1)}, ${a.pos.y.toFixed(1)}, ${a.pos.z.toFixed(1)}</span></div>
+    <div class="kv"><span class="k">GROUND</span><span class="v">${a.pos.y.toFixed(2)} m</span></div>
+    <div class="kv"><span class="k">SESSIONS</span><span class="v">${a.coachings}</span></div>
+  `;
+  el.dHint.textContent = a.role === 'avatar'
+    ? 'ADHD traits alter utility noise, movement speed, focus retention and stress accumulation. Only an assigned Aide can clear stress.'
+    : a.role === 'aide'
+      ? 'Aides suspend their own needs to coach the most stressed Avatar they are responsible for.'
+      : 'Residents run the same needs model. They provide ambient load and social contact.';
+}
+
+let lastLogSeq = -1;
+function renderLog(){
+  if (engine.eventSeq === lastLogSeq) return;
+  lastLogSeq = engine.eventSeq;
+  // newest first; rebuilt only when the event count actually changes
+  el.log.innerHTML = engine.events.slice(0, 40).map(ev => {
+    const m = Math.floor(ev.t / 60), s = Math.floor(ev.t % 60);
+    return `<div class="ev ${ev.kind}">
+      <span class="t">${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</span>
+      <span class="m">${ev.text}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderStats(){
+  el.tick.textContent = 'tick ' + Math.floor(engine.simTime / TICK).toLocaleString();
+  el.pop.textContent = engine.agents.length;
+  el.coach.textContent = engine.stats.coaching;
+  el.esc.textContent = engine.stats.escalations;
+}
+
+function refreshAll(){
+  renderRoster(); renderDetail(); renderLog(); renderStats();
+}
+
+/* ---------------- scenario buttons ---------------- */
+
+{
+  const wrap = $('scenarios');
+  SCENARIOS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'scn' + (s.id === engine.scenario.id ? ' on' : '');
+    b.dataset.id = s.id;
+    b.innerHTML = `<b>${s.name}</b><span>${i+1} · ${s.blurb}</span>`;
+    b.addEventListener('click', () => setScenarioUI(s.id));
+    wrap.appendChild(b);
+  });
+}
+function setScenarioUI(id){
+  engine.setScenario(id);
+  document.querySelectorAll('.scn').forEach(b => b.classList.toggle('on', b.dataset.id === id));
+  refreshAll();
+}
+
+/* ---------------- controls ---------------- */
+
+let paused = false;
+const bPause = $('b-pause');
+bPause.addEventListener('click', () => { paused = !paused; bPause.classList.toggle('on', paused); });
+$('b-reset').addEventListener('click', () => location.reload());
+
+$('b-info').addEventListener('click', () => $('info').classList.add('open'));
+$('b-close').addEventListener('click', () => $('info').classList.remove('open'));
+$('info').addEventListener('click', e => { if (e.target.id === 'info') $('info').classList.remove('open'); });
+
+addEventListener('keydown', e => {
+  if (e.key === ' '){ if (e.target.closest && e.target.closest('button')) return; e.preventDefault(); bPause.click(); }
+  else if (e.key >= '1' && e.key <= '6'){ const s = SCENARIOS[+e.key - 1]; if (s) setScenarioUI(s.id); }
+  else if (e.key.toLowerCase() === 'h') $('hud').classList.toggle('hidden');
+  else if (e.key.toLowerCase() === 'i') $('info').classList.toggle('open');
+  else if (e.key.toLowerCase() === 'f'){
+    if (selected){
+      controls.target.set(selected.pos.x, selected.pos.y + 1.4, selected.pos.z);
+      camera.position.set(selected.pos.x + 12, selected.pos.y + 10, selected.pos.z + 16);
+    }
+  }
+  else if (e.key.toLowerCase() === 'r') location.reload();
+});
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+/* ============================================================================
+   10 — MAIN LOOP  (fixed-timestep simulation, variable-rate render)
+   ========================================================================== */
+
+let acc = 0;
+let last = performance.now();
+let fpsAcc = 0, fpsFrames = 0;
+let hudAcc = 0;
+
+function loop(now){
+  requestAnimationFrame(loop);
+  const raw = Math.min((now - last) / 1000, 0.25);
+  last = now;
+
+  timeUniform.value += raw;
+  waterUniforms.uTime.value += raw;
+
+  if (!paused){
+    acc += raw;
+    let guard = 0;
+    while (acc >= TICK && guard++ < 12){
+      engine.step(TICK);
+      acc -= TICK;
+    }
+  }
+
+  for (const a of engine.agents) animateAgent(a, raw);
+
+  controls.update();
+  camera.updateMatrixWorld();
+
+  updateDaylight(engine.simTime);
+  waterUniforms.uCam.value.copy(camera.position);
+  sky.position.copy(camera.position);
+
+  renderer.render(scene, camera);
+  drawMinimap();
+
+  fpsAcc += raw; fpsFrames++;
+  hudAcc += raw;
+  if (hudAcc > 0.28){
+    el.fps.textContent = Math.round(fpsFrames / Math.max(fpsAcc, 1e-4));
+    fpsAcc = 0; fpsFrames = 0;
+    renderRoster(); renderDetail(); renderLog(); renderStats();
+    hudAcc = 0;
+  }
+}
+
+refreshAll();
+select(selected);
+$('boot').classList.add('gone');
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
