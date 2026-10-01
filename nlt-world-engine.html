@@ -130,6 +130,7 @@
   .agent-row{
     display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;
     padding:7px 14px;cursor:pointer;border-left:2px solid transparent;transition:.12s;
+    width:100%;text-align:left;background:none;border-top:0;border-right:0;border-bottom:0;color:inherit;font:inherit;
   }
   .agent-row:hover{background:rgba(255,255,255,.055);}
   .agent-row.sel{background:rgba(47,179,155,.13);border-left-color:var(--agent);}
@@ -627,6 +628,7 @@ class Engine {
     this.buildings = [];
     this.pois = [];
     this.events = [];
+    this.eventSeq = 0;
     this.stats = { coaching:0, escalations:0, interactions:0 };
     this.scenario = SCENARIOS[0];
     this.simTime = 0;
@@ -635,6 +637,7 @@ class Engine {
   randRange(a,b){ return a + (b-a)*this.rand(); }
   log(kind, text, who){
     this.events.unshift({ t:this.simTime, kind, text, who });
+    this.eventSeq++;
     if (this.events.length > 140) this.events.pop();
   }
 
@@ -1730,6 +1733,8 @@ const geo = {
   shoe:  new THREE.BoxGeometry(0.15, 0.10, 0.26),
 };
 
+const sharedGeo = new Set(Object.values(geo));
+
 function mat(hex, rough = 0.78){ return new THREE.MeshStandardMaterial({ color:hex, roughness:rough, metalness:0.02 }); }
 
 function makeLabelSprite(text, sub, accent){
@@ -1896,7 +1901,12 @@ engine.onDespawn = a => {
   scene.remove(a.ring);
   if (a.rig.label.material.map) a.rig.label.material.map.dispose();
   a.rig.label.material.dispose();
-  a.rig.root.traverse(o => { if (o.geometry && o.geometry !== geo.torso) o.geometry.dispose?.(); });
+  a.rig.root.traverse(o => {
+    if (o.geometry && !sharedGeo.has(o.geometry)) o.geometry.dispose();
+    if (o.material && o.material !== a.rig.label.material) o.material.dispose();
+  });
+  a.ring.geometry.dispose();
+  a.ring.material.dispose();
   if (selected === a) selected = null;
   a.rig = null;
 };
@@ -1916,7 +1926,11 @@ canvas.addEventListener('pointerup', e => {
   pointer.y = -(e.clientY / innerHeight) * 2 + 1;
   raycaster.setFromCamera(pointer, camera);
   const hits = raycaster.intersectObjects(engine.agents.map(a => a.pickTarget));
-  if (hits.length) select(hits[0].object.userData.agent);
+  for (const h of hits){
+    let o = h.object;
+    while (o && !o.userData.agent) o = o.parent;
+    if (o){ select(o.userData.agent); break; }
+  }
 });
 
 function select(a){
@@ -1976,10 +1990,10 @@ function animateAgent(a, dt){
   if (a.traits.inattention + a.traits.impulsivity > 0.5){
     a.fidget -= dt;
     if (a.fidget <= 0){
-      a.fidget = 0.5 + engine.rand() * 2.6 * (1 - a.traits.hyperactivity * 0.4);
+      a.fidget = 0.5 + Math.random() * 2.6 * (1 - a.traits.hyperactivity * 0.4);
       const amp = (a.traits.impulsivity * 0.5 + 0.2) * (moving ? 0.4 : 1);
-      r.armR.shoulder.rotation.z = (engine.rand() - 0.5) * 1.5 * amp;
-      r.head.rotation.z = (engine.rand() - 0.5) * 0.5 * amp;
+      r.armR.shoulder.rotation.z = (Math.random() - 0.5) * 1.5 * amp;
+      r.head.rotation.z = (Math.random() - 0.5) * 0.5 * amp;
     }
   } else {
     r.armR.shoulder.rotation.z = lerp(r.armR.shoulder.rotation.z, 0, 0.1);
@@ -2061,7 +2075,7 @@ function updateDaylight(simT){
 
   // advance the daylight bar
   document.getElementById('dayfill').style.width = (dayT * 100).toFixed(1) + '%';
-  const hours = (dayT * 24 + 6) % 24;
+  const hours = (dayT * 24) % 24;
   document.getElementById('s-time').textContent =
     String(Math.floor(hours)).padStart(2,'0') + ':' + String(Math.floor((hours%1)*60)).padStart(2,'0');
 }
@@ -2183,7 +2197,8 @@ function rosterOrder(a, b){
 }
 
 function buildRosterRow(a){
-  const root = document.createElement('div');
+  const root = document.createElement('button');
+  root.type = 'button';
   root.className = 'agent-row';
   root.dataset.id = a.id;
 
@@ -2302,10 +2317,10 @@ function renderDetail(){
       : 'Residents run the same needs model. They provide ambient load and social contact.';
 }
 
-let lastLogLen = -1;
+let lastLogSeq = -1;
 function renderLog(){
-  if (engine.events.length === lastLogLen) return;
-  lastLogLen = engine.events.length;
+  if (engine.eventSeq === lastLogSeq) return;
+  lastLogSeq = engine.eventSeq;
   // newest first; rebuilt only when the event count actually changes
   el.log.innerHTML = engine.events.slice(0, 40).map(ev => {
     const m = Math.floor(ev.t / 60), s = Math.floor(ev.t % 60);
@@ -2351,13 +2366,14 @@ function setScenarioUI(id){
 let paused = false;
 const bPause = $('b-pause');
 bPause.addEventListener('click', () => { paused = !paused; bPause.classList.toggle('on', paused); });
+$('b-reset').addEventListener('click', () => location.reload());
 
 $('b-info').addEventListener('click', () => $('info').classList.add('open'));
 $('b-close').addEventListener('click', () => $('info').classList.remove('open'));
 $('info').addEventListener('click', e => { if (e.target.id === 'info') $('info').classList.remove('open'); });
 
 addEventListener('keydown', e => {
-  if (e.key === ' '){ e.preventDefault(); bPause.click(); }
+  if (e.key === ' '){ if (e.target.closest && e.target.closest('button')) return; e.preventDefault(); bPause.click(); }
   else if (e.key >= '1' && e.key <= '6'){ const s = SCENARIOS[+e.key - 1]; if (s) setScenarioUI(s.id); }
   else if (e.key.toLowerCase() === 'h') $('hud').classList.toggle('hidden');
   else if (e.key.toLowerCase() === 'i') $('info').classList.toggle('open');
