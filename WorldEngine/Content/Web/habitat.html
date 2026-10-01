@@ -1,0 +1,1907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NLT World Engine — AI Habitat (Single-Page Simulation)</title>
+<style>
+  :root{
+    --ink:#e8f1f7;
+    --dim:#93a7b6;
+    --glass:rgba(9,17,24,.62);
+    --edge:rgba(140,190,220,.20);
+    --accent:#4fd1c5;
+    --avatar:#ffb454;
+    --aide:#4fd1c5;
+    --advocate:#c792ea;
+    --npc:#8fa3b4;
+    --warn:#ff6b6b;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;overflow:hidden;background:#05080b}
+  body{
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  #view{position:fixed;inset:0;display:block;width:100vw;height:100vh;touch-action:none;cursor:grab}
+  #view.dragging{cursor:grabbing}
+
+  .panel{
+    position:fixed;background:var(--glass);border:1px solid var(--edge);
+    border-radius:12px;backdrop-filter:blur(14px) saturate(140%);
+    -webkit-backdrop-filter:blur(14px) saturate(140%);
+    box-shadow:0 18px 50px rgba(0,0,0,.45);
+    padding:12px 14px;font-size:12px;line-height:1.5;
+  }
+  .panel h2{
+    font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--dim);font-weight:600;margin-bottom:8px;
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+  }
+  .panel h2 span.k{color:var(--accent);letter-spacing:.08em}
+
+  #brand{top:14px;left:14px;min-width:250px}
+  #brand .title{font-size:15px;font-weight:700;letter-spacing:.01em}
+  #brand .sub{font-size:11px;color:var(--dim);margin-top:2px}
+  #stats{display:grid;grid-template-columns:auto auto;gap:2px 14px;margin-top:10px;font-variant-numeric:tabular-nums}
+  #stats b{color:var(--dim);font-weight:500}
+  #stats i{font-style:normal;color:var(--ink)}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);
+       box-shadow:0 0 8px var(--accent);margin-right:6px;vertical-align:middle}
+  .dot.paused{background:#ffb454;box-shadow:0 0 8px #ffb454}
+
+  #scenario{
+    top:14px;left:50%;transform:translateX(-50%);text-align:center;min-width:290px;
+  }
+  #scenario .name{font-size:14px;font-weight:650;letter-spacing:.01em}
+  #scenario .meta{font-size:11px;color:var(--dim);margin-top:3px}
+  #scenario .trait{color:var(--accent)}
+
+  #card{top:14px;right:14px;width:266px}
+  #card .who{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+  #card .avatar{
+    width:26px;height:26px;border-radius:8px;flex:0 0 auto;
+    display:grid;place-items:center;font-size:12px;font-weight:700;color:#06131a;
+  }
+  #card .nm{font-size:13px;font-weight:650}
+  #card .role{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+  #card .intent{margin:9px 0 8px;padding:6px 8px;border-radius:8px;
+    background:rgba(79,209,197,.09);border:1px solid rgba(79,209,197,.22);font-size:11px}
+  #card .intent b{color:var(--accent)}
+  .need{display:grid;grid-template-columns:56px 1fr 30px;align-items:center;gap:7px;margin:4px 0;font-size:10px;color:var(--dim)}
+  .bar{height:5px;border-radius:3px;background:rgba(255,255,255,.09);overflow:hidden}
+  .bar>span{display:block;height:100%;border-radius:3px;transition:width .25s linear}
+  .need em{font-style:normal;text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
+  .divider{height:1px;background:var(--edge);margin:10px 0 8px}
+  .note{font-size:10px;color:var(--dim);line-height:1.5}
+
+  #controls{bottom:14px;left:14px;width:266px}
+  .row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  button,select{
+    font:inherit;font-size:11px;color:var(--ink);background:rgba(255,255,255,.06);
+    border:1px solid var(--edge);border-radius:8px;padding:6px 9px;cursor:pointer;
+  }
+  button:hover,select:hover{background:rgba(255,255,255,.13)}
+  button.on{background:var(--accent);color:#06131a;border-color:transparent;font-weight:650}
+  select{width:100%;margin-top:8px}
+  select option{background:#0b1319;color:var(--ink)}
+
+  #log{bottom:14px;right:14px;width:330px;max-height:38vh;display:flex;flex-direction:column}
+  #loglist{overflow:hidden;display:flex;flex-direction:column;gap:5px}
+  .ev{display:flex;gap:7px;font-size:10.5px;line-height:1.45;color:var(--dim);
+      border-left:2px solid transparent;padding-left:7px}
+  .ev time{color:#5d7183;flex:0 0 auto;font-variant-numeric:tabular-nums}
+  .ev.aide{border-color:var(--aide)} .ev.aide b{color:var(--aide)}
+  .ev.adv{border-color:var(--advocate)} .ev.adv b{color:var(--advocate)}
+  .ev.sys{border-color:#4a6377} .ev.sys b{color:#9fb6c6}
+  .ev.stress{border-color:var(--warn)} .ev.stress b{color:var(--warn)}
+  .ev b{color:var(--ink);font-weight:600}
+
+  #tier{margin-top:10px}
+  #tierbar{display:flex;gap:3px;margin-top:5px}
+  #tierbar i{flex:1;height:5px;border-radius:2px;background:rgba(255,255,255,.09)}
+  #tierbar i.on{background:var(--warn);box-shadow:0 0 8px rgba(255,107,107,.55)}
+  #tierlabel{font-size:10px;color:var(--dim);display:flex;justify-content:space-between;margin-top:4px}
+
+  #help{bottom:14px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--dim);
+        display:flex;gap:14px;padding:8px 14px}
+  #help kbd{background:rgba(255,255,255,.08);border:1px solid var(--edge);border-radius:4px;
+            padding:1px 5px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:9.5px;color:var(--ink)}
+
+  #intro{
+    position:fixed;inset:0;z-index:50;display:grid;place-items:center;
+    background:radial-gradient(1200px 700px at 50% 30%,#0d1b26 0%,#04070a 70%);
+    transition:opacity .7s ease;
+  }
+  #intro.gone{opacity:0;pointer-events:none}
+  #introbox{max-width:720px;padding:0 28px}
+  #introbox .kicker{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+  #introbox h1{font-size:34px;line-height:1.15;font-weight:700;letter-spacing:-.02em;margin-bottom:16px}
+  #introbox h1 em{font-style:normal;color:var(--accent)}
+  #introbox p{font-size:14px;line-height:1.7;color:var(--dim);margin-bottom:12px}
+  #introbox p strong{color:var(--ink);font-weight:600}
+  #introbox .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0}
+  #introbox .cell{border:1px solid var(--edge);border-radius:10px;padding:11px 12px;background:rgba(255,255,255,.03)}
+  #introbox .cell b{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
+  #introbox .cell span{font-size:11.5px;line-height:1.55;color:var(--dim)}
+  #enter{
+    margin-top:6px;font-size:13px;padding:11px 22px;border-radius:10px;
+    background:var(--accent);color:#06131a;border:none;font-weight:700;letter-spacing:.02em;
+  }
+  #enter:hover{filter:brightness(1.08)}
+  #hint{margin-top:14px;font-size:10.5px;color:#5d7183}
+
+  #toast{
+    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:40;
+    background:var(--glass);border:1px solid var(--edge);border-radius:10px;padding:10px 16px;
+    font-size:12px;opacity:0;transition:opacity .35s;pointer-events:none;backdrop-filter:blur(12px)
+  }
+  #toast.show{opacity:1}
+  .hidden{display:none!important}
+  @media (max-width:900px){
+    #card,#log{display:none}
+    #help{display:none}
+  }
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+
+<div id="brand" class="panel">
+  <div class="title">NLT World Engine</div>
+  <div class="sub">NeuroLift Technologies Simulation Environment</div>
+  <div id="stats">
+    <b>Runtime</b><i><span class="dot" id="runDot"></span><span id="runState">RUNNING</span></i>
+    <b>Tick</b><i id="oTick">0</i>
+    <b>Sim clock</b><i id="oClock">06:00</i>
+    <b>Seed</b><i id="oSeed">—</i>
+    <b>Residents</b><i id="oCount">0</i>
+    <b>Render</b><i id="oFps">0 fps</i>
+  </div>
+</div>
+
+<div id="scenario" class="panel">
+  <h2><span>Active Scenario</span><span class="k" id="oScenId">pers_4</span></h2>
+  <div class="name" id="oScenName">Morning Routine</div>
+  <div class="meta" id="oScenMeta">—</div>
+</div>
+
+<div id="card" class="panel">
+  <h2><span>Resident</span><span class="k" id="cId">—</span></h2>
+  <div id="cEmpty" class="note">Click a resident in the world to inspect its needs, affect, and current intent. You watch — you never take control of a body.</div>
+  <div id="cBody" class="hidden">
+    <div class="who">
+      <div class="avatar" id="cChip">—</div>
+      <div><div class="nm" id="cName">—</div><div class="role" id="cRole">—</div></div>
+    </div>
+    <div class="intent">intent · <b id="cIntent">—</b></div>
+    <div id="cNeeds"></div>
+    <div class="divider"></div>
+    <div id="cAffect"></div>
+    <div class="divider"></div>
+    <div class="note" id="cTraits">—</div>
+  </div>
+</div>
+
+<div id="controls" class="panel">
+  <h2><span>Observer Controls</span><span class="k">human</span></h2>
+  <div class="row">
+    <button id="bPause" class="on">Pause</button>
+    <button id="bStep">Step</button>
+    <button id="bFollow">Follow</button>
+  </div>
+  <div class="row">
+    <button data-pace="0.5">0.5×</button>
+    <button data-pace="1" class="on">1×</button>
+    <button data-pace="4">4×</button>
+    <button data-pace="12">12×</button>
+  </div>
+  <select id="scenSel"></select>
+  <div class="row"><button id="bRespawn" style="flex:1">Reseed world</button></div>
+</div>
+
+<div id="log" class="panel">
+  <h2><span>Aide / Advocate Log</span><span class="k" id="oLogCount">0</span></h2>
+  <div id="loglist"></div>
+  <div id="tier">
+    <h2 style="margin:10px 0 0"><span>RRT Advocate</span><span class="k" id="tierName">GREEN</span></h2>
+    <div id="tierbar"><i class="on"></i><i></i><i></i><i></i></div>
+    <div id="tierlabel"><span>escalation tier</span><span id="tierDetail">no active alert</span></div>
+  </div>
+</div>
+
+<div id="help" class="panel">
+  <span><kbd>drag</kbd> orbit</span>
+  <span><kbd>wheel</kbd> zoom</span>
+  <span><kbd>WASD</kbd> pan</span>
+  <span><kbd>click</kbd> inspect</span>
+  <span><kbd>F</kbd> follow</span>
+  <span><kbd>space</kbd> pause</span>
+</div>
+
+<div id="toast"></div>
+
+<div id="intro">
+  <div id="introbox">
+    <div class="kicker">NeuroLift Technologies · Simulation Environment</div>
+    <h1>An AI habitat where agents <em>live</em>, perceive, act, and learn.</h1>
+    <p><strong>No human plays this world.</strong> AI Avatars carry ADHD traits and AI Aides support them; an RRT Advocate watches for crisis. Humans only observe, through a spectator viewer.</p>
+    <p>Below is the world itself: procedural terrain, water, sky, vegetation, and a settlement, with residents walking articulated bodies through it. This page is the single-file projection of the authoritative simulation — <strong>Fusion owns semantic reality; this owns physical reality.</strong></p>
+    <div class="grid">
+      <div class="cell"><b>Avatar</b><span>Inhabits the world as a person. Needs decay, attention wanders, stressors fire on schedule, scenarios shape the day.</span></div>
+      <div class="cell"><b>Aide</b><span>Notices struggle signals, walks to the Avatar, and intervenes with coaching in the world — logged, never hidden.</span></div>
+      <div class="cell"><b>Advocate</b><span>Escalation tiers GREEN → BLACK. Detects crisis, raises alerting, and never edits the resident's state.</span></div>
+    </div>
+    <button id="enter">Enter the habitat</button>
+    <div id="hint">Drag to orbit · wheel to zoom · click any resident to follow their inner state. Deterministic: same seed, same world.</div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   NLT World Engine — single-page habitat runtime
+   Physics/rendering layer only. Deterministic: no Math.random
+   anywhere on the simulation path; a fixed seed reproduces the
+   world exactly. Avatar/Aide/Advocate intelligence lives in
+   neurolift-ai-fusion and reaches this page through the agent
+   interface; everything below is the projected world.
+   ============================================================ */
+
+const canvas = document.getElementById("view");
+const ctx = canvas.getContext("2d");
+
+/* ---------- deterministic noise ---------- */
+
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function hash2(ix, iz, seed){
+  let h = Math.imul(ix, 374761393) + Math.imul(iz, 668265263) + Math.imul(seed, 1442695041);
+  h = Math.imul(h ^ h >>> 13, 1274126177);
+  h = h ^ h >>> 16;
+  return (h >>> 0) / 4294967296;
+}
+
+function vnoise(x, z, seed){
+  const ix = Math.floor(x), iz = Math.floor(z);
+  const fx = x - ix, fz = z - iz;
+  const ux = fx * fx * (3 - 2 * fx), uz = fz * fz * (3 - 2 * fz);
+  const a = hash2(ix, iz, seed), b = hash2(ix + 1, iz, seed);
+  const c = hash2(ix, iz + 1, seed), d = hash2(ix + 1, iz + 1, seed);
+  return (a * (1 - ux) + b * ux) * (1 - uz) + (c * (1 - ux) + d * ux) * uz;
+}
+
+function fbm(x, z, seed, octaves, lacunarity, gain){
+  let sum = 0, amp = 0.5, freq = 1, norm = 0;
+  for (let i = 0; i < octaves; i++){
+    sum += amp * vnoise(x * freq, z * freq, seed + i * 131);
+    norm += amp; amp *= gain; freq *= lacunarity;
+  }
+  return sum / norm;
+}
+
+/* ---------- small math helpers ---------- */
+
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+const smoothstep = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
+const TAU = Math.PI * 2;
+
+function norm3(v){
+  const l = Math.hypot(v.x, v.y, v.z) || 1;
+  return { x: v.x / l, y: v.y / l, z: v.z / l };
+}
+function cross3(a, b){
+  return {
+    x: a.y * b.z - a.z * b.y,
+    y: a.z * b.x - a.x * b.z,
+    z: a.x * b.y - a.y * b.x
+  };
+}
+function mixRGB(a, b, t){
+  return [ a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t ];
+}
+function css(c, alpha){
+  const r = clamp(Math.round(c[0]), 0, 255), g = clamp(Math.round(c[1]), 0, 255), b = clamp(Math.round(c[2]), 0, 255);
+  return alpha === undefined ? "rgb(" + r + "," + g + "," + b + ")" : "rgba(" + r + "," + g + "," + b + "," + alpha + ")";
+}
+
+/* ---------- world constants ---------- */
+
+const WORLD = {
+  extent: 230,
+  seg: 34,
+  cell: 230 / 34,
+  waterLevel: 0,
+  dayLength: 720,
+  hillScale: 46
+};
+
+const PALETTE = {
+  grassLow:  [72, 100, 56],
+  grassHigh: [86, 112, 62],
+  dryGrass:  [124, 122, 74],
+  sand:      [176, 156, 116],
+  rock:      [104, 102, 100],
+  deepWater: [18, 46, 68],
+  shallow:   [52, 106, 128],
+  foliage:   [46, 92, 54],
+  foliageHi: [86, 132, 70],
+  trunk:     [64, 48, 38],
+  plaster:   [206, 200, 188],
+  plasterAlt:[176, 168, 158],
+  roof:      [92, 62, 54],
+  roofAlt:   [72, 74, 84],
+  path:      [162, 152, 132]
+};
+
+const TIERS = [
+  { name: "GREEN",  color: "#5ad19a", note: "baseline monitoring" },
+  { name: "AMBER",  color: "#ffd166", note: "elevated affect — Aide dispatched" },
+  { name: "RED",    color: "#ff8f5a", note: "sustained crisis signal" },
+  { name: "BLACK",  color: "#ff4d4d", note: "immediate intervention required" }
+];
+
+const SCENARIOS = [
+  { id: "pers_4", name: "Morning Routine",        category: "Personal",   trait: "Executive function, time blindness",        dim: "Independence, SuccessRate", aversiveness: 0.4, demand: 0.4 },
+  { id: "wp_1",   name: "Email Processing",       category: "Workplace",  trait: "Task-switching, distractibility",           dim: "Focus, Stress",             aversiveness: 0.4, demand: 0.5 },
+  { id: "wp_2",   name: "Report Writing",         category: "Workplace",  trait: "Sustained attention, procrastination",       dim: "Focus, Burnout",            aversiveness: 0.6, demand: 0.8 },
+  { id: "wp_5",   name: "Deadline Crunch",        category: "Workplace",  trait: "Urgency/adrenaline cycle, overwhelm",       dim: "Stress, Burnout",           aversiveness: 0.8, demand: 0.9 },
+  { id: "pers_1", name: "Household Cleaning",     category: "Personal",   trait: "Task avoidance, initiation difficulty",      dim: "Independence, Focus",       aversiveness: 0.7, demand: 0.3 },
+  { id: "pers_3", name: "Bill Paying",            category: "Personal",   trait: "Avoidance, boring tasks",                   dim: "Independence, Stress",      aversiveness: 0.8, demand: 0.7 },
+  { id: "soc_1",  name: "Phone Conversation",     category: "Social",     trait: "Rejection sensitivity, anxiety",            dim: "Stress, Focus",             aversiveness: 0.6, demand: 0.5 },
+  { id: "soc_2",  name: "Social Event",           category: "Social",     trait: "Overstimulation, social exhaustion",        dim: "Burnout, CognitiveLoad",    aversiveness: 0.7, demand: 0.8 },
+  { id: "acad_1", name: "Study Session",          category: "Academic",   trait: "Sustained attention, task initiation",      dim: "Focus, CognitiveLoad",      aversiveness: 0.5, demand: 0.8 },
+  { id: "acad_2", name: "Project Work",           category: "Academic",   trait: "Long-term planning, deadline pressure",     dim: "Independence, Burnout",     aversiveness: 0.6, demand: 0.9 },
+  { id: "wp_3",   name: "Meeting Participation",  category: "Workplace",  trait: "Social anxiety, executive dysfunction",    dim: "Stress, SuccessRate",      aversiveness: 0.3, demand: 0.6 },
+  { id: "wp_4",   name: "Code Review",            category: "Workplace",  trait: "Hyperfocus trap, perfectionism",           dim: "Focus, CognitiveLoad",      aversiveness: 0.4, demand: 0.85 },
+  { id: "pers_2", name: "Grocery Shopping",       category: "Personal",   trait: "Planning, decision fatigue",               dim: "CognitiveLoad, Stress",    aversiveness: 0.5, demand: 0.6 }
+];
+
+const ROSTER = [
+  { id: "stayalert", name: "StayAlert",  role: "Avatar",    hue: 34,  height: 4.0,
+    traits: "hyperfocus-prone · time blindness · high task salience" },
+  { id: "quietriver", name: "QuietRiver", role: "Avatar",   hue: 190, height: 3.9,
+    traits: "rejection sensitive · overstimulated in crowds" },
+  { id: "driftwood", name: "Driftwood",  role: "Avatar",    hue: 285, height: 4.1,
+    traits: "task initiation deficit · novelty seeking" },
+  { id: "lantern", name: "Lantern",    role: "Avatar",    hue: 128, height: 3.85,
+    traits: "sustained attention · deadline anxiety" },
+  { id: "ember", name: "Ember",      role: "Avatar",     hue: 8,   height: 3.95,
+    traits: "impulsivity · rapid task switching" },
+  { id: "aria", name: "ARIA",        role: "Aide",       hue: 168, height: 4.0,
+    traits: "coaching: initiation · body-doubling · time boxing" },
+  { id: "compass", name: "Compass",   role: "Aide",       hue: 205, height: 4.05,
+    traits: "coaching: task breakdown · externalisation" },
+  { id: "lumen", name: "Lumen",      role: "Aide",       hue: 265, height: 3.95,
+    traits: "coaching: recovery · regulation · rest scheduling" },
+  { id: "rrt", name: "RRT Advocate", role: "Advocate",  hue: 300, height: 4.15,
+    traits: "crisis detection · tiered alerting · never edits state" }
+];
+
+const NPCS = [
+  { id: "npc_mara", name: "Mara",   hue: 40 },
+  { id: "npc_ivo", name: "Ivo",     hue: 150 },
+  { id: "npc_sena", name: "Sena",   hue: 320 },
+  { id: "npc_bo", name: "Bo",      hue: 20 }
+];
+
+/* ---------- terrain generation ---------- */
+
+const terrain = {
+  seed: 20260928,
+  size: WORLD.seg + 1,
+  h: null,
+  normal: null
+};
+
+const POI_DEFS = [
+  { id: "home",     name: "Bungalow Row", x: -34, z: -26, kind: "home" },
+  { id: "office",   name: "Studio Block", x: 40,  z: 18,  kind: "office" },
+  { id: "cafe",     name: "Corner Café", x: 6,   z: -36, kind: "cafe" },
+  { id: "plaza",    name: "Village Plaza", x: 0,  z: 2,  kind: "plaza" },
+  { id: "park",     name: "Ridge Park", x: -46, z: 34,  kind: "park" },
+  { id: "shore",    name: "North Shore", x: 44,  z: -42, kind: "shore" }
+];
+
+let pois = [];
+let trees = [];
+let buildings = [];
+let rocks = [];
+let shrubs = [];
+let paths = [];
+
+function buildTerrain(seed){
+  terrain.seed = seed;
+  const N = WORLD.seg, C = WORLD.cell, E = WORLD.extent / 2;
+  const h = new Float32Array((N + 1) * (N + 1));
+  const rnd = mulberry32(seed ^ 0x9e3779b9);
+
+  for (let j = 0; j <= N; j++){
+    for (let i = 0; i <= N; i++){
+      const x = -E + i * C, z = -E + j * C;
+      let n = fbm(x * 0.011, z * 0.011, seed, 5, 2.03, 0.5);
+      n = n * 0.78 + fbm(x * 0.045 + 11.3, z * 0.045 - 4.1, seed + 77, 3, 2.11, 0.45) * 0.22;
+      let e = (n - 0.47) * WORLD.hillScale * 2.1;
+
+      const dPlaza = Math.hypot(x - 0, z - 2);
+      const flatten = 1 - smoothstep(26, 74, dPlaza);
+      e = lerp(e, 1.6, flatten * 0.88);
+
+      for (const p of POI_DEFS){
+        const d = Math.hypot(x - p.x, z - p.z);
+        const f = 1 - smoothstep(9, 30, d);
+        e = lerp(e, p.kind === "shore" ? -0.4 : 1.9, f * 0.8);
+      }
+
+      const edge = smoothstep(96, 116, Math.max(Math.abs(x), Math.abs(z)));
+      e -= edge * 9;
+      e += (rnd() - 0.5) * 0.35;
+      h[j * (N + 1) + i] = e;
+    }
+  }
+
+  for (const p of POI_DEFS){
+    const i = clamp(Math.round((p.x + E) / C), 0, N), j = clamp(Math.round((p.z + E) / C), 0, N);
+    h[j * (N + 1) + i] = p.kind === "shore" ? -0.4 : 1.9;
+  }
+
+  terrain.h = h;
+  terrain.size = N + 1;
+  terrain.normal = new Float32Array((N + 1) * (N + 1) * 3);
+  for (let j = 0; j <= N; j++){
+    for (let i = 0; i <= N; i++){
+      const hl = h[j * (N + 1) + Math.max(0, i - 1)];
+      const hr = h[j * (N + 1) + Math.min(N, i + 1)];
+      const hd = h[Math.max(0, j - 1) * (N + 1) + i];
+      const hu = h[Math.min(N, j + 1) * (N + 1) + i];
+      const n = norm3({ x: hl - hr, y: 2 * WORLD.cell, z: hd - hu });
+      const k = (j * (N + 1) + i) * 3;
+      terrain.normal[k] = n.x; terrain.normal[k + 1] = n.y; terrain.normal[k + 2] = n.z;
+    }
+  }
+}
+
+function heightAt(x, z){
+  const N = WORLD.seg, C = WORLD.cell, E = WORLD.extent / 2;
+  const fx = clamp((x + E) / C, 0, N - 0.0001);
+  const fz = clamp((z + E) / C, 0, N - 0.0001);
+  const i = Math.floor(fx), j = Math.floor(fz);
+  const tx = fx - i, tz = fz - j;
+  const s = terrain.size;
+  const h00 = terrain.h[j * s + i], h10 = terrain.h[j * s + i + 1];
+  const h01 = terrain.h[(j + 1) * s + i], h11 = terrain.h[(j + 1) * s + i + 1];
+  return lerp(lerp(h00, h10, tx), lerp(h01, h11, tx), tz);
+}
+
+function groundAt(x, z){
+  return Math.max(heightAt(x, z), WORLD.waterLevel - 0.15);
+}
+
+function cornerNormal(i, j, out){
+  const N = WORLD.seg;
+  const ci = clamp(i, 0, N), cj = clamp(j, 0, N);
+  const k = (cj * terrain.size + ci) * 3;
+  out.x = terrain.normal[k]; out.y = terrain.normal[k + 1]; out.z = terrain.normal[k + 2];
+  return out;
+}
+
+const _qn = [{ x: 0, y: 1, z: 0 }, { x: 0, y: 1, z: 0 }, { x: 0, y: 1, z: 0 }, { x: 0, y: 1, z: 0 }];
+function quadNormal(i, j){
+  cornerNormal(i, j, _qn[0]);
+  cornerNormal(i + 1, j, _qn[1]);
+  cornerNormal(i + 1, j + 1, _qn[2]);
+  cornerNormal(i, j + 1, _qn[3]);
+  return norm3({
+    x: _qn[0].x + _qn[1].x + _qn[2].x + _qn[3].x,
+    y: _qn[0].y + _qn[1].y + _qn[2].y + _qn[3].y,
+    z: _qn[0].z + _qn[1].z + _qn[2].z + _qn[3].z
+  });
+}
+
+let pathDist = null;
+
+function buildPathField(){
+  const N = WORLD.seg, C = WORLD.cell, E = WORLD.extent / 2;
+  pathDist = new Float32Array((N + 1) * (N + 1));
+  for (let j = 0; j <= N; j++){
+    for (let i = 0; i <= N; i++){
+      const x = -E + i * C, z = -E + j * C;
+      let best = 1e9;
+      for (const s of paths){
+        const dx = s[2] - s[0], dz = s[3] - s[1];
+        const l2 = dx * dx + dz * dz || 1;
+        let t = ((x - s[0]) * dx + (z - s[1]) * dz) / l2;
+        t = clamp(t, 0, 1);
+        const px = s[0] + dx * t, pz = s[1] + dz * t;
+        const d = Math.hypot(x - px, z - pz);
+        if (d < best) best = d;
+      }
+      pathDist[j * (N + 1) + i] = best;
+    }
+  }
+}
+
+function pathDistAt(x, z){
+  const N = WORLD.seg, C = WORLD.cell, E = WORLD.extent / 2;
+  if (!pathDist) return 1e9;
+  const fx = clamp((x + E) / C, 0, N - 0.001), fz = clamp((z + E) / C, 0, N - 0.001);
+  const i = Math.floor(fx), j = Math.floor(fz), tx = fx - i, tz = fz - j;
+  const sz = terrain.size;
+  return lerp(
+    lerp(pathDist[j * sz + i], pathDist[j * sz + i + 1], tx),
+    lerp(pathDist[(j + 1) * sz + i], pathDist[(j + 1) * sz + i + 1], tx), tz);
+}
+
+function normalAt(x, z){
+  const N = WORLD.seg, C = WORLD.cell, E = WORLD.extent / 2;
+  const i = clamp(Math.round((x + E) / C), 0, N), j = clamp(Math.round((z + E) / C), 0, N);
+  const k = (j * terrain.size + i) * 3;
+  return { x: terrain.normal[k], y: terrain.normal[k + 1], z: terrain.normal[k + 2] };
+}
+/* ---------- settlement, vegetation, props ---------- */
+
+function buildProps(seed){
+  const rnd = mulberry32(seed ^ 0x51ed270b);
+  const E = WORLD.extent / 2;
+  trees = []; rocks = []; shrubs = []; buildings = []; paths = [];
+
+  for (const p of POI_DEFS){
+    pois.push({
+      id: p.id, name: p.name, x: p.x, z: p.z, kind: p.kind,
+      y: groundAt(p.x, p.z), occupants: 0
+    });
+  }
+  const poiBy = id => pois.find(p => p.id === id);
+
+  const house = (px, pz, w, d, h, roof, alt) => {
+    buildings.push({ x: px, z: pz, w: w, d: d, h: h, roof: roof, alt: alt, rot: (rnd() - 0.5) * 0.24 });
+  };
+  const homeBase = poiBy("home");
+  for (let i = 0; i < 4; i++){
+    house(homeBase.x - 12 + i * 8.5, homeBase.z + (i % 2 ? 6 : -5), 6.2, 5.4, 4.4 + (i % 2) * 0.5,
+      i % 2 ? PALETTE.roof : PALETTE.roofAlt, i % 2 === 1);
+  }
+  const office = poiBy("office");
+  buildings.push({ x: office.x, z: office.z, w: 17, d: 12, h: 11.5, roof: PALETTE.roofAlt, alt: true, rot: -0.12 });
+  buildings.push({ x: office.x + 13, z: office.z - 9, w: 7, d: 6, h: 5.2, roof: PALETTE.roof, alt: false, rot: 0.08 });
+  const cafe = poiBy("cafe");
+  buildings.push({ x: cafe.x, z: cafe.z, w: 8.5, d: 6.5, h: 4.6, roof: PALETTE.roof, alt: false, rot: 0.16 });
+  buildings.push({ x: cafe.x - 9, z: cafe.z + 4, w: 5.2, d: 4.6, h: 3.9, roof: PALETTE.roofAlt, alt: false, rot: -0.2 });
+  const park = poiBy("park");
+  buildings.push({ x: park.x + 3, z: park.z - 5, w: 6, d: 5, h: 3.6, roof: PALETTE.roof, alt: false, rot: 0.3 });
+  buildings.push({ x: park.x + 12, z: park.z + 3, w: 5, d: 4.4, h: 3.4, roof: PALETTE.roofAlt, alt: false, rot: -0.15 });
+
+  const plaza = poiBy("plaza");
+  const rings = [
+    { x: plaza.x, z: plaza.z, r: 16 },
+    { x: cafe.x, z: cafe.z, r: 13 },
+    { x: homeBase.x, z: homeBase.z, r: 17 },
+    { x: office.x, z: office.z, r: 16 },
+    { x: park.x, z: park.z, r: 14 },
+    { x: poiBy("shore").x, z: poiBy("shore").z, r: 13 }
+  ];
+  for (let i = 0; i < 26; i++){
+    const a = i / 26 * TAU, b = (i * 5 % 26) / 26 * TAU;
+    const r1 = rings[i % rings.length], r2 = rings[(i + 3) % rings.length];
+    paths.push([ r1.x + Math.cos(a) * r1.r, r1.z + Math.sin(a) * r1.r,
+                 r2.x + Math.cos(b) * r2.r, r2.z + Math.sin(b) * r2.r ]);
+  }
+  paths.push([ homeBase.x, homeBase.z, plaza.x, plaza.z ]);
+
+  const blockBuilding = (x, z) => buildings.some(b => Math.abs(x - b.x) < b.w * 0.75 + 2 && Math.abs(z - b.z) < b.d * 0.75 + 2);
+  const onPath = (x, z) => {
+    for (const s of paths){
+      const dx = s[2] - s[0], dz = s[3] - s[1];
+      const l2 = dx * dx + dz * dz || 1;
+      let t = ((x - s[0]) * dx + (z - s[1]) * dz) / l2;
+      t = clamp(t, 0, 1);
+      const px = s[0] + dx * t, pz = s[1] + dz * t;
+      if (Math.hypot(x - px, z - pz) < 2.6) return true;
+    }
+    return false;
+  };
+
+  for (let i = 0; i < 520; i++){
+    const x = (rnd() - 0.5) * (WORLD.extent - 8);
+    const z = (rnd() - 0.5) * (WORLD.extent - 8);
+    const y = heightAt(x, z);
+    if (y < WORLD.waterLevel + 0.4 || y > 17) continue;
+    if (blockBuilding(x, z) || onPath(x, z)) continue;
+    const cluster = fbm(x * 0.03 + 40, z * 0.03 - 12, seed + 3, 3, 2, 0.5);
+    if (cluster < 0.46) continue;
+    const scale = 0.62 + rnd() * 0.5;
+    trees.push({ x: x, z: z, y: y, s: scale, kind: rnd() < 0.24 ? "conifer" : "broadleaf", seed: rnd() });
+  }
+  for (let i = 0; i < 120; i++){
+    const x = (rnd() - 0.5) * (WORLD.extent - 6), z = (rnd() - 0.5) * (WORLD.extent - 6);
+    const y = heightAt(x, z);
+    if (y < WORLD.waterLevel - 0.2 || y > 21) continue;
+    if (blockBuilding(x, z)) continue;
+    rocks.push({ x: x, z: z, y: y, s: 0.5 + rnd() * 1.5, rot: rnd() * TAU });
+  }
+  for (let i = 0; i < 320; i++){
+    const x = (rnd() - 0.5) * (WORLD.extent - 6), z = (rnd() - 0.5) * (WORLD.extent - 6);
+    const y = heightAt(x, z);
+    if (y < WORLD.waterLevel + 0.15 || y > 15) continue;
+    if (blockBuilding(x, z) || onPath(x, z)) continue;
+    shrubs.push({ x: x, z: z, y: y, s: 0.5 + rnd() * 0.7, seed: rnd() });
+  }
+
+  const plazaObelisks = [];
+  for (let i = 0; i < 6; i++){
+    const a = i / 6 * TAU;
+    plazaObelisks.push({ x: plaza.x + Math.cos(a) * 13, z: plaza.z + Math.sin(a) * 13, y: groundAt(plaza.x + Math.cos(a) * 13, plaza.z + Math.sin(a) * 13), h: 2.9 });
+  }
+  buildings.push({ obelisk: true, items: plazaObelisks });
+  buildPathField();
+}
+
+/* ---------- residents ---------- */
+
+const ROLE_COLOR = {
+  Avatar: [255, 180, 84],
+  Aide: [79, 209, 197],
+  Advocate: [199, 146, 234],
+  NPC: [143, 163, 180]
+};
+
+const ACTIVITY_SPOTS = {
+  home:     { label: "Bungalow Row", verbs: ["shower", "cook breakfast", "sort laundry", "sit with coffee"] },
+  office:   { label: "Studio Block", verbs: ["write report", "clear inbox", "review pull request", "sit in meeting"] },
+  cafe:     { label: "Corner Café",  verbs: ["order tea", "eat lunch", "scroll phone", "rest between tasks"] },
+  plaza:    { label: "Village Plaza",verbs: ["walk the plaza", "chat with a neighbour", "watch the water"] },
+  park:     { label: "Ridge Park",   verbs: ["walk the ridge", "sit under a tree", "paced breathing"] },
+  shore:    { label: "North Shore",  verbs: ["stand at the water", "collect shells", "stare at the horizon"] }
+};
+
+let agents = [];
+let eventLog = [];
+let logCount = 0;
+let simTime = 6 * 60;
+let tick = 0;
+let running = true;
+let pace = 1;
+let stepOnce = false;
+let activeScenario = SCENARIOS[0];
+let advocateTier = 0;
+let selectedId = null;
+let followId = null;
+
+function hueRGB(hue, sat, light){
+  const c = (1 - Math.abs(2 * light - 1)) * sat;
+  const hp = ((hue % 360) + 360) % 360 / 60;
+  const x = c * (1 - Math.abs(hp % 2 - 1));
+  let r = 0, g = 0, b = 0;
+  if (hp < 1){ r = c; g = x; } else if (hp < 2){ r = x; g = c; }
+  else if (hp < 3){ g = c; b = x; } else if (hp < 4){ g = x; b = c; }
+  else if (hp < 5){ r = x; b = c; } else { r = c; b = x; }
+  const m = light - c / 2;
+  return [ (r + m) * 255, (g + m) * 255, (b + m) * 255 ];
+}
+
+function makeAgent(spec, role, rnd){
+  const home = POI_DEFS[Math.floor(rnd() * POI_DEFS.length)];
+  const x = home.x + (rnd() - 0.5) * 18, z = home.z + (rnd() - 0.5) * 18;
+  const color = role === "NPC" ? hueRGB(spec.hue, 0.35, 0.62) : hueRGB(spec.hue, 0.62, 0.62);
+  return {
+    id: spec.id,
+    name: spec.name,
+    role: role,
+    color: color,
+    height: spec.height || 3.9,
+    traits: spec.traits || "resident of the village",
+    x: x, z: z, y: groundAt(x, z),
+    heading: rnd() * TAU,
+    speed: 1.5 + rnd() * 0.6,
+    phase: rnd() * TAU,
+    state: "idle",
+    actTimer: 0,
+    intent: "Idle",
+    spot: null,
+    needs: { energy: 0.6 + rnd() * 0.35, hunger: 0.5 + rnd() * 0.4, social: 0.4 + rnd() * 0.4, focus: 0.5 + rnd() * 0.4 },
+    affect: { focus: 0.5 + rnd() * 0.35, stress: role === "Avatar" ? 0.14 + rnd() * 0.28 : rnd() * 0.18, load: rnd() * 0.35 },
+    stressorIn: 40 + rnd() * 110,
+    tint: color,
+    lastVerb: "arriving in the world",
+    lastVerbUntil: 0,
+    coached: 0,
+    aura: null
+  };
+}
+
+function spawnWorld(seed){
+  const rnd = mulberry32(seed ^ 0x27d4eb2f);
+  agents = [];
+  eventLog = [];
+  logCount = 0;
+  tick = 0;
+  simTime = 6 * 60;
+  advocateTier = 0;
+  for (const s of ROSTER) agents.push(makeAgent(s, s.role, rnd));
+  for (const n of NPCS) agents.push(makeAgent(n, "NPC", rnd));
+  for (const a of agents){
+    a.x = clamp(a.x, -WORLD.extent / 2 + 6, WORLD.extent / 2 - 6);
+    a.z = clamp(a.z, -WORLD.extent / 2 + 6, WORLD.extent / 2 - 6);
+    a.y = groundAt(a.x, a.z);
+    a.spot = pois[Math.floor(rnd() * pois.length)];
+  }
+  logEvent("sys", "Habitat", "world seeded — tick 0, residents " + agents.length);
+}
+
+function pickSpot(a, rnd){
+  const w = [];
+  for (const p of pois){
+    let weight = 0.12;
+    if (a.role === "Avatar"){
+      if (p.kind === "office") weight = 0.5;
+      else if (p.kind === "home") weight = 0.35;
+      else if (p.kind === "park") weight = 0.5;
+      else if (p.kind === "cafe") weight = 0.4;
+      else if (p.kind === "plaza") weight = 0.45;
+      else if (p.kind === "shore") weight = 0.55;
+    } else if (a.role === "Aide"){
+      weight = p.kind === "office" || p.kind === "home" || p.kind === "plaza" || p.kind === "park" ? 0.7 : 0.2;
+    } else {
+      weight = p.kind === "plaza" || p.kind === "shore" ? 0.7 : 0.2;
+    }
+    w.push(weight);
+  }
+  let total = w.reduce((s, v) => s + v, 0);
+  let r = rnd() * total;
+  for (let i = 0; i < pois.length; i++){
+    r -= w[i];
+    if (r <= 0) return pois[i];
+  }
+  return pois[0];
+}
+
+function decide(a, rnd){
+  const n = a.needs;
+  if (a.role === "Avatar"){
+    if (n.energy < 0.26) return { spot: poisById("home"), intent: "Rest", verb: "sleep — energy is depleted" };
+    if (n.hunger < 0.3) return { spot: poisById("cafe"), intent: "Eat", verb: "get food" };
+    if (a.affect.stress > 0.6) return { spot: poisById("park"), intent: "FindQuietPlace", verb: "seek a quiet place to regulate" };
+    if (n.social < 0.3) return { spot: poisById("plaza"), intent: "Socialize", verb: "seek contact with others" };
+    const s = activeScenario;
+    const cat = s.category;
+    if (cat === "Workplace") return { spot: poisById("office"), intent: "Work", verb: s.name.toLowerCase() };
+    if (cat === "Academic") return { spot: poisById("home"), intent: "Study", verb: s.name.toLowerCase() };
+    if (cat === "Social") return { spot: poisById("plaza"), intent: "Socialize", verb: s.name.toLowerCase() };
+    return { spot: poisById("home"), intent: "Routine", verb: s.name.toLowerCase() };
+  }
+  if (a.role === "Aide"){
+    let worst = null, worstStress = 0.5;
+    for (const b of agents){
+      if (b.role !== "Avatar") continue;
+      if (b.affect.stress > worstStress){ worst = b; worstStress = b.affect.stress; }
+    }
+    if (worst){
+      worst.aideTarget = a.id;
+      const d = Math.hypot(worst.x - a.x, worst.z - a.z);
+      return {
+        spot: { id: "tether", x: worst.x + 3.2, z: worst.z + 2.4, y: groundAt(worst.x + 3.2, worst.z + 2.4), name: worst.name },
+        intent: "Coach", verb: "walk to " + worst.name,
+        tether: worst
+      };
+    }
+    return { spot: pickSpot(a, rnd), intent: "Observe", verb: "walk the village and watch" };
+  }
+  return { spot: pickSpot(a, rnd), intent: "Patrol", verb: "patrol the perimeter" };
+}
+
+function poisById(id){
+  return pois.find(p => p.id === id) || pois[0];
+}
+
+function logEvent(kind, who, text){
+  eventLog.unshift({ kind: kind, who: who, text: text, t: simTime });
+  eventLog.length = Math.min(eventLog.length, 40);
+  logCount++;
+  renderLog();
+}
+
+function clockLabel(t){
+  const total = Math.floor(t / 60) % 1440;
+  const h = Math.floor(total / 60), m = total % 60;
+  return (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
+}
+
+function stepSim(dt, rnd){
+  tick++;
+  simTime += dt;
+
+  for (const p of pois) p.occupants = 0;
+
+  for (const a of agents){
+    if (a.role !== "NPC"){
+      a.needs.energy = clamp(a.needs.energy - dt * 0.0014, 0, 1);
+      a.needs.hunger = clamp(a.needs.hunger - dt * 0.0011, 0, 1);
+      a.needs.social = clamp(a.needs.social - dt * 0.00085, 0, 1);
+    }
+    a.coached = Math.max(0, a.coached - dt);
+
+    if (a.state === "idle"){
+      const plan = decide(a, rnd);
+      a.spot = plan.spot;
+      a.intent = plan.intent;
+      a.tetherId = plan.tether ? plan.tether.id : null;
+      a.lastVerb = plan.verb;
+      a.lastVerbUntil = simTime + 18;
+      if (plan.tether){
+        const d = Math.hypot(plan.tether.x - a.x, plan.tether.z - a.z);
+        if (d < 5.5){
+          a.state = "coaching";
+          a.actTimer = 16 + rnd() * 14;
+          a.lastVerb = "coach " + plan.tether.name;
+          a.lastVerbUntil = simTime + 22;
+          plan.tether.affect.stress = clamp(plan.tether.affect.stress - 0.09, 0, 1);
+          plan.tether.affect.focus = clamp(plan.tether.affect.focus + 0.07, 0, 1);
+          plan.tether.coached = 20;
+          logEvent("aide", a.name, "intervened with " + plan.tether.name + " — " + coachingLine(rnd));
+          continue;
+        }
+      }
+      a.state = "walking";
+    }
+
+    if (a.state === "walking"){
+      const tx = a.spot.x + Math.cos(a.id.length * 2.7) * 2.6;
+      const tz = a.spot.z + Math.sin(a.id.length * 2.7) * 2.6;
+      const dx = tx - a.x, dz = tz - a.z;
+      const dist = Math.hypot(dx, dz);
+      if (dist < 1.6){
+        a.state = a.role === "Aide" && a.intent === "Coach" ? "coaching" : "acting";
+        a.actTimer = a.role === "NPC" ? 8 + rnd() * 14 : 20 + rnd() * 40 * (0.5 + activeScenario.demand);
+        a.y = groundAt(a.x, a.z);
+        if (a.spot && a.spot.id && a.spot.id !== "tether"){
+          const spot = ACTIVITY_SPOTS[a.spot.kind];
+          if (spot && a.role !== "NPC"){
+            a.lastVerb = spot.verbs[Math.floor(rnd() * spot.verbs.length)];
+            a.lastVerbUntil = simTime + 30;
+          }
+        }
+      } else {
+        let vx = dx / dist, vz = dz / dist;
+        const step = 2.4;
+        const nx = a.x + vx * step, nz = a.z + vz * step;
+        if (heightAt(nx, nz) < WORLD.waterLevel + 0.35){
+          const side = (a.id.charCodeAt(0) % 2 ? 1 : -1);
+          const ca = Math.cos(side * 1.2), sa = Math.sin(side * 1.2);
+          const rx = vx * ca - vz * sa, rz = vx * sa + vz * ca;
+          vx = rx; vz = rz;
+        }
+        const sp = a.speed * (a.coached > 0 ? 1.15 : 1) * (a.role === "Advocate" ? 1.25 : 1);
+        a.x += vx * sp * dt * 1.6;
+        a.z += vz * sp * dt * 1.6;
+        a.heading = Math.atan2(vx, vz);
+        a.phase += dt * sp * 2.6;
+        a.walking = true;
+      }
+    } else {
+      a.walking = false;
+      a.actTimer -= dt;
+      if (a.actTimer <= 0) a.state = "idle";
+    }
+
+    a.x = clamp(a.x, -WORLD.extent / 2 + 3, WORLD.extent / 2 - 3);
+    a.z = clamp(a.z, -WORLD.extent / 2 + 3, WORLD.extent / 2 - 3);
+    a.y = groundAt(a.x, a.z);
+
+    if (a.spot) a.spot.occupants++;
+
+    if (a.role === "Avatar"){
+      a.affect.focus = clamp(a.affect.focus + (a.state === "acting" ? -0.00026 : 0.00019) + (rnd() - 0.5) * 0.0003, 0, 1);
+      a.affect.load = clamp(a.affect.load + (a.state === "acting" ? 0.00024 * activeScenario.demand : -0.00018), 0, 1);
+      if (a.state === "acting") a.affect.stress = clamp(a.affect.stress + 0.0009 * activeScenario.demand * activeScenario.aversiveness * 2, 0, 1);
+      a.needs.focus = a.affect.focus;
+      if (a.intent === "Rest") a.needs.energy = clamp(a.needs.energy + 0.0009, 0, 1);
+      if (a.intent === "Eat") a.needs.hunger = clamp(a.needs.hunger + 0.0008, 0, 1);
+      if (a.intent === "Socialize") a.needs.social = clamp(a.needs.social + 0.0006, 0, 1);
+      if (a.coached > 0) a.affect.stress = clamp(a.affect.stress - 0.0006, 0, 1);
+      if (a.intent === "FindQuietPlace"){
+        a.affect.stress = clamp(a.affect.stress - 0.0012, 0, 1);
+        a.affect.load = clamp(a.affect.load - 0.0009, 0, 1);
+      }
+      a.stressorIn -= dt;
+      if (a.stressorIn <= 0){
+        a.stressorIn = 45 + rnd() * 110;
+        const sev = activeScenario.aversiveness;
+        a.affect.stress = clamp(a.affect.stress + sev * 0.32 + rnd() * 0.12, 0, 1);
+        if (a.affect.stress > 0.42){
+          logEvent("stress", a.name, "stressor fired — " + activeScenario.trait.toLowerCase() +
+            " · stress now " + Math.round(a.affect.stress * 100) + "%");
+        }
+      }
+      a.affect.stress = clamp(a.affect.stress - 0.0003 + (rnd() - 0.5) * 0.0006, 0, 1);
+    }
+    if (a.role === "Advocate"){
+      const peak = agents.reduce((m, b) => b.role === "Avatar" ? Math.max(m, b.affect.stress) : m, 0);
+      a.affect.focus = peak;
+      const tier = peak > 0.82 ? 3 : peak > 0.65 ? 2 : peak > 0.5 ? 1 : 0;
+      if (tier > advocateTier){
+        logEvent("adv", "RRT Advocate", "escalation → " + TIERS[tier].name + " — " + TIERS[tier].note);
+      }
+      advocateTier = tier;
+    }
+    if (a.role === "NPC"){
+      a.affect.stress = clamp(a.affect.stress + (rnd() - 0.5) * 0.0012, 0, 1);
+    }
+  }
+
+  if (tick % 40 === 0){
+    const worst = agents.filter(a => a.role === "Avatar").sort((x, y) => y.affect.stress - x.affect.stress)[0];
+    if (worst && worst.affect.stress > 0.42){
+      logEvent("sys", worst.name, "focus " + Math.round(worst.affect.focus * 100) +
+        "% · stress " + Math.round(worst.affect.stress * 100) + "% · load " + Math.round(worst.affect.load * 100) + "%");
+    }
+  }
+}
+
+const COACH_LINES = [
+  "two-minute start rule — body double the first step",
+  "time-boxed to 12 minutes, timer visible",
+  "externalised the task into a written next-action list",
+  "paced breathing before re-entry",
+  "rest scheduled between blocks, not after burnout"
+];
+function coachingLine(rnd){ return COACH_LINES[Math.floor(rnd() * COACH_LINES.length)]; }
+/* ============================================================
+   Camera — orbit + pan, projective projection onto 2D canvas
+   ============================================================ */
+
+const cam = {
+  tx: 0, ty: 2, tz: 0,
+  yaw: 0.62, pitch: 0.46, dist: 118,
+  px: 0, py: 0, pz: 0,
+  rx: 1, ry: 0, rz: 0,
+  ux: 0, uy: 1, uz: 0,
+  fx: 0, fy: 0, fz: 1,
+  focal: 700, cx: 0, cy: 0,
+  near: 0.6
+};
+
+function updateCamera(w, h){
+  const cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
+  const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);
+  cam.px = cam.tx + cam.dist * cp * sy;
+  cam.py = cam.ty + cam.dist * sp;
+  cam.pz = cam.tz + cam.dist * cp * cy;
+  const f = norm3({ x: cam.tx - cam.px, y: cam.ty - cam.py, z: cam.tz - cam.pz });
+  cam.fx = f.x; cam.fy = f.y; cam.fz = f.z;
+  const r = norm3(cross3(f, { x: 0, y: 1, z: 0 }));
+  cam.rx = r.x; cam.ry = r.y; cam.rz = r.z;
+  const u = cross3(r, f);
+  cam.ux = u.x; cam.uy = u.y; cam.uz = u.z;
+  cam.cx = w / 2;
+  cam.cy = h * 0.52;
+  cam.focal = h * 0.78;
+}
+
+function viewOf(x, y, z){
+  const dx = x - cam.px, dy = y - cam.py, dz = z - cam.pz;
+  return {
+    x: dx * cam.rx + dy * cam.ry + dz * cam.rz,
+    y: dx * cam.ux + dy * cam.uy + dz * cam.uz,
+    z: dx * cam.fx + dy * cam.fy + dz * cam.fz
+  };
+}
+function toScreen(v){
+  const s = cam.focal / v.z;
+  return { x: cam.cx + v.x * s, y: cam.cy - v.y * s, s: s };
+}
+
+function clipNear(pts){
+  const out = [], n = pts.length;
+  for (let i = 0; i < n; i++){
+    const a = pts[i], b = pts[(i + 1) % n];
+    const ain = a.z > cam.near, bin = b.z > cam.near;
+    if (ain) out.push(a);
+    if (ain !== bin){
+      const t = (cam.near - a.z) / (b.z - a.z);
+      out.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, z: cam.near });
+    }
+  }
+  return out;
+}
+
+function fillPoly(pts, style, stroke){
+  const c = clipNear(pts);
+  if (c.length < 3) return;
+  ctx.beginPath();
+  for (let i = 0; i < c.length; i++){
+    const p = toScreen(c[i]);
+    if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = style;
+  ctx.fill();
+  if (stroke){
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+}
+
+function drawLine3(a, b, style, width){
+  const va = viewOf(a.x, a.y, a.z), vb = viewOf(b.x, b.y, b.z);
+  if (va.z < cam.near && vb.z < cam.near) return;
+  const sa = toScreen(va), sb = toScreen(vb);
+  const wpx = width * Math.min(sa.s, sb.s);
+  if (wpx < 0.25) return;
+  ctx.strokeStyle = style;
+  ctx.lineWidth = Math.max(0.6, wpx);
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(sa.x, sa.y);
+  ctx.lineTo(sb.x, sb.y);
+  ctx.stroke();
+}
+
+/* ============================================================
+   Lighting / sky model — time-of-day driven, deterministic
+   ============================================================ */
+
+const sky = { top: [18, 42, 74], horizon: [150, 190, 214], sun: [255, 244, 214], light: [1, 0.96, 0.86], fog: [150, 190, 214], sunDir: { x: .5, y: .8, z: .3 }, elev: 1 };
+
+function updateSky(){
+  const dayT = ((simTime / WORLD.dayLength) % 1 + 1) % 1;
+  const elev = clamp(Math.sin((dayT - 0.22) * TAU) * 0.5 + 0.5, 0, 1);
+  const night = 1 - smoothstep(0.06, 0.34, elev);
+  const golden = smoothstep(0.05, 0.30, elev) * (1 - smoothstep(0.34, 0.62, elev));
+
+  sky.elev = elev;
+  sky.top = mixRGB(mixRGB([8, 14, 34], [40, 104, 172], smoothstep(0.0, 0.45, elev)), [12, 18, 40], night);
+  sky.horizon = mixRGB(mixRGB([24, 40, 66], [178, 208, 226], smoothstep(0.0, 0.4, elev)),
+    mixRGB([236, 150, 96], [30, 42, 66], night * 0.8), golden * 0.75);
+  sky.fog = mixRGB(sky.horizon, sky.top, 0.55);
+
+  const warmth = golden * 0.9 + (1 - smoothstep(0.1, 0.5, elev)) * 0.3;
+  sky.light = mixRGB([0.62, 0.68, 0.86], [1.0, 0.94, 0.82], smoothstep(0.05, 0.5, elev));
+  sky.light = mixRGB(sky.light, [1.0, 0.72, 0.5], warmth * 0.6);
+  const ambientBase = lerp(0.34, 0.60, smoothstep(0.0, 0.5, elev));
+
+  const az = dayT * TAU * 0.7 + 0.9;
+  const height = Math.max(0.12, Math.sin((dayT - 0.22) * TAU));
+  sky.sunDir = norm3({ x: Math.cos(az) * 0.85, y: height, z: Math.sin(az) * 0.85 });
+  sky.sun = mixRGB(mixRGB([255, 190, 130], [255, 250, 236], smoothstep(0.1, 0.6, elev)), [250, 210, 180], night * 0.4);
+  sky.ambient = ambientBase;
+}
+
+function shade(color, normal, depth){
+  const d = sky.sunDir;
+  const ndl = clamp(normal.x * d.x + normal.y * d.y + normal.z * d.z, 0, 1);
+  const diff = sky.ambient + (1 - sky.ambient) * ndl * (0.35 + 0.85 * sky.elev);
+  const lit = [
+    color[0] * diff * sky.light[0],
+    color[1] * diff * sky.light[1],
+    color[2] * diff * sky.light[2]
+  ];
+  const fog = 1 - Math.exp(-Math.max(0, depth - 45) * 0.0052);
+  const f = clamp(fog, 0, 0.86);
+  return mixRGB(lit, sky.fog, f);
+}
+
+/* ============================================================
+   Renderer
+   ============================================================ */
+
+const drawList = [];
+
+function push(depth, fn){ drawList.push({ d: depth, fn: fn }); }
+
+function terrainColorAt(x, z, y, slope){
+  let c;
+  const shore = smoothstep(0.0, 1.6, y + 0.4);
+  const grassy = mixRGB(PALETTE.sand, PALETTE.grassLow, shore);
+  const alt = smoothstep(4, 13, y);
+  const dry = smoothstep(6, 15, y) * clamp(slope * 0.6 + 0.2, 0, 1);
+  c = mixRGB(grassy, mixRGB(PALETTE.grassHigh, PALETTE.dryGrass, dry), alt);
+  c = mixRGB(c, PALETTE.rock, smoothstep(0.55, 0.92, slope));
+  return c;
+}
+
+function renderSky(w, h){
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, css(sky.top));
+  g.addColorStop(0.55, css(mixRGB(sky.top, sky.horizon, 0.55)));
+  g.addColorStop(1, css(sky.horizon));
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+
+  const far = 3000;
+  const sunV = viewOf(cam.px + sky.sunDir.x * far, cam.py + sky.sunDir.y * far, cam.pz + sky.sunDir.z * far);
+  if (sunV.z > 0){
+    const s = toScreen(sunV);
+    const r = Math.max(26, 90 * cam.focal / sunV.z * 0.35);
+    const glow = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, r * 5);
+    glow.addColorStop(0, css(sky.sun, 0.85));
+    glow.addColorStop(0.25, css(sky.sun, 0.20));
+    glow.addColorStop(1, css(sky.sun, 0));
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, r * 5, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = css(sky.sun, 0.95);
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, r * 0.7, 0, TAU);
+    ctx.fill();
+  }
+
+  const drift = (simTime * 0.6) % (w + 400);
+  for (let i = 0; i < 5; i++){
+    const cx = ((i * 337 + drift * (0.4 + i * 0.12)) % (w + 400)) - 200;
+    const cy = h * (0.08 + i * 0.055);
+    const cw = 90 + i * 34;
+    ctx.fillStyle = "rgba(255,255,255," + (0.05 + 0.05 * sky.elev).toFixed(3) + ")";
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, cw, cw * 0.22, 0, 0, TAU);
+    ctx.fill();
+  }
+}
+
+function renderGround(){
+  const N = WORLD.seg, C = WORLD.cell, E = WORLD.extent / 2;
+  for (let j = 0; j < N; j++){
+    for (let i = 0; i < N; i++){
+      const x0 = -E + i * C, z0 = -E + j * C;
+      const x1 = x0 + C, z1 = z0 + C;
+      const cx = x0 + C / 2, cz = z0 + C / 2;
+      const vy = viewOf(cx, cam.ty, cz).z;
+      if (vy < -40) continue;
+      const d = Math.hypot(cx - cam.tx, cz - cam.tz);
+      if (d > 235) continue;
+
+      const y00 = terrain.h[j * terrain.size + i];
+      const y10 = terrain.h[j * terrain.size + i + 1];
+      const y11 = terrain.h[(j + 1) * terrain.size + i + 1];
+      const y01 = terrain.h[(j + 1) * terrain.size + i];
+      const avg = (y00 + y10 + y11 + y01) / 4;
+      const n = quadNormal(i, j);
+      const slope = 1 - n.y;
+
+      let col;
+      if (avg < WORLD.waterLevel - 0.15){
+        const deep = smoothstep(0, -7, avg);
+        col = mixRGB(PALETTE.deepWater, PALETTE.shallow, 1 - deep);
+        col = mixRGB(col, [10, 22, 36], deep * 0.5);
+      } else {
+        col = terrainColorAt(cx, cz, avg, slope);
+        const pw = 1 - smoothstep(0.9, 2.7, pathDistAt(cx, cz));
+        col = mixRGB(col, PALETTE.path, pw * 0.6);
+        if (avg < WORLD.waterLevel + 0.5){
+          col = mixRGB(mixRGB(PALETTE.sand, col, 0.5), [70, 96, 92], 0.35);
+        }
+      }
+      const shaded = shade(col, n, vy);
+      const pts = [
+        viewOf(x0, y00, z0), viewOf(x1, y10, z0),
+        viewOf(x1, y11, z1), viewOf(x0, y01, z1)
+      ];
+      const dpt = (pts[0].z + pts[1].z + pts[2].z + pts[3].z) / 4;
+      push(dpt, () => fillPoly(pts, css(shaded)));
+    }
+  }
+}
+
+function renderWater(){
+  const N = WORLD.seg, C = WORLD.cell, E = WORLD.extent / 2;
+  const wl = WORLD.waterLevel;
+  for (let j = 0; j < N; j++){
+    for (let i = 0; i < N; i++){
+      const cx = -E + (i + 0.5) * C, cz = -E + (j + 0.5) * C;
+      const avg = (terrain.h[j * terrain.size + i] + terrain.h[j * terrain.size + i + 1] +
+        terrain.h[(j + 1) * terrain.size + i + 1] + terrain.h[(j + 1) * terrain.size + i]) / 4;
+      if (avg > wl - 0.05) continue;
+      const x0 = -E + i * C, z0 = -E + j * C, x1 = x0 + C, z1 = z0 + C;
+      const pts = [
+        viewOf(x0, wl, z0), viewOf(x1, wl, z0), viewOf(x1, wl, z1), viewOf(x0, wl, z1)
+      ];
+      const vz = (pts[0].z + pts[1].z + pts[2].z + pts[3].z) / 4;
+      if (vz < -20) continue;
+      const depth = clamp((wl - avg) / 7, 0, 1);
+      const spec = 0.5 + 0.5 * Math.sin(cx * 0.55 + simTime * 1.5) * Math.cos(cz * 0.42 - simTime * 1.1);
+      const sun = clamp(sky.sunDir.x * 0.3 + sky.sunDir.y * 0.8, 0, 1);
+      let col = mixRGB(PALETTE.deepWater, PALETTE.shallow, 1 - depth * 0.85);
+      col = mixRGB(col, sky.horizon, 0.42);
+      col = mixRGB(col, sky.sun, spec * 0.16 * (0.3 + sun));
+      col = mixRGB(col, sky.fog, clamp(1 - Math.exp(-Math.max(0, vz - 45) * 0.0052), 0, 0.86));
+      push(vz - 0.02, () => fillPoly(pts, css(col)));
+    }
+  }
+}
+
+function renderTrees(){
+  for (const t of trees){
+    const d = viewOf(t.x, t.y, t.z).z;
+    if (d < -10 || Math.hypot(t.x - cam.tx, t.z - cam.tz) > 220) continue;
+    const n = normalAt(t.x, t.z);
+    const trunkC = shade(PALETTE.trunk, n, d);
+    const leafBase = t.kind === "conifer" ? [38, 72, 58] : PALETTE.foliage;
+    const leafC = shade(mixRGB(leafBase, PALETTE.foliageHi, 0.35 + t.seed * 0.4), n, d);
+    push(d, () => drawTree(t, trunkC, leafC));
+  }
+  for (const s of shrubs){
+    const d = viewOf(s.x, s.y, s.z).z;
+    if (d < -6 || Math.hypot(s.x - cam.tx, s.z - cam.tz) > 200) continue;
+    const n = normalAt(s.x, s.z);
+    const c = shade(mixRGB(PALETTE.foliage, PALETTE.foliageHi, s.seed), n, d);
+    push(d, () => drawBush(s, c));
+  }
+  for (const r of rocks){
+    const d = viewOf(r.x, r.y, r.z).z;
+    if (d < -6 || Math.hypot(r.x - cam.tx, r.z - cam.tz) > 210) continue;
+    const n = normalAt(r.x, r.z);
+    const c = shade(mixRGB(PALETTE.rock, [138, 136, 132], r.rot / TAU), n, d);
+    push(d, () => drawRock(r, c));
+  }
+}
+
+function drawTree(t, trunkC, leafC){
+  const H = (t.kind === "conifer" ? 8.2 : 5.6) * t.s;
+  const base = { x: t.x, y: t.y, z: t.z };
+  const top = { x: t.x + 0.18, y: t.y + H * 0.5, z: t.z + 0.14 };
+  drawLine3(base, top, css(trunkC), 0.85 * t.s);
+  if (t.kind === "conifer"){
+    const layers = 4;
+    for (let k = 0; k < layers; k++){
+      const t0 = 0.16 + k * 0.2;
+      const y0 = t.y + H * t0;
+      const apex = { x: t.x, y: t.y + H * (t0 + 0.44), z: t.z };
+      const r0 = (1.06 - t0) * 2.9 * t.s;
+      const face = mixRGB(leafC, k % 2 ? [255, 255, 255] : [0, 0, 0], k % 2 ? 0.13 : 0.14);
+      fillPoly([viewOf(t.x - r0, y0, t.z - r0), viewOf(t.x + r0, y0, t.z - r0), viewOf(apex.x, apex.y, apex.z)], css(face));
+      fillPoly([viewOf(t.x - r0, y0, t.z + r0), viewOf(t.x + r0, y0, t.z + r0), viewOf(apex.x, apex.y, apex.z)],
+        css(mixRGB(face, [0, 0, 0], 0.2)));
+      fillPoly([viewOf(t.x - r0, y0, t.z + r0), viewOf(t.x + r0, y0, t.z + r0),
+        viewOf(t.x + r0, y0, t.z - r0), viewOf(t.x - r0, y0, t.z - r0)], css(mixRGB(face, [0, 0, 0], 0.34)));
+    }
+  } else {
+    const blobs = 6;
+    for (let k = 0; k < blobs; k++){
+      const a = (k / blobs) * TAU + t.seed * 3;
+      const rr = 1.15 * t.s;
+      const cx = t.x + Math.cos(a) * 1.05 * t.s;
+      const cz = t.z + Math.sin(a) * 1.05 * t.s;
+      const cy = t.y + H * (0.72 + 0.12 * Math.sin(k * 2.1 + t.seed * 6));
+      const c = mixRGB(leafC, k % 2 ? [255, 255, 255] : [0, 0, 0], k % 2 ? 0.12 : 0.18);
+      const sp = toScreen(viewOf(cx, cy, cz));
+      if (sp.z <= 0 || sp.x < -300 || sp.x > VIEW_W + 300) continue;
+      const rad = Math.max(0.5, rr * sp.s);
+      ctx.fillStyle = css(c);
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, rad, 0, TAU);
+      ctx.fill();
+    }
+  }
+}
+
+function drawBush(s, col){
+  const sp = toScreen(viewOf(s.x, s.y + 0.5 * s.s, s.z));
+  if (sp.z <= 0) return;
+  ctx.fillStyle = css(col);
+  ctx.beginPath();
+  ctx.ellipse(sp.x, sp.y, Math.max(0.4, 0.9 * s.s * sp.s), Math.max(0.25, 0.55 * s.s * sp.s), 0, 0, TAU);
+  ctx.fill();
+}
+
+function drawRock(r, col){
+  const w = r.s, h = r.s * 0.75;
+  const pts = [
+    viewOf(r.x - w, r.y, r.z - w * 0.6), viewOf(r.x + w, r.y, r.z - w * 0.4),
+    viewOf(r.x + w * 0.7, r.y, r.z + w * 0.8), viewOf(r.x - w * 0.8, r.y, r.z + w * 0.6),
+    viewOf(r.x - w * 0.4, r.y + h, r.z - w * 0.2), viewOf(r.x + w * 0.5, r.y + h, r.z + w * 0.2)
+  ];
+  fillPoly([pts[0], pts[1], pts[5], pts[4]], css(mixRGB(col, [255, 255, 255], 0.16)));
+  fillPoly([pts[1], pts[2], pts[5]], css(col));
+  fillPoly([pts[2], pts[3], pts[5]], css(mixRGB(col, [0, 0, 0], 0.24)));
+}
+
+function renderBuildings(){
+  for (const b of buildings){
+    if (b.obelisk){
+      for (const o of b.items){
+        const d = viewOf(o.x, o.y, o.z).z;
+        if (d < -8) continue;
+        push(d, () => {
+          const n = normalAt(o.x, o.z);
+          const c = shade([124, 122, 116], n, d);
+          fillPoly([
+            viewOf(o.x - 0.26, o.y, o.z - 0.26), viewOf(o.x + 0.26, o.y, o.z - 0.26),
+            viewOf(o.x + 0.26, o.y + o.h, o.z - 0.26), viewOf(o.x - 0.26, o.y + o.h, o.z - 0.26)
+          ], css(c));
+          fillPoly([
+            viewOf(o.x - 0.26, o.y, o.z + 0.26), viewOf(o.x + 0.26, o.y, o.z + 0.26),
+            viewOf(o.x + 0.26, o.y + o.h, o.z + 0.26), viewOf(o.x - 0.26, o.y + o.h, o.z + 0.26)
+          ], css(mixRGB(c, [0, 0, 0], 0.22)));
+        });
+      }
+      continue;
+    }
+    const d = viewOf(b.x, groundAt(b.x, b.z), b.z).z;
+    if (d < -14 || Math.hypot(b.x - cam.tx, b.z - cam.tz) > 210) continue;
+    const n = normalAt(b.x, b.z);
+    push(d, () => drawBuilding(b, n, d));
+  }
+}
+
+function drawBuilding(b, n, d){
+  const rot = b.rot, ca = Math.cos(rot), sa = Math.sin(rot);
+  const place = (sx, sz, hw, hd) => {
+    const lx = sx * hw, lz = sz * hd;
+    return { x: b.x + lx * ca - lz * sa, z: b.z + lx * sa + lz * ca };
+  };
+  const c1 = place(-1, -1, b.w * 0.5, b.d * 0.5), c2 = place(1, -1, b.w * 0.5, b.d * 0.5),
+        c3 = place(1, 1, b.w * 0.5, b.d * 0.5), c4 = place(-1, 1, b.w * 0.5, b.d * 0.5);
+  const toV = (p, y) => viewOf(p.x, y, p.z);
+
+  let yBase = Infinity, yTop = -Infinity;
+  for (const c of [c1, c2, c3, c4]){
+    const g = groundAt(c.x, c.z);
+    if (g < yBase) yBase = g;
+    if (g > yTop) yTop = g;
+  }
+  yBase -= 1.1;
+  const eavesY = yTop + b.h;
+
+  const wallCol = alt => shade(alt ? PALETTE.plasterAlt : PALETTE.plaster, n, d);
+  const faces = [
+    { a: c1, b: c2, alt: false },
+    { a: c2, b: c3, alt: true },
+    { a: c3, b: c4, alt: false },
+    { a: c4, b: c1, alt: true }
+  ];
+  const visible = [];
+  for (const f of faces){
+    const ex = f.b.x - f.a.x, ez = f.b.z - f.a.z;
+    const facing = cam.rx * ex + cam.rz * ez;
+    if (facing > 0.02) visible.push(f);
+    f.length = Math.hypot(ex, ez);
+    f.c = wallCol(f.alt);
+    f.winC = shade(mixRGB(f.c, [24, 38, 54], 0.62), n, d);
+    f.trimC = mixRGB(f.c, [0, 0, 0], 0.22);
+  }
+
+  for (const f of visible){
+    fillPoly([toV(f.a, yBase), toV(f.b, yBase), toV(f.b, eavesY), toV(f.a, eavesY)], css(f.c));
+  }
+
+  const ov = 0.34;
+  const o1 = place(-1, -1, b.w * 0.5 + ov, b.d * 0.5 + ov),
+        o2 = place(1, -1, b.w * 0.5 + ov, b.d * 0.5 + ov),
+        o3 = place(1, 1, b.w * 0.5 + ov, b.d * 0.5 + ov),
+        o4 = place(-1, 1, b.w * 0.5 + ov, b.d * 0.5 + ov);
+  const eaveY = eavesY + 0.16;
+  const alongX = b.w >= b.d;
+  const mid = (p, q) => ({ x: (p.x + q.x) / 2, z: (p.z + q.z) / 2 });
+  const r1 = alongX ? mid(o1, o2) : mid(o1, o4);
+  const r2 = alongX ? mid(o3, o4) : mid(o2, o3);
+  const ridgeY = eavesY + Math.min(b.w, b.d) * 0.40;
+  const R1 = toV(r1, ridgeY), R2 = toV(r2, ridgeY);
+  const e1 = toV(o1, eaveY), e2 = toV(o2, eaveY), e3 = toV(o3, eaveY), e4 = toV(o4, eaveY);
+  const roofC = shade(b.roof, n, d);
+  const roofLit = mixRGB(roofC, [255, 255, 255], 0.16);
+  const roofDark = mixRGB(roofC, [0, 0, 0], 0.26);
+
+  const frontNormal = alongX ? { x: sa, y: 0, z: -ca } : { x: -ca, y: 0, z: -sa };
+  const planeFront = (cam.rx * frontNormal.x + cam.rz * frontNormal.z) > 0;
+  const under = mixRGB(roofC, [0, 0, 0], 0.45);
+  fillPoly([e1, e2, toV(c2, eavesY - 0.02), toV(c1, eavesY - 0.02)], css(under));
+  fillPoly([e4, e3, toV(c3, eavesY - 0.02), toV(c4, eavesY - 0.02)], css(under));
+  fillPoly([e1, e2, R2, R1], css(planeFront ? roofLit : roofDark));
+  fillPoly([e4, e3, R2, R1], css(planeFront ? roofDark : roofLit));
+  fillPoly([e1, R1, e4], css(mixRGB(wallCol(true), [0, 0, 0], 0.1)));
+  fillPoly([e2, R2, e3], css(mixRGB(wallCol(true), [0, 0, 0], 0.24)));
+
+  for (const f of visible){
+    const cols = Math.max(2, Math.round(f.length / 2.4));
+    const rows = Math.max(1, Math.round(b.h / 3.1));
+    for (let r0 = 0; r0 < rows; r0++){
+      const wy = yTop + 1.5 + r0 * (b.h - 2.0) / rows;
+      if (wy > eavesY - 1.0) break;
+      for (let c0 = 0; c0 < cols; c0++){
+        const t0 = (c0 + 0.28) / cols, t1 = (c0 + 0.82) / cols;
+        const p0 = { x: lerp(f.a.x, f.b.x, t0), z: lerp(f.a.z, f.b.z, t0) };
+        const p1 = { x: lerp(f.a.x, f.b.x, t1), z: lerp(f.a.z, f.b.z, t1) };
+        const wh = Math.min(1.15, (b.h - 2.0) / rows * 0.45);
+        fillPoly([toV(p0, wy), toV(p1, wy), toV(p1, wy + wh), toV(p0, wy + wh)], css(f.winC, 0.92));
+        fillPoly([toV(p0, wy - 0.1), toV(p1, wy - 0.1), toV(p1, wy), toV(p0, wy)], css(f.trimC));
+      }
+    }
+  }
+}
+
+function agentSkeleton(a){
+  const H = a.height;
+  const fx = Math.sin(a.heading), fz = Math.cos(a.heading);
+  const rx = Math.cos(a.heading), rz = -Math.sin(a.heading);
+  const swing = a.walking ? Math.sin(a.phase) : Math.sin(simTime * 1.1 + a.phase) * 0.08;
+  const bob = a.walking ? Math.abs(Math.sin(a.phase)) * 0.06 : Math.sin(simTime * 1.4 + a.phase) * 0.015;
+  const P = (f, r, y) => ({ x: a.x + fx * f + rx * r, y: a.y + y * H + bob * H, z: a.z + fz * f + rz * r });
+
+  const hip = P(0, 0, 0.50), shoulder = P(0, 0, 0.82);
+  const shL = P(0, -0.235, 0.82), shR = P(0, 0.235, 0.82);
+  const hpL = P(0, -0.155, 0.48), hpR = P(0, 0.155, 0.48);
+  const legSwing = swing * 0.55;
+  const footL = P(legSwing * 0.55, -0.105, 0.02 - Math.max(0, swing) * 0.10);
+  const footR = P(-legSwing * 0.55, 0.105, 0.02 - Math.max(0, -swing) * 0.10);
+  const kneeL = P(legSwing * 0.30, -0.105, 0.27);
+  const kneeR = P(-legSwing * 0.30, 0.105, 0.27);
+  const armSwing = -swing * 0.42;
+  const handL = P(armSwing * 0.7, -0.30, 0.50);
+  const handR = P(-armSwing * 0.7, 0.30, 0.50);
+  const elbowL = P(armSwing * 0.3, -0.27, 0.67);
+  const elbowR = P(-armSwing * 0.3, 0.27, 0.67);
+  const head = P(0, 0, 0.94);
+  const neck = P(0, 0, 0.86);
+  return { hip: hip, shoulder: shoulder, shL: shL, shR: shR, hpL: hpL, hpR: hpR, neck: neck,
+           head: head, kneeL: kneeL, kneeR: kneeR, footL: footL, footR: footR,
+           elbowL: elbowL, elbowR: elbowR, handL: handL, handR: handR, H: H };
+}
+
+function screenQuad(ax, ay, bx, by, wa, wb, style, dx){
+  ctx.beginPath();
+  ctx.moveTo(ax - wa + (dx || 0), ay);
+  ctx.lineTo(ax + wa + (dx || 0), ay);
+  ctx.lineTo(bx + wb + (dx || 0), by);
+  ctx.lineTo(bx - wb + (dx || 0), by);
+  ctx.closePath();
+  ctx.fillStyle = style;
+  ctx.fill();
+}
+
+function drawAgent(a){
+  const k = agentSkeleton(a);
+  const d = viewOf(a.x, a.y, a.z).z;
+  if (d <= 0) return;
+  const body = a.color;
+  const lit = shade(body, normalAt(a.x, a.z), d);
+  const dark = mixRGB(lit, [0, 0, 0], 0.35);
+  const light = mixRGB(lit, [255, 255, 255], 0.16);
+  const roleTint = ROLE_COLOR[a.role];
+
+  const sp = toScreen(viewOf(k.head.x, k.head.y, k.head.z));
+  if (sp.z <= 0 || sp.x < -260 || sp.x > VIEW_W + 260 || sp.y < -200 || sp.y > VIEW_H + 260) return;
+
+  const shadow = toScreen(viewOf(a.x, a.y + 0.05, a.z));
+  const sr = Math.max(1, a.height * 0.16 * shadow.s);
+  ctx.fillStyle = "rgba(0,0,0," + (0.28 * (1 - clamp(d / 260, 0, 0.75))).toFixed(3) + ")";
+  ctx.beginPath();
+  ctx.ellipse(shadow.x, shadow.y, sr, sr * 0.42, 0, 0, TAU);
+  ctx.fill();
+
+  const w = a.height * 0.098;
+  drawLine3(k.footL, k.kneeL, css(dark), w);
+  drawLine3(k.kneeL, k.hpL, css(dark), w * 1.05);
+  drawLine3(k.footR, k.kneeR, css(dark), w);
+  drawLine3(k.kneeR, k.hpR, css(dark), w * 1.05);
+  const torso = css(lit), torsoBack = css(mixRGB(lit, [0, 0, 0], 0.3));
+  const hipS = toScreen(viewOf(k.hip.x, k.hip.y, k.hip.z));
+  const shS = toScreen(viewOf(k.shoulder.x, k.shoulder.y, k.shoulder.z));
+  const neckS = toScreen(viewOf(k.neck.x, k.neck.y, k.neck.z));
+  const unit = a.height * hipS.s;
+  screenQuad(shS.x, shS.y, hipS.x, hipS.y, unit * 0.125, unit * 0.085, torso);
+  screenQuad(neckS.x, neckS.y, hipS.x, hipS.y, unit * 0.118, unit * 0.08, torsoBack, -unit * 0.03);
+  drawLine3(k.shL, k.elbowL, css(light), w * 0.62);
+  drawLine3(k.elbowL, k.handL, css(light), w * 0.54);
+  drawLine3(k.shR, k.elbowR, css(mixRGB(light, [0, 0, 0], 0.22)), w * 0.62);
+  drawLine3(k.elbowR, k.handR, css(mixRGB(light, [0, 0, 0], 0.22)), w * 0.54);
+  drawLine3(k.neck, k.head, css(mixRGB(lit, [255, 255, 255], 0.1)), w * 0.9);
+
+  const headV = viewOf(k.head.x, k.head.y, k.head.z);
+  const hs = toScreen(headV);
+  const hr = Math.max(1, a.height * 0.098 * hs.s);
+  ctx.fillStyle = css(mixRGB(lit, [255, 255, 255], 0.22));
+  ctx.beginPath();
+  ctx.arc(hs.x, hs.y - hr * 0.15, hr, 0, TAU);
+  ctx.fill();
+
+  const ringR = hr * 2.0;
+  ctx.strokeStyle = css(roleTint, 0.85);
+  ctx.lineWidth = Math.max(0.8, hr * 0.28);
+  ctx.beginPath();
+  ctx.ellipse(shadow.x, shadow.y, ringR, ringR * 0.45, 0, 0, TAU);
+  ctx.stroke();
+
+  if (a.role === "Avatar"){
+    const fs = Math.max(1, a.height * 0.12 * shadow.s);
+    ctx.fillStyle = "rgba(8,12,16,.5)";
+    ctx.beginPath();
+    ctx.ellipse(shadow.x - ringR * 0.6, shadow.y - ringR * 0.18, fs * 1.5, fs * 1.5, 0, -Math.PI / 2, -Math.PI / 2 + TAU * a.affect.focus);
+    ctx.fill();
+    ctx.strokeStyle = css(roleTint, 0.9);
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+    if (a.affect.stress > 0.52){
+      const pulse = 0.4 + 0.4 * Math.sin(simTime * 3 + a.phase);
+      ctx.strokeStyle = "rgba(255,107,107," + (0.25 + pulse * 0.5).toFixed(3) + ")";
+      ctx.lineWidth = Math.max(1, hr * 0.22);
+      ctx.beginPath();
+      ctx.ellipse(shadow.x, shadow.y, ringR * 1.35, ringR * 0.6, 0, 0, TAU);
+      ctx.stroke();
+    }
+    if (a.coached > 0){
+      ctx.strokeStyle = "rgba(79,209,197," + (0.3 + 0.3 * Math.sin(simTime * 2)).toFixed(3) + ")";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.ellipse(shadow.x, shadow.y, ringR * 1.15, ringR * 0.52, 0, 0, TAU);
+      ctx.stroke();
+    }
+  }
+  if (a.role === "Aide" && a.intent === "Coach" && a.tetherId){
+    const tgt = agents.find(b => b.id === a.tetherId);
+    if (tgt){
+      const from = toScreen(viewOf(a.x, a.y + a.height * 0.92, a.z));
+      const to = toScreen(viewOf(tgt.x, tgt.y + tgt.H * 0.92, tgt.z));
+      ctx.strokeStyle = "rgba(79,209,197,.45)";
+      ctx.setLineDash([4, 5]);
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  if (d > 96) return;
+  const fontSize = clamp(150 / Math.max(d, 4) * 3.6, 8.5, 18);
+  ctx.font = "600 " + fontSize.toFixed(1) + "px Inter, system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+  const label = a.name;
+  const y = hs.y - hr * 1.5;
+  ctx.fillStyle = "rgba(6,10,14,.55)";
+  const tw = ctx.measureText(label).width;
+  ctx.beginPath();
+  const pad = fontSize * 0.34;
+  if (ctx.roundRect) ctx.roundRect(hs.x - tw / 2 - pad, y - fontSize, tw + pad * 2, fontSize * 1.28, fontSize * 0.4);
+  else ctx.rect(hs.x - tw / 2 - pad, y - fontSize, tw + pad * 2, fontSize * 1.28);
+  ctx.fill();
+  ctx.fillStyle = a.role === "NPC" ? "#c3d2dc" : css(mixRGB(roleTint, [255, 255, 255], 0.35));
+  ctx.fillText(label, hs.x, y);
+  if (a.role !== "NPC" && fontSize > 9.5){
+    ctx.font = "500 " + (fontSize * 0.72).toFixed(1) + "px Inter, system-ui, sans-serif";
+    ctx.fillStyle = "rgba(200,216,228,.7)";
+    const sub = a.intent.toLowerCase();
+    ctx.fillText(sub, hs.x, y + fontSize * 0.95);
+  }
+}
+
+function renderAgents(){
+  for (const a of agents){
+    const d = viewOf(a.x, a.y, a.z).z;
+    if (d <= 0 || d > 320) continue;
+    push(d - 0.25, () => drawAgent(a));
+  }
+}
+
+function renderSpotLabels(){
+  for (const p of pois){
+    const d = viewOf(p.x, p.y + 3.2, p.z).z;
+    if (d <= 0 || d > 190) continue;
+    const s = toScreen(viewOf(p.x, p.y + 3.2, p.z));
+    if (s.x < 0 || s.x > VIEW_W) continue;
+    const fs = clamp(220 / Math.max(d, 6) * 5, 9, 15);
+    ctx.font = "600 " + fs.toFixed(1) + "px Inter, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "rgba(6,10,14,.4)";
+    const tw = ctx.measureText(p.name.toUpperCase()).width;
+    ctx.fillRect(s.x - tw / 2 - 5, s.y - fs * 0.7, tw + 10, fs * 1.4);
+    ctx.fillStyle = "rgba(214,232,242,.72)";
+    ctx.fillText(p.name.toUpperCase(), s.x, s.y);
+  }
+}
+
+function render(){
+  ctx.setTransform(VIEW_DPR, 0, 0, VIEW_DPR, 0, 0);
+  const w = VIEW_W, h = VIEW_H;
+  renderSky(w, h);
+  drawList.length = 0;
+  renderGround();
+  renderWater();
+  renderBuildings();
+  renderTrees();
+  renderAgents();
+  drawList.sort((a, b) => b.d - a.d);
+  for (const item of drawList){
+    if (item.d < -30) continue;
+    item.fn();
+  }
+  renderSpotLabels();
+}
+/* ============================================================
+   HUD — spectator panels
+   ============================================================ */
+
+const el = id => document.getElementById(id);
+const oTick = el("oTick"), oClock = el("oClock"), oSeed = el("oSeed"), oCount = el("oCount"),
+      oFps = el("oFps"), runState = el("runState"), runDot = el("runDot"),
+      oScenId = el("oScenId"), oScenName = el("oScenName"), oScenMeta = el("oScenMeta"),
+      loglist = el("loglist"), oLogCount = el("oLogCount"),
+      tierName = el("tierName"), tierDetail = el("tierDetail"), tierBar = el("tierbar"),
+      toast = el("toast");
+
+function renderLog(){
+  const rows = eventLog.slice(0, 9).map(e =>
+    '<div class="ev ' + e.kind + '"><time>' + clockLabel(e.t) + "</time><span><b>" +
+    e.who + "</b> " + e.text + "</span></div>").join("");
+  loglist.innerHTML = rows || '<div class="note">no events yet — the world is just beginning.</div>';
+  oLogCount.textContent = logCount;
+}
+
+function renderScenarioPanel(){
+  oScenId.textContent = activeScenario.id;
+  oScenName.textContent = activeScenario.name;
+  oScenMeta.innerHTML = activeScenario.category + " · <span class=\"trait\">" + activeScenario.trait +
+    "</span><br>affects " + activeScenario.dim + " · aversiveness " + activeScenario.aversiveness +
+    " · demand " + activeScenario.demand;
+}
+
+function needRow(label, v, color){
+  return '<div class="need"><span>' + label + '</span><span class="bar"><span style="width:' +
+    (clamp(v, 0, 1) * 100).toFixed(0) + "%;background:" + color +
+    '"></span></span><em>' + Math.round(clamp(v, 0, 1) * 100) + "</em></div>";
+}
+
+function renderCard(){
+  const a = agents.find(x => x.id === selectedId);
+  el("cEmpty").classList.toggle("hidden", !!a);
+  el("cBody").classList.toggle("hidden", !a);
+  if (!a) return;
+  const rc = ROLE_COLOR[a.role];
+  el("cId").textContent = a.id;
+  el("cChip").textContent = a.name.slice(0, 1).toUpperCase();
+  el("cChip").style.background = css(rc);
+  el("cName").textContent = a.name;
+  el("cRole").textContent = a.role;
+  el("cIntent").textContent = a.intent + " — " + (simTime < a.lastVerbUntil ? a.lastVerb : "settling in");
+  el("cNeeds").innerHTML =
+    needRow("energy", a.needs.energy, "#ffb454") +
+    needRow("hunger", a.needs.hunger, "#ff8f5a") +
+    needRow("social", a.needs.social, "#4fd1c5") +
+    needRow("focus", a.needs.focus, "#8fd3ff");
+  el("cAffect").innerHTML =
+    needRow("stress", a.affect.stress, "#ff6b6b") +
+    needRow("load", a.affect.load, "#c792ea");
+  el("cTraits").textContent = a.traits + " · " + (a.state === "walking" ? "walking" : a.state === "coaching" ? "coaching" : "acting");
+}
+
+function renderHUD(fps){
+  oTick.textContent = tick;
+  oClock.textContent = clockLabel(simTime);
+  oSeed.textContent = terrain.seed;
+  oCount.textContent = agents.length;
+  oFps.textContent = fps.toFixed(0) + " fps";
+  runState.textContent = running ? "RUNNING" : (stepOnce ? "STEPPING" : "PAUSED");
+  runDot.classList.toggle("paused", !running);
+  const t = TIERS[advocateTier];
+  tierName.textContent = t.name;
+  tierName.style.color = t.color;
+  tierDetail.textContent = t.note;
+  const bars = tierBar.children;
+  for (let i = 0; i < bars.length; i++){
+    bars[i].classList.toggle("on", i <= advocateTier);
+    if (i <= advocateTier) bars[i].style.background = t.color;
+    else bars[i].style.background = "";
+  }
+  renderCard();
+}
+
+let toastTimer = null;
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 1500);
+}
+
+/* ============================================================
+   Observer controls — humans never move a resident
+   ============================================================ */
+
+function setRunning(v){
+  running = v;
+  el("bPause").textContent = running ? "Pause" : "Resume";
+  el("bPause").classList.toggle("on", !running);
+}
+
+el("bPause").addEventListener("click", () => setRunning(!running));
+el("bStep").addEventListener("click", () => { stepOnce = true; running = false; setRunning(false); });
+el("bFollow").addEventListener("click", () => {
+  followId = followId ? null : selectedId;
+  showToast(followId ? "following " + followId : "camera released");
+});
+document.querySelectorAll("[data-pace]").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll("[data-pace]").forEach(o => o.classList.remove("on"));
+  b.classList.add("on");
+  pace = parseFloat(b.dataset.pace);
+}));
+el("bRespawn").addEventListener("click", () => {
+  terrain.seed = (terrain.seed * 1103515245 + 12345) & 0x7fffffff;
+  const keepCam = { tx: cam.tx, tz: cam.tz };
+  pois = [];
+  buildTerrain(terrain.seed);
+  buildProps(terrain.seed);
+  spawnWorld(terrain.seed);
+  cam.tx = keepCam.tx; cam.tz = keepCam.tz;
+  selectedId = null;
+  showToast("reseeded — world " + terrain.seed);
+});
+
+const scenSel = el("scenSel");
+for (const s of SCENARIOS){
+  const o = document.createElement("option");
+  o.value = s.id;
+  o.textContent = s.id + " · " + s.name;
+  scenSel.appendChild(o);
+}
+scenSel.value = activeScenario.id;
+scenSel.addEventListener("change", () => {
+  const next = SCENARIOS.find(s => s.id === scenSel.value);
+  if (!next) return;
+  activeScenario = next;
+  renderScenarioPanel();
+  for (const a of agents) if (a.role === "Avatar") a.state = "idle";
+  logEvent("sys", "Scenario", "assigned " + next.id + " — " + next.name + " (" + next.category + ")");
+  showToast("scenario → " + next.name);
+});
+
+/* ---------- pointer + keyboard ---------- */
+
+let dragging = false, lastX = 0, lastY = 0, moved = 0;
+
+canvas.addEventListener("pointerdown", e => {
+  dragging = true; moved = 0;
+  lastX = e.clientX; lastY = e.clientY;
+  canvas.classList.add("dragging");
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener("pointermove", e => {
+  if (!dragging) return;
+  const dx = e.clientX - lastX, dy = e.clientY - lastY;
+  lastX = e.clientX; lastY = e.clientY;
+  moved += Math.abs(dx) + Math.abs(dy);
+  cam.yaw -= dx * 0.005;
+  cam.pitch = clamp(cam.pitch + dy * 0.004, 0.10, 1.32);
+  followId = null;
+});
+canvas.addEventListener("pointerup", e => {
+  dragging = false;
+  canvas.classList.remove("dragging");
+  if (moved < 6){
+    const rect = canvas.getBoundingClientRect();
+    pick(e.clientX - rect.left, e.clientY - rect.top);
+  }
+});
+canvas.addEventListener("wheel", e => {
+  e.preventDefault();
+  cam.dist = clamp(cam.dist * (e.deltaY > 0 ? 1.11 : 0.9), 12, 300);
+}, { passive: false });
+
+function pick(sx, sy){
+  let best = null, bestD = Infinity;
+  for (const a of agents){
+    const k = agentSkeleton(a);
+    const s = toScreen(viewOf(k.head.x, k.head.y, k.head.z));
+    if (s.z <= 0) continue;
+    const d = Math.hypot(s.x - sx, s.y - sy);
+    const rad = Math.max(16, a.height * 0.3 * s.s);
+    if (d < rad && d < bestD){ best = a; bestD = d; }
+  }
+  selectedId = best ? best.id : null;
+  if (best) showToast(best.name + " — " + best.role);
+}
+
+const keys = {};
+document.addEventListener("keydown", e => {
+  const k = e.key.toLowerCase();
+  keys[k] = true;
+  if (k === " "){ e.preventDefault(); setRunning(!running); }
+  if (k === "f"){ followId = followId ? null : selectedId; showToast(followId ? "following " + followId : "camera released"); }
+  if (k === "escape"){ selectedId = null; followId = null; }
+});
+document.addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; });
+
+function panFromKeys(dt){
+  const sp = cam.dist * 0.55 * dt;
+  let fx = 0, fz = 0;
+  if (keys["w"] || keys["arrowup"]) fz -= 1;
+  if (keys["s"] || keys["arrowdown"]) fz += 1;
+  if (keys["a"] || keys["arrowleft"]) fx -= 1;
+  if (keys["d"] || keys["arrowright"]) fx += 1;
+  if (!fx && !fz) return;
+  const l = Math.hypot(fx, fz);
+  fx /= l; fz /= l;
+  const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);
+  cam.tx += (fx * cy + fz * sy) * sp;
+  cam.tz += (-fx * sy + fz * cy) * sp;
+  followId = null;
+  const E = WORLD.extent / 2 - 6;
+  cam.tx = clamp(cam.tx, -E, E);
+  cam.tz = clamp(cam.tz, -E, E);
+}
+
+/* ============================================================
+   Boot + loop
+   ============================================================ */
+
+let VIEW_DPR = 1;
+let VIEW_W = 0, VIEW_H = 0;
+
+function resize(){
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  VIEW_W = window.innerWidth;
+  VIEW_H = window.innerHeight;
+  canvas.width = Math.floor(VIEW_W * dpr);
+  canvas.height = Math.floor(VIEW_H * dpr);
+  canvas.style.width = VIEW_W + "px";
+  canvas.style.height = VIEW_H + "px";
+  VIEW_DPR = dpr;
+}
+window.addEventListener("resize", () => { resize(); });
+
+buildTerrain(terrain.seed);
+buildProps(terrain.seed);
+spawnWorld(terrain.seed);
+renderScenarioPanel();
+renderLog();
+resize();
+
+el("enter").addEventListener("click", () => {
+  el("intro").classList.add("gone");
+  setTimeout(() => el("intro").classList.add("hidden"), 800);
+});
+
+const SIM_DT = 1 / 6;
+let last = performance.now();
+let fps = 60, fpsAcc = 0, fpsFrames = 0;
+let simRnd = mulberry32(terrain.seed ^ 0x5bf03635);
+let uiAcc = 0;
+
+function frame(now){
+  const rawDt = Math.min(0.1, (now - last) / 1000);
+  last = now;
+  fpsAcc += rawDt; fpsFrames++;
+  if (fpsAcc > 0.5){ fps = fpsFrames / fpsAcc; fpsAcc = 0; fpsFrames = 0; }
+
+  panFromKeys(rawDt);
+
+  if (running || stepOnce){
+    simRnd = mulberry32(terrain.seed ^ (tick * 2654435761));
+    const steps = stepOnce ? 1 : Math.max(1, Math.round(rawDt * 60 * pace));
+    for (let i = 0; i < steps; i++) stepSim(SIM_DT, simRnd);
+    stepOnce = false;
+  }
+
+  const target = followId ? agents.find(a => a.id === followId) : null;
+  if (target){
+    cam.tx += (target.x - cam.tx) * 0.08;
+    cam.tz += (target.z - cam.tz) * 0.08;
+    cam.ty += (target.y + 2 - cam.ty) * 0.08;
+  } else {
+    cam.ty += ((heightAt(cam.tx, cam.tz) + 2) - cam.ty) * 0.05;
+  }
+
+  updateCamera(VIEW_W, VIEW_H);
+  updateSky();
+  render();
+  uiAcc += rawDt;
+  if (uiAcc > 0.1){ uiAcc = 0; renderHUD(fps); }
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

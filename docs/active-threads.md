@@ -2,11 +2,21 @@
 
 > This file tracks active work threads. Agents must read this at session start and update it during and at the end of each session.
 
-**Last updated:** 2026-09-24
+**Last updated:** 2026-10-01
 
 ---
 
 ## Active Threads
+
+### 🌐 HABITAT-001 — Single-page AI habitat viewer (UE retirement proposal)
+- **Status:** open — awaiting Joshua's decision on retiring the UE 5.8 authoritative runtime
+- **Owner:** Kilo
+- **Started:** 2026-10-01
+- **Last updated:** 2026-10-01
+- **Branch:** `kilo/modular-fern-k54`
+- **Summary:** Built `WorldEngine/Content/Web/habitat.html` — a self-contained, zero-dependency single page that renders the whole vision: procedural terrain/water/sky with a time-of-day lighting model, vegetation and a settlement, articulated AI residents with walk cycles, role rings and name labels, and a spectator HUD (observer controls, per-resident needs/affect, Aide intervention log, RRT Advocate escalation tiers, and the 13-scenario ADHD catalog). The simulation is deterministic from a single seed and runs with no `Math.random`, matching the DESIGN.md determinism rule.
+- **Blockers:** Replacing the UE 5.8 authoritative simulation with a browser page is an architecture change (AGENTS.md guardrail: *No architecture decisions*), so the UE tree in `WorldEngine/` is **untouched**. Decision escalated in `docs/escalations/2026-10-01-single-page-habitat-vs-ue5.md`.
+- **Next action:** Joshua to choose (a) full retirement of UE in favour of the page, (b) keep UE authoritative and treat the page as the spectator viewer, or (c) keep both, with the page driven by a UE snapshot feed. If (a) or (c) is chosen, wire the `contracts/v1` snapshot shape into the page and decommission the `WorldEngine/Content/Web/index.html` placeholder.
 
 ### 🧪 DET-001 — Deterministic state verification and headless build foundation
 - **Status:** open
