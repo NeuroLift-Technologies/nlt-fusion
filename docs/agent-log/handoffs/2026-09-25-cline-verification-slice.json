@@ -1,0 +1,75 @@
+{
+  "handoff_record": {
+    "session_id": "2026-09-25-cline-verification-slice",
+    "agent_name": "Cline",
+    "date": "2026-09-25",
+    "otoi_version": "ORG-DEV-OTOI-1.0.3",
+    "repo": "NeuroLift-Technologies/nlt-world-engine",
+    "branch": "cline/d8d52",
+    "work_completed": [
+      "Added WorldEngineServer.Target.cs with non-editor server target settings.",
+      "Added DefaultServer.ini with Workplace_Level as the server default map and NLTDemoGameMode as the server game mode.",
+      "Added FNLTRandomStream InitialSeed metadata and deterministic Reset behavior.",
+      "Updated deterministic seed serialization to retain reset metadata while accepting the legacy Seed+Calls format.",
+      "Added FNLTDeterministicStateHash with a versioned canonical state representation and BLAKE3 digest.",
+      "Added three UE AutomationTests for random-stream reset, seed serialization, and canonical state hashing.",
+      "Added a versioned JSON replay record with state, RNG, action, event, and hash integrity verification.",
+      "Added replay round-trip, malformed JSON, tamper, and observed-final-state AutomationTests.",
+      "Added shared configurable visual LOD policy with distance thresholds, hysteresis, viewer fallback, and Mesh/HISM/fallback representation selection.",
+      "Integrated visual-only LOD filtering into Mass HISM visualization and actor-resident mesh visibility without changing simulation state or update rates.",
+      "Added four LOD policy AutomationTests for thresholds, hysteresis, representation/fallback, and viewer fallback.",
+      "Added dedicated-server guards preventing local-player spawn retries and door spawning on headless servers.",
+      "Created the required Cline agent registration record."
+    ],
+    "work_in_progress": [
+      "Server target compilation and runtime smoke testing remain pending on a UE distribution with Dedicated Server support.",
+      "CI build validation remains pending until the supported UE runner is selected."
+    ],
+    "blockers": [
+      "The installed UE 5.8 distribution reports: Server targets are not currently supported from this engine distribution.",
+      "The first automation commandlet attempt was stopped because Python startup attempted to download a 2.5 GB PyTorch dependency; the successful run used -DisablePython."
+    ],
+    "decisions_made": [
+      "Use UE's built-in BLAKE3 implementation for the local deterministic state verification hash; do not add a new third-party dependency.",
+      "Do not modify the archived external SHA-256 replay schema or invent the Fusion WebSocket contract in this slice.",
+      "Keep the seed persistence format backward-compatible with existing two-field saves."
+    ],
+    "decisions_pending": [
+      "Joshua must select the UE-capable CI runner and confirm whether a server-capable UE distribution will be used.",
+      "The full Fusion-to-Unreal WebSocket wire contract still requires approval before implementation."
+    ],
+    "escalations": [
+      "Environment limitation recorded in docs/active-threads.md: this installed UE distribution cannot create Server targets."
+    ],
+    "next_agent_notes": "Editor validation is green: WorldEngineEditor Win64 Development builds with ASFDK_ROOT=D:\\nlt-repos\\asfdk-cplus, and the combined NLT.Simulation suite passes 7/7 (3 determinism + 4 replay) in WorldEngine/Saved/TestReports/replay-final/index.json. The replay layer verifies record integrity and observed final-state hashes but does not execute action payloads until an approved action contract exists. Use -DisablePython when invoking UnrealEditor-Cmd.exe to avoid the project Python plugin's optional PyTorch installation. Re-run the server target only on a UE distribution that supports Server targets.",
+    "files_modified": [
+      "WorldEngine/Source/WorldEngineServer.Target.cs",
+      "WorldEngine/Config/DefaultServer.ini",
+      "WorldEngine/Source/WorldEngine/Public/Core/NLTSimulationState.h",
+      "WorldEngine/Source/WorldEngine/Public/Core/NLTSimulationStateHash.h",
+      "WorldEngine/Source/WorldEngine/Public/Core/NLTSimulationReplay.h",
+      "WorldEngine/Source/WorldEngine/Public/Visual/NLTVisualLODPolicy.h",
+      "WorldEngine/Source/WorldEngine/Private/Core/NLTSimulationStateHash.cpp",
+      "WorldEngine/Source/WorldEngine/Private/Core/NLTSimulationReplay.cpp",
+      "WorldEngine/Source/WorldEngine/Private/Visual/NLTVisualLODPolicy.cpp",
+      "WorldEngine/Source/WorldEngine/Private/Simulation/NLTDeterministicSeedSubsystem.cpp",
+      "WorldEngine/Source/WorldEngine/Private/Scenarios/NLTDemoGameMode.cpp",
+      "WorldEngine/Source/WorldEngine/Private/Tests/NLTSimulationDeterminismTests.cpp",
+      "WorldEngine/Source/WorldEngine/NLTAgentVisualizer.h",
+      "WorldEngine/Source/WorldEngine/NLTAgentVisualizer.cpp",
+      "WorldEngine/Source/WorldEngine/Public/Agents/AvatarCharacter.h",
+      "WorldEngine/Source/WorldEngine/Private/Agents/AvatarCharacter.cpp",
+      "docs/active-threads.md",
+      "docs/agent-log/registrations/2026-09-25-cline-verification-slice.json"
+    ],
+    "tests_run": [
+      "WorldEngineEditor Win64 Development UBT build: Result: Succeeded with ASFDK_ROOT=D:\\nlt-repos\\asfdk-cplus.",
+      "UnrealEditor-Cmd.exe -DisablePython -ExecCmds=\"Automation RunTests NLT.Simulation\": 7 succeeded, 0 failed, 0 warnings (3 determinism + 4 replay tests).",
+      "UnrealEditor-Cmd.exe -DisablePython -ExecCmds=\"Automation RunTests NLT.VisualLOD.Policy\": 4 succeeded, 0 failed, 0 warnings.",
+      "WorldEngineEditor Win64 Development UBT build after LOD integration: Result: Succeeded with ASFDK_ROOT=D:\\nlt-repos\\asfdk-cplus.",
+      "WorldEngineServer Win64 Development UBT invocation: blocked before compilation by the installed engine distribution's unsupported-server-target message."
+    ],
+    "tests_passing": true,
+    "pr_url": null
+  }
+}

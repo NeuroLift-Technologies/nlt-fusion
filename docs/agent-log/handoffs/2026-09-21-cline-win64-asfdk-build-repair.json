@@ -1,0 +1,50 @@
+{
+  "handoff_record": {
+    "session_id": "session_1790011638962_i7men",
+    "agent_name": "Cline",
+    "date": "2026-09-21",
+    "otoi_version": "ORG-DEV-OTOI-1.0.3",
+    "repo": "NeuroLift-Technologies/nlt-world-engine",
+    "branch": "fix/win64-asfdk-stubs",
+    "work_completed": [
+      "Root-caused C1083 'asfdk/ASFDK.h': the ThirdParty/ASFDK junction in the user's UE build tree (C:\\Users\\joshd\\Documents\\Unreal Projects\\WorldEngine) pointed at C:\\Users\\joshd\\Documents\\nlt-repos\\asfdk-cplus, gone after nlt-repos moved to D:\\. Junction re-pointed to D:\\nlt-repos\\asfdk-cplus.",
+      "Hardened NLTGovernanceSubsystem.Build.cs: ASFDK root resolves via the ASFDK_ROOT environment variable with ThirdParty/ASFDK as fallback; build fails loudly with a BuildException (with exact fix commands) when the root is unusable, instead of silently adding dead include paths. Documented and guarded the duplicate nlohmann/json.hpp vendoring (packages/include must stay first; the packages/rrt-advocate copy differs in size and must not win).",
+      "Rewrote ASFDK_Win64Stubs.cpp to compile and link against the real ASFDK-C++ headers: no repeated default arguments, exact member-initializer lists for sleepwalker::SleepwalkerProtocol, deliberate null pillar unique_ptrs with no dereferences, and fail-safe outputs (flagged=true, 'ASFDK not built for Win64') instead of fabricated governance results.",
+      "Root-caused LNK1104 on 'UnrealEditor-WorldEngine-0002.lib.rsp': legacy hot-reload-from-IDE re-applied a stale, internally inconsistent HotReloadState.json while UnrealEditor.exe was running; UBT's base-name substitution (HotReload.cs:1214-1228) rewrote the import-library action's response-file argument to a file no action produces. Full write-up in WorldEngine/docs/building/LNK1104-rsp-diagnosis.md.",
+      "Cleared the poisoned HotReloadState.json / Metadata-HotReload.json in the build tree; the exact failing command (Build.bat WorldEngineEditor Win64 Development) then completed with 'Result: Succeeded' in 59s with the editor still open (designed hot-reload flow). Game-target build also 'Result: Succeeded' (230s, fresh WorldEngine.exe).",
+      "Repaired the canonical repo's ASFDK wiring: added the missing .gitmodules mapping for the previously dangling gitlink and restored the submodule at the pinned commit 55b21fe7ead7b41cf1be472c099f283703234856 (https://github.com/NeuroLift-Technologies/asfdk-cplus.git)."
+    ],
+    "work_in_progress": [],
+    "blockers": [],
+    "decisions_made": [
+      "Kept C:\\Users\\joshd\\Documents\\Unreal Projects\\WorldEngine as the UE build tree (user decision) and D:\\nlt-repos\\nlt-world-engine as the canonical git repo; fixes authored in the build tree were ported byte-identical into the canonical repo.",
+      "Did not terminate the user's running UnrealEditor.exe (unsaved-work safety); resolved the link failure by clearing stale hot-reload state instead, which is reversible and self-healing.",
+      "Preserved the Win64 stub philosophy (no fabricated governance output) rather than building a Win64 ASFDK library, which remains a TODO."
+    ],
+    "decisions_pending": [
+      "Whether to build a real Win64 ASFDK-C++ library (build-win64 CMake tree exists but is incomplete) or keep the verified stub path - Joshua.",
+      "Long-term relationship between the C: build tree and the canonical repo (sync mechanism or documented deployment step) - Joshua.",
+      "Windows Defender exclusion for the Intermediate tree (recommended command in WorldEngine/docs/building/LNK1104-rsp-diagnosis.md section 7) - Joshua to approve; nothing was changed."
+    ],
+    "escalations": [],
+    "next_agent_notes": "The canonical repo now builds NLTGovernanceSubsystem on Win64 out of the box via the restored submodule; if it is not checked out, Build.cs fails loudly and tells you to run 'git submodule update --init WorldEngine/Plugins/NLTGovernanceSubsystem/ThirdParty/ASFDK' or set ASFDK_ROOT. When building the editor target from Visual Studio while the Unreal Editor is running, UBT uses the legacy hot-reload-from-IDE path; if LNK1104 on a -NNNN.lib.rsp ever recurs, close the editor (or clear Intermediate/Build/Win64/x64/WorldEngineEditor/Development/HotReloadState.json and Metadata-HotReload.json) and rebuild - see WorldEngine/docs/building/LNK1104-rsp-diagnosis.md. Never expose packages/rrt-advocate/include/nlohmann on the include path. Scratch verification probe (not part of the module) lives at Plugins/NLTGovernanceSubsystem/Intermediate/StubCheck/ in the C: build tree and is safe to delete.",
+    "files_modified": [
+      "WorldEngine/Plugins/NLTGovernanceSubsystem/Source/NLTGovernanceSubsystem/NLTGovernanceSubsystem.Build.cs",
+      "WorldEngine/Plugins/NLTGovernanceSubsystem/Source/NLTGovernanceSubsystem/Private/ASFDK_Win64Stubs.cpp",
+      "WorldEngine/docs/building/LNK1104-rsp-diagnosis.md",
+      ".gitmodules",
+      "DEPLOYMENT.md",
+      "docs/active-threads.md",
+      "docs/agent-log/registrations/2026-09-21-cline-win64-asfdk-build-repair.json",
+      "docs/agent-log/handoffs/2026-09-21-cline-win64-asfdk-build-repair.json"
+    ],
+    "tests_run": [
+      "Standalone MSVC compile of ASFDK_Win64Stubs.cpp: cl /std:c++20 /EHsc /W4 /permissive- /c with the six ASFDK include dirs - exit 0, zero diagnostics.",
+      "Forced-reference link probe (StubLinkProbe.cpp) exercising every stubbed symbol - link exit 0, no LNK2001/LNK2019; runtime output confirmed fail-safe behaviour.",
+      "Authoritative game-target build: Build.bat WorldEngine Win64 Development - Result: Succeeded (229.76s); AgentGovernanceState.cpp and ASFDK_Win64Stubs.cpp compiled under full UE settings; WorldEngine.exe linked fresh.",
+      "Authoritative editor-target build: Build.bat WorldEngineEditor Win64 Development - Result: Succeeded (59.25s) after clearing stale hot-reload state; UnrealEditor-NLTGovernanceSubsystem-0001.dll and UnrealEditor-WorldEngine-0001.dll produced and hot-reloaded."
+    ],
+    "tests_passing": true,
+    "pr_url": "https://github.com/NeuroLift-Technologies/nlt-world-engine/pull/50"
+  }
+}

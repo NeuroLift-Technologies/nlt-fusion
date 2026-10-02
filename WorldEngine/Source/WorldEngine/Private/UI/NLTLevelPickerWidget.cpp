@@ -52,7 +52,7 @@ void UNLTLevelPickerWidget::HidePicker()
 {
 	if (IsInViewport())
 	{
-		RemoveFromViewport();
+		RemoveFromParent();
 	}
 
 	SetVisibility(ESlateVisibility::Hidden);

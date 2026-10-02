@@ -11,7 +11,7 @@ import math
 import os
 
 # --- Config ---
-OUTPUT_DIR = "/home/joshd/Desktop/nlt-repos/nlt-fusion/WorldEngine/Content/Kits/Workplace"
+OUTPUT_DIR = "D:/nlt-repos/nlt-fusion/WorldEngine/Content/Kits/Workplace"
 BLEND_FILE = os.path.join(OUTPUT_DIR, "WorkplaceKit.blend")
 FBX_FILE = os.path.join(OUTPUT_DIR, "WorkplaceKit.fbx")
 

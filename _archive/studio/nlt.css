@@ -1,0 +1,188 @@
+/* ============================================================
+   NLT Fusion — "Habitat" design system
+   A bright, playful Sims/RPG visual layer for the World Engine.
+   Tokens + base styles. View-specific styles live in each .jsx.
+   ============================================================ */
+
+:root {
+  /* -- type -- */
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* -- warm "paper" surfaces (light game UI) -- */
+  --paper: #f4efe6;          /* app background */
+  --paper-2: #ece4d6;        /* recessed bg */
+  --card: #fffdf8;           /* panel surface */
+  --card-2: #f8f3ea;         /* nested surface */
+  --line: #e4dac8;           /* hairline */
+  --line-2: #d6c9b2;         /* stronger line */
+
+  /* -- ink -- */
+  --ink: #2c2a26;            /* primary text */
+  --ink-2: #6c655a;          /* secondary */
+  --ink-3: #a39884;          /* tertiary / muted */
+
+  /* -- brand / fusion -- */
+  --gold: #f5a623;
+  --gold-deep: #e07b2c;
+  --violet: #7a5af0;
+  --violet-deep: #5b3fd6;
+  --fusion: linear-gradient(120deg, #f5a623 0%, #f06f4c 38%, #7a5af0 100%);
+
+  /* -- status colors (Sims-style needs) -- */
+  --focus: #16b8a6;          /* teal */
+  --focus-soft: #c8efe9;
+  --stress: #f0654c;         /* coral */
+  --stress-soft: #fbd6cd;
+  --load: #f5a623;           /* amber */
+  --load-soft: #fbe6bd;
+  --burnout: #e0405a;        /* red */
+  --burnout-soft: #f7ccd4;
+  --independ: #7a5af0;       /* violet */
+  --independ-soft: #ddd3fb;
+  --calm: #6fae5a;           /* plumbob green */
+
+  /* -- geometry -- */
+  --r-xl: 26px;
+  --r-lg: 18px;
+  --r-md: 13px;
+  --r-sm: 9px;
+  --r-pill: 999px;
+
+  /* -- shadows: chunky, soft, game-UI -- */
+  --sh-card: 0 1px 0 rgba(255,255,255,.9) inset, 0 2px 4px rgba(80,60,30,.06), 0 14px 30px -16px rgba(80,60,30,.28);
+  --sh-pop: 0 1px 0 rgba(255,255,255,.9) inset, 0 18px 44px -14px rgba(80,60,30,.42);
+  --sh-inset: inset 0 2px 5px rgba(120,95,55,.16);
+
+  /* -- density (overridden by tweak) -- */
+  --gap: 18px;
+  --pad: 20px;
+
+  /* -- motion -- */
+  --ease: cubic-bezier(.22,.61,.36,1);
+  --anim: 1;                 /* animation intensity multiplier (tweak) */
+}
+
+/* dark "night mode" habitat — toggled via [data-theme] */
+[data-theme="dusk"] {
+  --paper: #1d1a24;
+  --paper-2: #161320;
+  --card: #272234;
+  --card-2: #211d2e;
+  --line: #383046;
+  --line-2: #4a4058;
+  --ink: #f3eefb;
+  --ink-2: #b8aecb;
+  --ink-3: #7f7592;
+  --sh-card: 0 1px 0 rgba(255,255,255,.05) inset, 0 14px 34px -16px rgba(0,0,0,.6);
+  --sh-pop: 0 1px 0 rgba(255,255,255,.06) inset, 0 22px 50px -14px rgba(0,0,0,.7);
+  --sh-inset: inset 0 2px 6px rgba(0,0,0,.4);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#root { height: 100%; }
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+::selection { background: color-mix(in oklab, var(--gold) 35%, transparent); }
+
+/* ---- shared atoms ---- */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-card);
+}
+
+.mono { font-family: var(--font-mono); font-variant-ligatures: none; }
+
+.tab-num { font-variant-numeric: tabular-nums; }
+
+/* chip / pill */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: var(--r-pill);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1;
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+/* scrollbars */
+.scroll { scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
+.scroll::-webkit-scrollbar { width: 9px; height: 9px; }
+.scroll::-webkit-scrollbar-thumb {
+  background: var(--line-2); border-radius: 6px;
+  border: 2px solid transparent; background-clip: content-box;
+}
+.scroll::-webkit-scrollbar-track { background: transparent; }
+
+/* focus ring for interactive */
+button { font-family: inherit; cursor: pointer; }
+button:focus-visible, [tabindex]:focus-visible {
+  outline: 2.5px solid var(--violet);
+  outline-offset: 2px;
+}
+
+/* keyframes */
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes spinCrystal {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(360deg); }
+}
+@keyframes pulseGlow {
+  0%, 100% { opacity: .55; transform: scale(1); }
+  50% { opacity: .95; transform: scale(1.12); }
+}
+@keyframes floatUp {
+  0% { opacity: 0; transform: translateY(8px) scale(.96); }
+  12% { opacity: 1; transform: translateY(0) scale(1); }
+  88% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-10px) scale(.98); }
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  96% { transform: scaleY(0.1); }
+}
+@keyframes ringPulse {
+  0% { transform: scale(.8); opacity: .7; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
+}

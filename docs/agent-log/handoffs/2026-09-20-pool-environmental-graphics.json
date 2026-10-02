@@ -1,0 +1,101 @@
+{
+  "handoff_record": {
+    "agent_name": "Pool (Poolside Agent)",
+    "handoff_timestamp": "2026-09-20",
+    "session_id": "pool-gfx-20260920",
+    "working_branch": "fix/win64-asfdk-stubs",
+    "registration_ref": "docs/agent-log/registrations/2026-09-20-pool-environmental-graphics.json",
+    "active_thread_ref": "docs/active-threads.md (ESC-001 / ENV-TEX-001)",
+    "escalation_ref": "docs/escalations/2026-09-20-openworld-expansion.md",
+
+    "task_origin": {
+      "user_prompt": "start working on the graphics" + "take a look in the WorldEngine project workspace you should find everything you need there",
+      "primary_context": "Procedural open-world environmental graphics on branch fix/win64-asfdk-stubs (ESC-001). Phase 1 (sky/atmosphere/post-process/water) was already complete; the next unclaimed step was Phase 2: port the openworld-engine Three.js terrain.js heightfield into UE5 C++.",
+      "scope_gate": "Within ESC-001 (procedural open-world), approved by resolved escalation 2026-09-20. Character graphics §4.3 was already fully wired — no gap there."
+    },
+
+    "secondary_completed_this_context": {
+      "mcp_pool_setup": "unreal-mcp MCP server added to Pool on port 8001 (HTTP Streamable); verified live (POST /mcp → HTTP 200, MCP initialize ok). Already done before this sub-task per environment snapshot.",
+      "port_migration_8000_to_8001": "WorldEngine MCP endpoint migrated 8000→8001 across README.md, Scripts/*.py (MCP_URL), build-configuration.md, NLTWebServerSubsystem.cpp comment, DefaultEditorPerProjectUserSettings.ini; grep-clean (no MCP :8000 refs remain).",
+      "asfdk_governance_stdio": "asfdk-harness MCP server registered in Pool as stdio `asfdk-governance` (env ASFDK_GOVERNANCE_TOOLS=approved, ASFDK_TOI_PATH, ASFDK_OTOI_PATH); verified end-to-end via pool exec.",
+      "unreal_mcp_standalone_stdio": "ChiR24/unreal-mcp added to Pool as stdio `unreal-mcp-standalone` (env LOG_LEVEL=warn, UE_PROJECT_PATH); verified end-to-end via pool exec (12 capabilities)."
+    },
+
+    "what_i_did": [
+      {
+        "step": "Self-registration",
+        "status": "complete",
+        "artifact": "docs/agent-log/registrations/2026-09-20-pool-environmental-graphics.json",
+        "note": "Per OTOI Section 3, before coding."
+      },
+      {
+        "step": "Implementation (additive C++ port of terrain.js)",
+        "status": "complete",
+        "files": [
+          "WorldEngine/Source/WorldEngine/Public/Core/NLTNoiseLibrary.h",
+          "WorldEngine/Source/WorldEngine/Private/Core/NLTNoiseLibrary.cpp"
+        ],
+        "changes": [
+          "Added UENUM(BlueprintType) ETerrainBiome { Ocean, Sand, Grass, Rock, Snow }.",
+          "Added UNLTNoiseLibrary::GenerateTerrainHeight(X, Z, Seed, WorldSize, HeightScale) — faithful port of terrain.js createHeightField/baseHeight: nx=X/WorldSize+0.5 / ny=Z/WorldSize+0.5; island/continental falloff dist=clamp(sqrt(dx^2+dy^2)*2,0,1), continent=1-dist^2.2; hills=fbm5(nx*6,ny*6,seed); mountains=max(0,fbm3(nx*3+7,ny*3-3,seed+99))^2; h=continent*(0.25+hills*0.55+mountains*0.9)-0.18; return h*HeightScale. Uses NLTNoiseLibrary::Fbm2D (UE5 noise primitive) per procedural-openworld.md §Terrain intent.",
+          "Added UNLTNoiseLibrary::ClassifyTerrainBiome(Height, SeaLevel) — biome bands adapted from terrain.js buildTerrain (Sand/SeaLevel+3, Grass +12, Rock +22, Snow else, Ocean at/below sea)."
+        ]
+      },
+      {
+        "step": "Compilation verification (headless UBT, UE 5.8)",
+        "status": "complete (change clean; pre-existing branch failures unrelated)",
+        "command": "UnrealBuildTool.exe WorldEngine Win64 Development -Project=<WorldEngine.uproject> -NoP4 -NoXGE -WaitMutex",
+        "result": "UBT overall Result: Failed (OtherCompilationError) — but ALL 31 errors are in pre-existing Phase-3 files NOT touched by this agent: NLTBuildingPortalActor.cpp (28x StreamingHandle undeclared) + NLTOpenWorldSubsystem.cpp (3x GetBuildingTypeFromFName). Error attribution: NLTNoiseLibrary.cpp 0, NLTAtmosphereSubsystem.cpp 0, PostProcessVolumeActor.cpp 0, NLTWorldGenerator.cpp 0. No error/warning mentions GenerateTerrainHeight/ClassifyTerrainBiome/ETerrainBiome.",
+        "note": "NLTNoiseLibrary.cpp compiled standalone (excluded from unity by adaptive-build); NLTAtmosphereSubsystem.cpp (also includes NLTNoiseLibrary.h) recompiled against the changed header with 0 errors -> header change is non-breaking."
+      },
+      {
+        "step": "Active-thread update",
+        "status": "complete",
+        "artifact": "docs/active-threads.md — appended Phase 2 to ESC-001 Delivered/Next-action; added ENV-TEX-001 thread claiming the terrain lane."
+      },
+      {
+        "step": "Handoff record",
+        "status": "complete",
+        "artifact": "docs/agent-log/handoffs/2026-09-20-pool-environmental-graphics.json (this file)."
+      }
+    ],
+
+    "what_is_NOT_done": [
+      "Landscape mesh instantiation: cannot be done headless (no UE editor runtime). Requires a session with the UE editor to spawn a Landscape and feed the heightfield — or a PCG heightfield node. The data-layer heightfield+bioem port is ready for that.",
+      "Phase 3 level-streaming bridge (buildings -> indoor .umap portals) is explicitly out of scope — cross-lane work needing Codex + Poolside coordination. Left as ESC-001 next-action, untouched.",
+      "No runtime/visual verification of terrain appearance (no editor binary)."
+    ],
+
+    "decisions_made": [
+      "Heightfield+bioem port placed in NLTNoiseLibrary (the doc'd noise/graphics primitive lib) rather than a separate subsystem — additive, minimal risk, reusable by NLTWorldGeneratorSubsystem + PCG later.",
+      "Used NLTNoiseLibrary::Fbm2D (Perlin-style value noise, the repo's UE5 noise primitive) inside the terrain heightfield, per procedural-openworld.md §Terrain (rather than re-porting terrain.js's own hash-value-noise). Visuals will differ slightly from the Three.js original but are deterministic and valid procedural terrain; documented in code comments.",
+      "Biome bands scaled for UE WorldUnit=1cm (Sand sea+3 / Grass +12 / Rock +22 / Snow else) rather than terrain.js's raw cm-scale thresholds, which were tuned for the JS heightScale convention.",
+      "Did NOT refactor NLTNoiseLibrary's static Perm[512]/bPermInitialized/CurrentPermSeed concurrency hazard — touched only additively to avoid regressing the in-use NLTAtmosphereSubsystem."
+    ],
+
+    "decisions_pending_for_next_agent": [
+      {
+        "question": "Where should the terrain heightfield consumer live for mesh instantiation?",
+        "options": ["Wired into NLTWorldGeneratorSubsystem -> UE5 Landscape (or PCG ETextureSampler heightfield node)", "New NLTProceduralTerrainSubsystem (cleaner separation, avoids the shared static Perm state)"],
+        "recommendation": "PCG heightfield node is the least invasive path that stays within ESC-001 procedural plan; Landscape direct is faster but editor-bound."
+      },
+      {
+        "question": "Should NLTNoiseLibrary's shared mutable permutation state be refactored to be reentrant/thread-safe?",
+        "why_now": "It is currently called by NLTAtmosphereSubsystem (cloud/star noise) and now by terrain (hills/mountains). If terrain is sampled concurrently (e.g., from world-gen or PCG threads), the static Perm[512] + bPermInitialized + CurrentPermSeed is a latent data race.",
+        "recommendation": "Refactor to a seed-parameterized/reentrant form (or per-call permutation via a seeded local). Flag as small escalation-worthy cleanup if atmosphere callers must be retuned."
+      }
+    ],
+
+    "files_touched_this_session": [
+      "docs/agent-log/registrations/2026-09-20-pool-environmental-graphics.json (new)",
+      "WorldEngine/Source/WorldEngine/Public/Core/NLTNoiseLibrary.h (enum + 2 UFUNCTION declarations)",
+      "WorldEngine/Source/WorldEngine/Private/Core/NLTNoiseLibrary.cpp (2 static function definitions)",
+      "docs/active-threads.md (ESC-001 updated + ENV-TEX-001 added)",
+      "docs/agent-log/handoffs/2026-09-20-pool-environmental-graphics.json (new, this file)"
+    ],
+
+    "git_state_note": "On branch fix/win64-asfdk-stubs. HEAD 71fedc9. All changes are uncommitted working-tree edits; nothing pushed. PR-only workflow per AGENTS.md — commit format '[Pool] feat(scope): desc' and open a PR; do not merge to main. (No git commit/push performed this session.)",
+
+    "next_baton": "ENV-TEX-001: wire UNLTNoiseLibrary::GenerateTerrainHeight + ClassifyTerrainBiome into the Landscape/PCG heightfield pipeline (needs UE editor runtime, not available on this box), and resolve the NLTNoiseLibrary static-permutation thread-safety question if terrain is sampled from world-gen/PCG threads."
+  }
+}

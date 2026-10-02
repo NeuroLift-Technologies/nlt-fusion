@@ -1,132 +1,153 @@
 {
-  "FileVersion": 3,
-  "EngineAssociation": "5.8",
-  "Category": "",
-  "Description": "",
-  "Modules": [
-    {
-      "Name": "WorldEngine",
-      "Type": "Runtime",
-      "LoadingPhase": "Default"
-    }
-  ],
-  "Plugins": [
-    {
-      "Name": "ModelingToolsEditorMode",
-      "Enabled": true,
-      "TargetAllowList": [
-        "Editor"
-      ]
-    },
-    {
-      "Name": "ModelContextProtocol",
-      "Enabled": true
-    },
-    {
-      "Name": "AllToolsets",
-      "Enabled": true
-    },
-    {
-      "Name": "MassGameplay",
-      "Enabled": true
-    },
-    {
-      "Name": "MassAI",
-      "Enabled": true
-    },
-    {
-      "Name": "MassCrowd",
-      "Enabled": true
-    },
-    {
-      "Name": "StateTree",
-      "Enabled": true
-    },
-    {
-      "Name": "SmartObjects",
-      "Enabled": true
-    },
-    {
-      "Name": "PCG",
-      "Enabled": true
-    },
-    {
-      "Name": "LearningAgents",
-      "Enabled": true
-    },
-    {
-      "Name": "LearningCore",
-      "Enabled": true
-    },
-    {
-      "Name": "NNERuntimeBasicCpu",
-      "Enabled": true
-    },
-    {
-      "Name": "MLAdapter",
-      "Enabled": true
-    },
-    {
-      "Name": "Niagara",
-      "Enabled": true
-    },
-    {
-      "Name": "WebSocketNetworking",
-      "Enabled": true
-    },
-    {
-      "Name": "MetaHumanGenerator",
-      "Enabled": true
-    },
-    {
-      "Name": "MetaHumanCharacter",
-      "Enabled": true
-    },
-    {
-      "Name": "AIAssistant",
-      "Enabled": true
-    },
-    {
-      "Name": "GameplayBehaviors",
-      "Enabled": true
-    },
-    {
-      "Name": "BlueprintFileUtils",
-      "Enabled": true
-    },
-    {
-      "Name": "PlayFabParty",
-      "Enabled": true,
-      "SupportedTargetPlatforms": [
-        "Win64"
-      ]
-    },
-    {
-      "Name": "MetaHumanCoreML",
-      "Enabled": true,
-      "SupportedTargetPlatforms": [
-        "Mac",
-        "IOS",
-        "TVOS",
-        "VisionOS"
-      ]
-    },
-    {
-      "Name": "MetaHumanLiveLink",
-      "Enabled": true
-    },
-    {
-      "Name": "MetaHumanCalibrationProcessing",
-      "Enabled": true,
-      "SupportedTargetPlatforms": [
-        "Win64",
-        "Linux",
-        "Mac"
-      ]
-    },
-    {
-      "Name": "NLTGovernanceSubsystem",
-      "Enabled": false
-    }
-  ]
+	"FileVersion": 3,
+	"EngineAssociation": "5.8",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "WorldEngine",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "ModelingToolsEditorMode",
+			"Enabled": true
+		},
+		{
+			"Name": "ModelContextProtocol",
+			"Enabled": true
+		},
+		{
+			"Name": "AllToolsets",
+			"Enabled": true
+		},
+		{
+			"Name": "McpAutomationBridge",
+			"Enabled": true
+		},
+		{
+			"Name": "MoviePipelineMaskRenderPass",
+			"Enabled": true
+		},
+		{
+			"Name": "MovieRenderPipeline",
+			"Enabled": true
+		},
+		{
+			"Name": "MassGameplay",
+			"Enabled": true
+		},
+		{
+			"Name": "MassAI",
+			"Enabled": true
+		},
+		{
+			"Name": "MassCrowd",
+			"Enabled": true
+		},
+		{
+			"Name": "StateTree",
+			"Enabled": true
+		},
+		{
+			"Name": "SmartObjects",
+			"Enabled": true
+		},
+		{
+			"Name": "PCG",
+			"Enabled": true
+		},
+		{
+			"Name": "LearningAgents",
+			"Enabled": true
+		},
+		{
+			"Name": "LearningCore",
+			"Enabled": true
+		},
+		{
+			"Name": "NNERuntimeBasicCpu",
+			"Enabled": true
+		},
+		{
+			"Name": "MLAdapter",
+			"Enabled": true
+		},
+		{
+			"Name": "Niagara",
+			"Enabled": true
+		},
+		{
+			"Name": "WebSocketNetworking",
+			"Enabled": true
+		},
+		{
+			"Name": "MetaHumanGenerator",
+			"Enabled": true
+		},
+		{
+			"Name": "MetaHumanCharacter",
+			"Enabled": true
+		},
+		{
+			"Name": "AIAssistant",
+			"Enabled": true
+		},
+		{
+			"Name": "GameplayBehaviors",
+			"Enabled": true
+		},
+		{
+			"Name": "BlueprintFileUtils",
+			"Enabled": true
+		},
+		{
+			"Name": "PlayFabParty",
+			"Enabled": true,
+			"SupportedTargetPlatforms": [
+				"Win64"
+			]
+		},
+		{
+			"Name": "MetaHumanCoreML",
+			"Enabled": true,
+			"SupportedTargetPlatforms": [
+				"Mac",
+				"IOS",
+				"TVOS",
+				"VisionOS"
+			]
+		},
+		{
+			"Name": "MetaHumanLiveLink",
+			"Enabled": true
+		},
+		{
+			"Name": "MetaHumanCalibrationProcessing",
+			"Enabled": true,
+			"SupportedTargetPlatforms": [
+				"Win64",
+				"Linux",
+				"Mac"
+			]
+		},
+		{
+			"Name": "NLTGovernanceSubsystem",
+			"Enabled": true
+		},
+		{
+			"Name": "Water",
+			"Enabled": true
+		},
+		{
+			"Name": "VisualStudioTools",
+			"Enabled": true,
+			"SupportedTargetPlatforms": [
+				"Win64"
+			],
+			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/362651520df94e4fa65492dbcba44ae2"
+		}
+	]
 }

@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Engine/PostProcessVolume.h"
+#include "Materials/MaterialInterface.h"
+#include "Engine/Texture.h"
 #include "PostProcessVolumeActor.generated.h"
 
 /**
@@ -76,6 +78,24 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Post-Process|Color", meta = (ClampMin = "0.0", ClampMax = "2.0"))
 	float Contrast = 1.0f;
+
+	/**
+	 * Optional 2D LUT (Look-Up Table) texture for cinematic color grading
+	 * (e.g. from Fab "Post Process LUTS"). When set, a post-process material
+	 * (M_CC_ColorGrading) must be assigned to ColorGradingLUTMaterial to apply
+	 * the LUT via WeightedBlendables. When empty, procedural color grading
+	 * (tint, saturation, contrast) remains the fallback.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Post-Process|Color")
+	TObjectPtr<UTexture2D> ColorGradingLUT;
+
+	/**
+	 * Post-process material that samples the ColorGradingLUT. This material
+	 * should take SceneColor + LUT texture and output graded color. Created in
+	 * the UE Editor and assigned here. Falls back to procedural grading if empty.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Post-Process|Color")
+	TObjectPtr<UMaterialInterface> ColorGradingLUTMaterial;
 
 	// ─── Motion Blur ────────────────────────────────────────────
 

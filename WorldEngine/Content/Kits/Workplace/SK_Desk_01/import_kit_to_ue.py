@@ -14,7 +14,7 @@ import unreal
 import os
 
 KIT_ROOT = "/Game/Kits/Workplace/SK_Desk_01"
-SOURCE_ROOT = "/home/joshd/Desktop/nlt-repos/nlt-fusion/WorldEngine/Content/Kits/Workplace/SK_Desk_01"
+SOURCE_ROOT = "D:/nlt-repos/nlt-fusion/WorldEngine/Content/Kits/Workplace/SK_Desk_01"
 
 STATES = ["Clean", "Cluttered", "AfterHours"]
 

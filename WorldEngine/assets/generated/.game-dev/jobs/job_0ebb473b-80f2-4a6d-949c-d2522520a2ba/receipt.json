@@ -1,0 +1,51 @@
+{
+  "schema": "game_dev.receipt.v1",
+  "operation": "skill.install",
+  "result": {
+    "schema": "game_dev.skill_install.v1",
+    "bundleVersion": "1.0.2",
+    "bundleSha256": "318a62954d699db9eece0f2aac2212ae932b920f2795617a6774fd60c12f9d13",
+    "selection": "all",
+    "targetRoot": "C:\\Users\\joshd\\Documents\\nlt-repos\\nlt-world-engine\\WorldEngine\\.skills",
+    "dryRun": false,
+    "installations": [
+      {
+        "id": "game-development-studio",
+        "destination": "C:\\Users\\joshd\\Documents\\nlt-repos\\nlt-world-engine\\WorldEngine\\.skills\\game-development-studio",
+        "contentSha256": "e11d373f4aef10e10b13f1aa2a1d00e2a467373951ecfe839ccc6208be464409",
+        "fileCount": 5,
+        "reused": false
+      },
+      {
+        "id": "game-asset-production",
+        "destination": "C:\\Users\\joshd\\Documents\\nlt-repos\\nlt-world-engine\\WorldEngine\\.skills\\game-asset-production",
+        "contentSha256": "91e2c5bbfaadc29db22aedb75501589f7aba38b53e9050f825eb6aee703ca256",
+        "fileCount": 5,
+        "reused": false
+      },
+      {
+        "id": "game-asset-vendoring",
+        "destination": "C:\\Users\\joshd\\Documents\\nlt-repos\\nlt-world-engine\\WorldEngine\\.skills\\game-asset-vendoring",
+        "contentSha256": "a279d760c9d15f9fc466d13a5861f1ce926f7c69ebda85ac0e20b7cd9509a7d7",
+        "fileCount": 5,
+        "reused": false
+      },
+      {
+        "id": "game-visual-debugging",
+        "destination": "C:\\Users\\joshd\\Documents\\nlt-repos\\nlt-world-engine\\WorldEngine\\.skills\\game-visual-debugging",
+        "contentSha256": "70ecd8a57c2d63f11fd9ccbaa07f0a0feb4e0d208a848866e3d9dc94e547273b",
+        "fileCount": 5,
+        "reused": false
+      },
+      {
+        "id": "game-performance-optimization",
+        "destination": "C:\\Users\\joshd\\Documents\\nlt-repos\\nlt-world-engine\\WorldEngine\\.skills\\game-performance-optimization",
+        "contentSha256": "7d0e027691dd2dbb9055010ed27239adefb078d5e4582af48406c202c4b793f0",
+        "fileCount": 5,
+        "reused": false
+      }
+    ],
+    "evidenceCeiling": "Skill installation proves an exact byte copy of packaged local instructions. It does not install the game-dev CLI, configure credentials, modify a game project, run a provider, or execute a capture."
+  },
+  "completedAt": "2026-09-20T00:15:35.844Z"
+}

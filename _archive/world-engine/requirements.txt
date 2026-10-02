@@ -1,0 +1,9 @@
+# NLT-Fusion World Engine - Python Dependencies
+
+# The environment engine uses only the Python standard library.
+# server.py needs websockets for the live agent API:
+websockets>=13.0
+
+# Development dependencies
+flake8>=6.0.0
+pytest>=7.0.0

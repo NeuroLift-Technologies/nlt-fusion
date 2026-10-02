@@ -85,7 +85,7 @@ def generate_distant_murmur():
     return samples
 
 def main():
-    base_dir = "/home/joshd/Desktop/nlt-repos/nlt-fusion/WorldEngine/Content/Audio/Soundscape/Workplace"
+    base_dir = "D:/nlt-repos/nlt-fusion/WorldEngine/Content/Audio/Soundscape/Workplace"
     os.makedirs(base_dir, exist_ok=True)
     
     print("Generating Workplace soundscape WAV files...")

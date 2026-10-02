@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:nlt:world-engine:v1:replay",
+  "title": "NLT World Engine Replay",
+  "type": "object",
+  "required": [
+    "contract_version",
+    "replay_id",
+    "description",
+    "seed",
+    "initial_snapshot",
+    "actions",
+    "events",
+    "interventions",
+    "expected_final_snapshot",
+    "expected_final_hash",
+    "extensions"
+  ],
+  "properties": {
+    "contract_version": {
+      "$ref": "common.schema.json#/$defs/contract_version"
+    },
+    "replay_id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "initial_snapshot": {
+      "$ref": "snapshot.schema.json"
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "$ref": "action.schema.json"
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "event.schema.json"
+      }
+    },
+    "interventions": {
+      "type": "array",
+      "items": {
+        "$ref": "intervention.schema.json"
+      }
+    },
+    "expected_final_snapshot": {
+      "$ref": "snapshot.schema.json"
+    },
+    "expected_final_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "extensions": {
+      "$ref": "common.schema.json#/$defs/extensions"
+    }
+  },
+  "additionalProperties": false
+}

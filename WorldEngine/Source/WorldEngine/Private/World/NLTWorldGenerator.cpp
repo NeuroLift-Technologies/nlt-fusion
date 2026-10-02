@@ -88,23 +88,30 @@ void UNLTWorldGeneratorSubsystem::GenerateDistricts(const FNLTWorldGenerationPar
 
 void UNLTWorldGeneratorSubsystem::GenerateBuildings(const FNLTWorldGenerationParams& Params, FRandomStream& Rand)
 {
-    TArray<FName> BuildingTypes = { TEXT("Office"), TEXT("Apartment"), TEXT("Shop"), TEXT("Factory"), TEXT("Park") };
+    // Fixed, authored layout (FNLTOpenWorldConfig.BuildingLayout). Every building keeps the exact
+    // type, location and yaw from the config - placement is NOT random, so the city never overlaps
+    // and never drifts between runs. The seed only varies per-building semantic detail below.
+    if (Params.BuildingLayout.Num() == 0)
+    {
+        UE_LOG(LogNLTWorldGenerator, Warning,
+            TEXT("GenerateBuildings: BuildingLayout is empty - spawning no buildings. Populate FNLTOpenWorldConfig.BuildingLayout."));
+        return;
+    }
 
-    for (int32 i = 0; i < Params.NumBuildings; i++)
+    for (const FNLTDesiredBuilding& Desired : Params.BuildingLayout)
     {
         FNLTGeneratedBuilding Building;
-        Building.BuildingType = BuildingTypes[Rand.RandRange(0, BuildingTypes.Num() - 1)];
+        Building.BuildingType = Desired.BuildingType;
+        // Z is 0 here; the open-world subsystem raises each building onto the terrain at spawn.
         Building.Transform = FTransform(
-            FRotator(0.0f, Rand.FRandRange(0.0f, 360.0f), 0.0f),
-            FVector(
-                Rand.FRandRange(-Params.WorldSize.X / 2, Params.WorldSize.X / 2),
-                Rand.FRandRange(-Params.WorldSize.Y / 2, Params.WorldSize.Y / 2),
-                0.0f
-            )
+            FRotator(Desired.Rotation.Pitch, Desired.Rotation.Yaw, Desired.Rotation.Roll),
+            FVector(Desired.Location.X, Desired.Location.Y, 0.0f)
         );
         Building.SemanticData = GenerateBuildingSemantics(Building.BuildingType, Rand);
         GeneratedWorld.Buildings.Add(Building);
     }
+
+    UE_LOG(LogNLTWorldGenerator, Log, TEXT("World generated with %d explicit building placements"), GeneratedWorld.Buildings.Num());
 }
 
 void UNLTWorldGeneratorSubsystem::GenerateRoads(const FNLTWorldGenerationParams& Params, FRandomStream& Rand)
@@ -161,6 +168,20 @@ FNLTLocationSemanticData UNLTWorldGeneratorSubsystem::GenerateBuildingSemantics(
         Semantics.SocialDensity = Rand.FRandRange(0.2f, 0.5f);
         Semantics.Privacy = Rand.FRandRange(0.6f, 0.9f);
         Semantics.AvailableActivities = { TEXT("Rest"), TEXT("Exercise") };
+    }
+    else if (BuildingType == TEXT("School"))
+    {
+        Semantics.NoiseLevel = Rand.FRandRange(0.4f, 0.7f);
+        Semantics.SocialDensity = Rand.FRandRange(0.6f, 0.9f);
+        Semantics.Privacy = Rand.FRandRange(0.3f, 0.6f);
+        Semantics.AvailableActivities = { TEXT("Learn"), TEXT("Meet") };
+    }
+    else if (BuildingType == TEXT("Hut"))
+    {
+        Semantics.NoiseLevel = Rand.FRandRange(0.0f, 0.2f);
+        Semantics.SocialDensity = Rand.FRandRange(0.05f, 0.25f);
+        Semantics.Privacy = Rand.FRandRange(0.7f, 1.0f);
+        Semantics.AvailableActivities = { TEXT("Rest"), TEXT("Survive") };
     }
 
     return Semantics;

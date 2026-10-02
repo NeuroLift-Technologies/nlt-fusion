@@ -1,3 +1,4 @@
+#pragma warning(disable: 4668) // __GNUC__ undefined on MSVC
 #include "NLTGovernanceSubsystem.h"
 #include "AgentGovernanceState.h"
 #include <nlohmann/json.hpp> // used directly below (GetGovernanceStatus); was previously only reaching this TU transitively via AgentGovernanceState.h -> asfdk/ASFDK.h

@@ -1,0 +1,171 @@
+/* ============================================================
+   NLT Fusion — layout & view styles
+   ============================================================ */
+
+.app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(1200px 600px at 80% -10%, color-mix(in oklab, var(--gold) 12%, transparent), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, color-mix(in oklab, var(--violet) 12%, transparent), transparent 55%),
+    var(--paper);
+}
+
+/* ---------- top bar ---------- */
+.topbar {
+  flex: none;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in oklab, var(--card) 78%, transparent);
+  backdrop-filter: blur(10px);
+  z-index: 20;
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-mark {
+  width: 38px; height: 38px; border-radius: 12px; flex: none;
+  background: var(--fusion);
+  display: grid; place-items: center;
+  box-shadow: var(--sh-card), 0 6px 18px -6px color-mix(in oklab, var(--gold) 60%, transparent);
+}
+.brand-mark span {
+  width: 15px; height: 15px; background: #fff;
+  clip-path: polygon(50% 0, 100% 38%, 50% 100%, 0 38%);
+}
+.brand-name { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--ink); letter-spacing: -0.01em; white-space: nowrap; }
+.brand-sub { font-weight: 600; font-size: 10.5px; color: var(--ink-3); border: 1px solid var(--line-2); padding: 1px 7px; border-radius: 999px; margin-left: 4px; vertical-align: 2px; }
+.brand-tag { font-size: 11.5px; color: var(--ink-2); margin-top: 1px; }
+
+.nav { display: flex; gap: 6px; background: var(--card-2); padding: 5px; border-radius: 15px; box-shadow: var(--sh-inset); }
+.nav-tab {
+  display: flex; align-items: center; gap: 9px; white-space: nowrap;
+  padding: 7px 14px 7px 11px; border: none; border-radius: 11px;
+  background: transparent; color: var(--ink-2);
+  transition: background .18s var(--ease), color .18s, box-shadow .18s;
+}
+.nav-tab[data-active="true"] { background: var(--card); color: var(--ink); box-shadow: var(--sh-card); }
+.nav-tab[data-active="true"] .nav-tab-ico { color: var(--gold-deep); }
+.nav-tab-ico { display: grid; place-items: center; color: var(--ink-3); }
+
+.topbar-right { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.run-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ink-3); }
+.run-dot.on { background: var(--calm); box-shadow: 0 0 0 4px color-mix(in oklab, var(--calm) 28%, transparent); animation: pulseGlow 2s ease-in-out infinite; }
+
+.stage-wrap { flex: 1; min-height: 0; padding: var(--gap); overflow: hidden; }
+
+/* ---------- LIVE SIM ---------- */
+.ls-grid { height: 100%; display: grid; grid-template-columns: 1fr 384px; gap: var(--gap); min-height: 0; }
+.ls-stage { display: flex; flex-direction: column; overflow: hidden; padding: 14px; gap: 12px; }
+.ls-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; flex: none; }
+.ls-select {
+  appearance: none; height: 34px; padding: 0 30px 0 12px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--card); color: var(--ink);
+  font-family: var(--font-display); font-weight: 600; font-size: 12.5px; cursor: pointer;
+  box-shadow: var(--sh-card); max-width: 230px; text-overflow: ellipsis;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%23a39884' d='M0 0h10L5 6z'/></svg>");
+  background-repeat: no-repeat; background-position: right 11px center;
+}
+.ls-roombar { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 9px 13px; border-radius: var(--r-md); background: var(--card-2); }
+.ls-iso {
+  flex: 1; min-height: 0; border-radius: var(--r-md); overflow: hidden; position: relative;
+  background:
+    radial-gradient(120% 90% at 50% 0%, color-mix(in oklab, var(--gold) 10%, transparent), transparent 60%),
+    linear-gradient(180deg, color-mix(in oklab, var(--violet) 8%, var(--card-2)), var(--card-2));
+}
+.ls-iso::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(circle at 1px 1px, color-mix(in oklab, var(--ink) 6%, transparent) 1px, transparent 0);
+  background-size: 26px 26px; opacity: .5;
+}
+.ls-legend { flex: none; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 0 4px; }
+.ls-rail { display: flex; flex-direction: column; gap: var(--gap); overflow-y: auto; padding-right: 4px; min-height: 0; }
+
+/* iso speech bubble */
+.iso-thought {
+  position: absolute; left: 50%; top: -82px; transform: translateX(-50%);
+  max-width: 200px; width: max-content; padding: 8px 12px;
+  background: var(--card); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 14px; font-size: 12px; font-style: italic; line-height: 1.35;
+  text-align: center; box-shadow: var(--sh-pop); z-index: 60;
+  animation: floatUp calc(5s / var(--anim, 1)) ease-in-out;
+}
+.iso-thought-tail { position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%) rotate(45deg); width: 12px; height: 12px; background: var(--card); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+
+.ai-now {
+  flex: 1; padding: 11px 14px; border-radius: 14px 14px 14px 4px;
+  background: linear-gradient(135deg, color-mix(in oklab, var(--violet) 14%, var(--card-2)), var(--card-2));
+  border: 1px solid color-mix(in oklab, var(--violet) 22%, var(--line));
+  font-size: 13.5px; font-style: italic; color: var(--ink); line-height: 1.4;
+  animation: slideIn .3s ease both;
+}
+
+/* ---------- FLEET ---------- */
+.fleet-grid { height: 100%; display: grid; grid-template-columns: 1fr 340px; gap: var(--gap); min-height: 0; }
+.fleet-main { display: flex; flex-direction: column; gap: var(--gap); overflow-y: auto; padding-right: 4px; min-height: 0; }
+.fleet-summary { flex: none; display: flex; align-items: center; gap: 30px; padding: 16px 20px; border-radius: var(--r-lg); background: var(--card); border: 1px solid var(--line); box-shadow: var(--sh-card); }
+.fleet-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(244px, 1fr)); gap: 13px; }
+.fleet-tile { text-align: left; padding: 14px; border-radius: var(--r-md); background: var(--card); border: 1px solid var(--line); box-shadow: var(--sh-card); transition: transform .16s var(--ease), box-shadow .16s, border-color .16s; }
+.fleet-tile:hover { transform: translateY(-3px); box-shadow: var(--sh-pop); }
+.fleet-tile[data-sel="true"] { border-color: var(--tile-accent); box-shadow: 0 0 0 2px var(--tile-accent), var(--sh-card); }
+.fleet-state { flex: none; font-family: var(--font-display); font-weight: 700; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; }
+.fleet-bars { display: flex; gap: 5px; margin-top: 11px; }
+.fleet-ticker { display: flex; flex-direction: column; padding: var(--pad); min-height: 0; overflow: hidden; }
+
+/* ---------- FUSION ---------- */
+.fusion-grid { height: 100%; display: grid; grid-template-columns: 1fr 360px; gap: var(--gap); min-height: 0; }
+.fusion-stage { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 28px; }
+.fusion-aura {
+  position: absolute; inset: 0; pointer-events: none; opacity: .9;
+  background:
+    radial-gradient(60% 50% at 50% 38%, hsl(var(--hue) 70% 60% / .16), transparent 70%),
+    radial-gradient(40% 40% at 30% 70%, color-mix(in oklab, var(--violet) 16%, transparent), transparent 70%),
+    radial-gradient(40% 40% at 70% 70%, color-mix(in oklab, var(--gold) 16%, transparent), transparent 70%);
+}
+.fusion-stage[data-phase="charging"] .fusion-aura { animation: pulseGlow 1.2s ease-in-out infinite; }
+.fusion-stage[data-phase="fused"] .fusion-aura {
+  background:
+    radial-gradient(70% 60% at 50% 40%, color-mix(in oklab, var(--gold) 30%, transparent), transparent 72%),
+    radial-gradient(50% 50% at 30% 70%, color-mix(in oklab, var(--violet) 26%, transparent), transparent 70%);
+}
+.fusion-rings { position: absolute; top: 38%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+.fusion-rings span { position: absolute; left: 50%; top: 50%; width: 120px; height: 120px; margin: -60px; border: 2px solid color-mix(in oklab, var(--gold) 50%, transparent); border-radius: 50%; opacity: 0; }
+.fusion-rings[data-on="true"] span { animation: ringPulse 2.4s ease-out infinite; }
+.fusion-rings[data-on="true"] span:nth-child(2) { animation-delay: .8s; border-color: color-mix(in oklab, var(--violet) 50%, transparent); }
+.fusion-rings[data-on="true"] span:nth-child(3) { animation-delay: 1.6s; }
+.fusion-roster { position: absolute; top: 16px; right: 16px; z-index: 5; }
+.fusion-figures { position: relative; z-index: 3; display: flex; align-items: flex-end; gap: 56px; transition: gap .8s var(--ease); }
+.fusion-figures[data-phase="charging"] { gap: 18px; }
+.fusion-figures[data-phase="fused"] { gap: 6px; }
+.fusion-figure { display: flex; flex-direction: column; align-items: center; gap: 26px; }
+.fusion-tag { display: flex; flex-direction: column; align-items: center; color: #fff; font-family: var(--font-display); font-weight: 700; font-size: 13px; padding: 5px 14px; border-radius: 999px; box-shadow: var(--sh-card); }
+.fusion-tag span { font-weight: 500; font-size: 9.5px; opacity: .85; text-transform: uppercase; letter-spacing: .08em; }
+.fusion-core { position: relative; z-index: 4; display: grid; place-items: center; transition: transform .6s var(--ease); }
+.fusion-core[data-phase="fused"] { transform: scale(1.3) translateY(-6px); }
+.fusion-meter { position: relative; z-index: 3; width: min(440px, 80%); display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.fusion-meter-track { width: 100%; height: 14px; border-radius: 999px; background: var(--card-2); box-shadow: var(--sh-inset); overflow: hidden; }
+.fusion-meter-fill { height: 100%; border-radius: 999px; background: var(--fusion); transition: width .25s linear; box-shadow: 0 0 14px color-mix(in oklab, var(--gold) 60%, transparent); }
+.fusion-meter-label { display: flex; align-items: baseline; gap: 7px; }
+.fusion-result { position: relative; z-index: 3; text-align: center; animation: slideIn .4s ease both; }
+.fusion-result-badge { display: inline-block; font-family: var(--font-display); font-weight: 800; font-size: 12px; letter-spacing: .12em; color: var(--gold-deep); background: color-mix(in oklab, var(--gold) 16%, transparent); padding: 6px 14px; border-radius: 999px; }
+.fusion-btn { appearance: none; border: none; cursor: pointer; font-family: var(--font-display); font-weight: 700; font-size: 14px; color: #fff; padding: 12px 24px; border-radius: 14px; background: var(--ink); box-shadow: var(--sh-pop); transition: transform .14s var(--ease); }
+.fusion-btn:hover:not(:disabled) { transform: translateY(-2px); }
+.fusion-btn:disabled { opacity: .6; cursor: default; }
+
+.fusion-rail { display: flex; flex-direction: column; gap: var(--gap); overflow-y: auto; padding-right: 4px; min-height: 0; }
+.fuse-row { display: flex; align-items: stretch; gap: 10px; }
+.fuse-col { flex: 1; border: 1.5px solid; border-radius: var(--r-md); padding: 10px 12px; background: var(--card-2); }
+.fuse-col-h { font-family: var(--font-display); font-weight: 800; font-size: 9.5px; letter-spacing: .08em; margin-bottom: 4px; }
+.fuse-plus { display: grid; place-items: center; font-size: 18px; color: var(--ink-3); font-weight: 700; }
+.fuse-arrow { text-align: center; font-size: 18px; color: var(--ink-3); margin: 8px 0; }
+.fuse-out { border-radius: var(--r-md); padding: 12px 16px; text-align: center; box-shadow: var(--sh-card); }
+
+/* responsive */
+@media (max-width: 1080px) {
+  .ls-grid, .fleet-grid, .fusion-grid { grid-template-columns: 1fr; grid-template-rows: minmax(340px, 1fr) auto; overflow-y: auto; }
+  .ls-rail, .fleet-main, .fusion-rail { overflow: visible; }
+  .stage-wrap { overflow-y: auto; }
+}

@@ -1,0 +1,1 @@
+{"schema":"game_dev.event.v1","event_id":"evt_3879144f-f556-4d77-a91a-8c78f7410d69","job_id":"job_0ebb473b-80f2-4a6d-949c-d2522520a2ba","sequence":0,"timestamp":"2026-09-20T00:15:35.463Z","type":"started","operation":"skill.install","data":{"version":"1.0.2"}}

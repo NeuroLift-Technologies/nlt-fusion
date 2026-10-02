@@ -8,6 +8,7 @@
 #include "Engine/ExponentialHeightFog.h"
 #include "Components/StaticMeshComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Engine/Texture.h"
 #include "NLTAtmosphereSubsystem.generated.h"
 
 class APostProcessVolumeActor;
@@ -140,8 +141,42 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NLT|Atmosphere|SkyDome")
 	TObjectPtr<UMaterialInterface> SkyDomeMaterial;
 
+	/**
+	 * Optional HDRI skybox cubemap (e.g. from Fab "13 Nebula Skyboxes" or
+	 * "HDRI Variety Skyboxes"). When set, this is applied to the sky dome
+	 * material as the "SkyboxCubemap" parameter and optionally to the SkyLight
+	 * for image-based reflections. When empty, the procedural color blending
+	 * remains active as the fallback.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NLT|Atmosphere|SkyDome")
+	TObjectPtr<UTextureCube> SkyboxCubemap;
+
+	/** When true, the SkyboxCubemap drives the SkyLight cubemap for reflections. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NLT|Atmosphere|Sky")
+	bool bUseSkyboxForSkyLight = true;
+
 	UFUNCTION(BlueprintPure, Category = "NLT|Atmosphere|SkyDome")
 	bool AreStarsVisible() const { return bStarsVisible; }
+
+	/**
+	 * Assign an HDRI skybox cubemap at runtime (e.g. from a weather-preset
+	 * DataAsset). Passes the texture to the sky dome material and optionally
+	 * to the SkyLight for IBL reflections.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "NLT|Atmosphere|SkyDome")
+	void SetSkyboxCubemap(UTextureCube* InCubemap, bool bApplyToSkyLight = true);
+
+	/**
+	 * Assign a color-grading LUT at runtime (e.g. from a weather-preset
+	 * DataAsset). Delegates to the post-process volume's LUT system.
+	 * Call with nullptr to revert to procedural color grading.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "NLT|Atmosphere|Color")
+	void SetColorGradingLUT(UTexture2D* InLUT, UMaterialInterface* InLUTMaterial);
+
+	/** True when a custom HDRI skybox cubemap is assigned. */
+	UFUNCTION(BlueprintPure, Category = "NLT|Atmosphere|SkyDome")
+	bool HasSkyboxCubemap() const { return SkyboxCubemap != nullptr; }
 
 	// === Color Grading ===
 

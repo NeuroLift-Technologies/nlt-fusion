@@ -10,6 +10,7 @@
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Components/PostProcessComponent.h"
+#include "Visual/NLTVisualLODPolicy.h"
 #include "NLTAgentVisualizer.generated.h"
 
 // Visual state for mass agents
@@ -88,6 +89,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visualization")
     float FocusThresholdForEffects = 0.7f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visualization|LOD")
+	FNLTVisualLODPolicy VisualLODPolicy;
+
+
 private:
     UPROPERTY()
     UHierarchicalInstancedStaticMeshComponent* HISMComponent;
@@ -106,6 +111,9 @@ private:
     // State tracking
     TArray<FVector> ActiveStressLocations;
     TArray<FVector> ActiveFocusLocations;
+
+	TMap<FName, ENLTVisualLODLevel> AgentVisualLevels;
+
 
     void SetupQuery();
     void UpdateVisuals();

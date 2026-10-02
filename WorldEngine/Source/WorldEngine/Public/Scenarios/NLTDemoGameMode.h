@@ -27,4 +27,7 @@ public:
 
 private:
 	class ANLTDoorActor* SpawnDoor(const FName& TargetLevel, const FText& DisplayName, const FVector& Location, const FRotator& Rotation = FRotator::ZeroRotator);
+
+	/** Ensure the open-world player has a safe spawn even when the map has no PlayerStart. */
+	void EnsureOpenWorldPlayerSpawn();
 };

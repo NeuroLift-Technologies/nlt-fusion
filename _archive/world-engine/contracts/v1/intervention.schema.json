@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:nlt:world-engine:v1:intervention",
+  "title": "NLT World Engine Intervention",
+  "type": "object",
+  "required": [
+    "contract_version",
+    "intervention_id",
+    "sequence",
+    "clock",
+    "avatar_id",
+    "aide_id",
+    "strategy",
+    "reason",
+    "effectiveness",
+    "effects",
+    "extensions"
+  ],
+  "properties": {
+    "contract_version": {
+      "$ref": "common.schema.json#/$defs/contract_version"
+    },
+    "intervention_id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "clock": {
+      "$ref": "common.schema.json#/$defs/clock"
+    },
+    "avatar_id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "aide_id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "strategy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "effectiveness": {
+      "$ref": "common.schema.json#/$defs/unit_interval"
+    },
+    "effects": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": -1,
+        "maximum": 1
+      }
+    },
+    "extensions": {
+      "$ref": "common.schema.json#/$defs/extensions"
+    }
+  },
+  "additionalProperties": false
+}

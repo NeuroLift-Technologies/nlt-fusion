@@ -117,7 +117,7 @@ PublicDependencyModuleNames.AddRange(new string[] {
 ## Build Commands
 
 ```bash
-cd ~/Desktop/nlt-repos/nlt-fusion/WorldEngine
+cd D:\\nlt-repos/nlt-fusion/WorldEngine
 make configure                    # Generate project files
 make WorldEngineEditor            # Build editor target
 make WorldEngine                  # Build game target
@@ -125,12 +125,12 @@ make WorldEngine                  # Build game target
 
 ## MCP Server
 
-The UE project runs an MCP server on `localhost:8000`.
+The UE project runs an MCP server on `localhost:8001`.
 
 ### Verify it's running:
 
 ```bash
-curl -s -X POST http://localhost:8000/mcp \
+curl -s -X POST http://localhost:8001/mcp \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"hermes","version":"1.0.0"}}}'
 ```
@@ -139,7 +139,7 @@ curl -s -X POST http://localhost:8000/mcp \
 
 ```bash
 # Initialize session first, then:
-curl -s -X POST http://localhost:8000/mcp \
+curl -s -X POST http://localhost:8001/mcp \
   -H "Content-Type: application/json" \
   -H "Mcp-Session-Id: <session_id>" \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"list_toolsets","arguments":{}}}'

@@ -123,10 +123,11 @@ int32 UNLTDeterministicSeedSubsystem::GetDeterministicIndex(ENLTSeedCategory Cat
 
 void UNLTDeterministicSeedSubsystem::SerializeSeedState(TArray<uint8>& OutData) const
 {
-	// Serialize master seed + all category stream states (seed + calls)
-	const int32 PerStreamSize = sizeof(int32) + sizeof(int32); // Seed + Calls
+	// Seed + Calls + InitialSeed. All three fields are required to restore a
+	// stream to the exact same point, including its reset behavior.
+	const int32 PerStreamSize = sizeof(int32) * 3;
 	OutData.Empty();
-	OutData.AddUninitialized(sizeof(int32) + sizeof(int32) + NumCategories * PerStreamSize);
+	OutData.AddUninitialized(sizeof(int32) * 2 + NumCategories * PerStreamSize);
 
 	int32 Offset = 0;
 	FMemory::Memcpy(&OutData[Offset], &MasterSeed, sizeof(int32)); Offset += sizeof(int32);
@@ -136,16 +137,19 @@ void UNLTDeterministicSeedSubsystem::SerializeSeedState(TArray<uint8>& OutData) 
 	{
 		FMemory::Memcpy(&OutData[Offset], &CategoryStreams[i].Seed, sizeof(int32)); Offset += sizeof(int32);
 		FMemory::Memcpy(&OutData[Offset], &CategoryStreams[i].Calls, sizeof(int32)); Offset += sizeof(int32);
+		FMemory::Memcpy(&OutData[Offset], &CategoryStreams[i].InitialSeed, sizeof(int32)); Offset += sizeof(int32);
 	}
 }
 
 bool UNLTDeterministicSeedSubsystem::DeserializeSeedState(const TArray<uint8>& InData)
 {
-	const int32 PerStreamSize = sizeof(int32) + sizeof(int32);
-	const int32 ExpectedSize = sizeof(int32) + sizeof(int32) + NumCategories * PerStreamSize;
-	if (InData.Num() < ExpectedSize)
+	const int32 LegacyPerStreamSize = sizeof(int32) * 2;
+	const int32 LegacyExpectedSize = sizeof(int32) * 2 + NumCategories * LegacyPerStreamSize;
+	const int32 PerStreamSize = sizeof(int32) * 3;
+	const int32 ExpectedSize = sizeof(int32) * 2 + NumCategories * PerStreamSize;
+	if (InData.Num() < LegacyExpectedSize)
 	{
-		UE_LOG(LogNLTDeterministicSeed, Warning, TEXT("DeserializeSeedState: buffer too small (%d < %d)"), InData.Num(), ExpectedSize);
+		UE_LOG(LogNLTDeterministicSeed, Warning, TEXT("DeserializeSeedState: buffer too small (%d < %d)"), InData.Num(), LegacyExpectedSize);
 		return false;
 	}
 
@@ -161,10 +165,23 @@ bool UNLTDeterministicSeedSubsystem::DeserializeSeedState(const TArray<uint8>& I
 	}
 
 	CategoryStreams.SetNum(NumCategories);
+	const bool bHasInitialSeed = InData.Num() >= ExpectedSize;
 	for (int32 i = 0; i < NumCategories; ++i)
 	{
 		FMemory::Memcpy(&CategoryStreams[i].Seed, &InData[Offset], sizeof(int32)); Offset += sizeof(int32);
 		FMemory::Memcpy(&CategoryStreams[i].Calls, &InData[Offset], sizeof(int32)); Offset += sizeof(int32);
+		if (bHasInitialSeed)
+		{
+			FMemory::Memcpy(&CategoryStreams[i].InitialSeed, &InData[Offset], sizeof(int32)); Offset += sizeof(int32);
+		}
+		else
+		{
+			// Legacy saves did not retain the stream's initial seed. Reconstruct
+			// it from the master seed so future Reset calls remain deterministic.
+			CategoryStreams[i].InitialSeed = DeriveCategorySeed(
+				MasterSeed,
+				static_cast<ENLTSeedCategory>(i));
+		}
 	}
 
 	UE_LOG(LogNLTDeterministicSeed, Log, TEXT("Seed state deserialized: master=%d, categories=%d"), MasterSeed, NumCategories);

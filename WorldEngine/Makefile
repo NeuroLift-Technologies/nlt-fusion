@@ -51,39 +51,39 @@ DebugSet: RequiredTools UnrealFrontend-Linux-Debug WorldEngineEditor-Linux-Debug
 
 
 WorldEngine-Android-DebugGame:
-	 $(BUILD) WorldEngine Android DebugGame  -Project="/home/joshd/Desktop/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
+	 $(BUILD) WorldEngine Android DebugGame  -Project="D:/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
 
 WorldEngine-Android-Development:
-	 $(BUILD) WorldEngine Android Development  -Project="/home/joshd/Desktop/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
+	 $(BUILD) WorldEngine Android Development  -Project="D:/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
 
 WorldEngine-Android-Shipping:
-	 $(BUILD) WorldEngine Android Shipping  -Project="/home/joshd/Desktop/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
+	 $(BUILD) WorldEngine Android Shipping  -Project="D:/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
 
 WorldEngine-Linux-DebugGame:
-	 $(BUILD) WorldEngine Linux DebugGame  -Project="/home/joshd/Desktop/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
+	 $(BUILD) WorldEngine Linux DebugGame  -Project="D:/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
 
 WorldEngine-Linux-Development:
-	 $(BUILD) WorldEngine Linux Development  -Project="/home/joshd/Desktop/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
+	 $(BUILD) WorldEngine Linux Development  -Project="D:/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
 
 WorldEngine-Linux-Shipping:
-	 $(BUILD) WorldEngine Linux Shipping  -Project="/home/joshd/Desktop/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
+	 $(BUILD) WorldEngine Linux Shipping  -Project="D:/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
 
 WorldEngine-LinuxArm64-DebugGame:
-	 $(BUILD) WorldEngine LinuxArm64 DebugGame  -Project="/home/joshd/Desktop/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
+	 $(BUILD) WorldEngine LinuxArm64 DebugGame  -Project="D:/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
 
 WorldEngine-LinuxArm64-Development:
-	 $(BUILD) WorldEngine LinuxArm64 Development  -Project="/home/joshd/Desktop/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
+	 $(BUILD) WorldEngine LinuxArm64 Development  -Project="D:/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
 
 WorldEngine-LinuxArm64-Shipping:
-	 $(BUILD) WorldEngine LinuxArm64 Shipping  -Project="/home/joshd/Desktop/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
+	 $(BUILD) WorldEngine LinuxArm64 Shipping  -Project="D:/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
 
 WorldEngine: WorldEngine-Linux-Development
 
 WorldEngineEditor-Linux-DebugGame:
-	 $(BUILD) WorldEngineEditor Linux DebugGame  -Project="/home/joshd/Desktop/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
+	 $(BUILD) WorldEngineEditor Linux DebugGame  -Project="D:/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
 
 WorldEngineEditor-Linux-Development:
-	 $(BUILD) WorldEngineEditor Linux Development  -Project="/home/joshd/Desktop/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
+	 $(BUILD) WorldEngineEditor Linux Development  -Project="D:/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" $(ARGS)
 
 WorldEngineEditor: WorldEngineEditor-Linux-Development
 
@@ -141,6 +141,6 @@ UnrealGame-LinuxArm64-Shipping:
 UnrealGame: UnrealGame-Linux-Development
 
 configure:
-	$(BUILD) -ProjectFiles -Project="/home/joshd/Desktop/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" -Game 
+	$(BUILD) -ProjectFiles -Project="D:/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject" -Game 
 
 .PHONY: $(TARGETS)

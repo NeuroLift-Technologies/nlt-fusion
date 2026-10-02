@@ -23,6 +23,9 @@
 #include "IPAddress.h"
 #include "Misc/CoreDelegates.h"
 #include "Modules/ModuleManager.h"
+#include "Async/Async.h"
+#include "WebSocketNetworkingDelegates.h"
+#include "INetworkingWebSocket.h"
 
 DEFINE_LOG_CATEGORY(LogNLTWebServer);
 
@@ -57,16 +60,18 @@ void UNLTWebServerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	Super::Initialize(Collection);
 
 	// Host the web server at engine boot so it (and the shared HTTP listeners,
-	// including the ModelContextProtocol MCP endpoint on port 8000) are not tied
+	// including the ModelContextProtocol MCP endpoint on port 8001) are not tied
 	// to any single PIE world lifecycle. Engine subsystems initialize before the
 	// HTTP module is guaranteed to be loaded, so defer the start to post-engine-init.
 	PostEngineInitHandle = FCoreDelegates::GetOnPostEngineInit().AddUObject(this, &UNLTWebServerSubsystem::OnPostEngineInit);
+	StartWebSocketServer(WebSocketPort);
 	UE_LOG(LogNLTWebServer, Log, TEXT("WebServer subsystem initialized"));
 }
 
 void UNLTWebServerSubsystem::Deinitialize()
 {
 	StopServer();
+	StopWebSocketServer();
 	FCoreDelegates::GetOnPostEngineInit().Remove(PostEngineInitHandle);
 	Super::Deinitialize();
 }
@@ -991,4 +996,255 @@ void UNLTWebServerSubsystem::BroadcastEvent(const FString& EventType, const FStr
 	{
 		EventBuffer.RemoveAt(0);
 	}
+}
+
+void UNLTWebServerSubsystem::StartWebSocketServer(int32 InWebSocketPort)
+{
+	if (WebSocketServer.IsValid())
+	{
+		UE_LOG(LogNLTWebServer, Warning, TEXT("WebSocket server already running on port %d"), WebSocketPort);
+		return;
+	}
+
+	FModuleManager::Get().LoadModuleChecked<FDefaultModuleImpl>(TEXT("WebSocketNetworking"));
+	IWebSocketNetworkingModule& WebSocketModule = FModuleManager::GetModuleChecked<IWebSocketNetworkingModule>(TEXT("WebSocketNetworking"));
+	WebSocketServer = WebSocketModule.CreateServer();
+	if (!WebSocketServer.IsValid())
+	{
+		UE_LOG(LogNLTWebServer, Error, TEXT("Failed to create WebSocket server"));
+		return;
+	}
+
+	WebSocketPort = InWebSocketPort;
+	FWebSocketClientConnectedCallBack Connected = FWebSocketClientConnectedCallBack::CreateLambda([this](INetworkingWebSocket* Socket)
+	{
+		if (Socket == nullptr) return;
+		TSharedPtr<INetworkingWebSocket> SharedSocket(Socket, [](INetworkingWebSocket*) {});
+		Socket->SetReceiveCallBack(FWebSocketPacketReceivedCallBack::CreateLambda([this, SharedSocket](void* Data, int32 Size)
+		{
+			if (IsInGameThread())
+			{
+				HandleWebSocketMessage(SharedSocket, Data, Size);
+				return;
+			}
+
+			TArray<uint8> Payload;
+			Payload.SetNumUninitialized(Size);
+			FMemory::Memcpy(Payload.GetData(), Data, Size);
+			AsyncTask(ENamedThreads::GameThread, [this, SharedSocket, Payload = MoveTemp(Payload)]()
+			{
+				HandleWebSocketMessage(SharedSocket, Payload.GetData(), Payload.Num());
+			});
+		}));
+		Socket->SetSocketClosedCallBack(FWebSocketInfoCallBack::CreateLambda([this, SharedSocket]()
+		{
+			WebSocketClients.Remove(SharedSocket);
+		}));
+		WebSocketClients.Add(SharedSocket);
+	});
+	if (!WebSocketServer->Init(static_cast<uint32>(WebSocketPort), Connected, TEXT("127.0.0.1")))
+	{
+		WebSocketServer.Reset();
+		UE_LOG(LogNLTWebServer, Error, TEXT("Failed to start WebSocket server on port %d"), WebSocketPort);
+		return;
+	}
+	UE_LOG(LogNLTWebServer, Log, TEXT("Fusion WebSocket server started on ws://127.0.0.1:%d"), WebSocketPort);
+}
+
+void UNLTWebServerSubsystem::StopWebSocketServer()
+{
+	WebSocketClients.Reset();
+	if (WebSocketServer.IsValid())
+	{
+		WebSocketServer.Reset();
+		UE_LOG(LogNLTWebServer, Log, TEXT("Fusion WebSocket server stopped"));
+	}
+}
+
+void UNLTWebServerSubsystem::SendWebSocketEnvelope(TSharedPtr<INetworkingWebSocket> Socket, const TSharedPtr<FJsonObject>& Message)
+{
+	if (!Socket.IsValid() || !Message.IsValid()) return;
+	const FString Json = JsonToStr(Message);
+	FTCHARToUTF8 Utf8(*Json);
+	Socket->Send(reinterpret_cast<const uint8*>(Utf8.Get()), static_cast<uint32>(Utf8.Length()), false);
+}
+
+void UNLTWebServerSubsystem::HandleWebSocketMessage(TSharedPtr<INetworkingWebSocket> Socket, const void* Data, int32 Size)
+{
+	if (!Socket.IsValid() || Data == nullptr || Size <= 0) return;
+	FString Body;
+	Body.Append(static_cast<const ANSICHAR*>(Data), Size);
+	TSharedPtr<FJsonObject> Request;
+	const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Body);
+	if (!FJsonSerializer::Deserialize(Reader, Request))
+	{
+		TSharedPtr<FJsonObject> ResponsePayload = MakeShared<FJsonObject>();
+		ResponsePayload->SetStringField(TEXT("status"), TEXT("rejected"));
+		TSharedPtr<FJsonObject> Error = MakeShared<FJsonObject>();
+		Error->SetStringField(TEXT("code"), TEXT("invalid_envelope"));
+		Error->SetStringField(TEXT("message"), TEXT("message is not valid JSON"));
+		ResponsePayload->SetObjectField(TEXT("error"), Error);
+		TSharedPtr<FJsonObject> Response = MakeShared<FJsonObject>();
+		Response->SetStringField(TEXT("protocol"), TEXT("nlt.fusion-unreal"));
+		Response->SetStringField(TEXT("protocol_version"), TEXT("1.0"));
+		Response->SetStringField(TEXT("message_type"), TEXT("ack"));
+		Response->SetStringField(TEXT("message_id"), FGuid::NewGuid().ToString(EGuidFormats::Digits));
+		Response->SetStringField(TEXT("session_id"), TEXT("invalid"));
+		Response->SetObjectField(TEXT("payload"), ResponsePayload);
+		SendWebSocketEnvelope(Socket, Response);
+		return;
+	}
+
+	FString Protocol;
+	FString Version;
+	FString SessionId;
+	FString MessageId;
+	FString MessageType;
+	Request->TryGetStringField(TEXT("protocol"), Protocol);
+	Request->TryGetStringField(TEXT("protocol_version"), Version);
+	Request->TryGetStringField(TEXT("session_id"), SessionId);
+	Request->TryGetStringField(TEXT("message_id"), MessageId);
+	Request->TryGetStringField(TEXT("message_type"), MessageType);
+	FString AgentId;
+	Request->TryGetStringField(TEXT("agent_id"), AgentId);
+
+	const TSharedPtr<FJsonObject>* Payload = nullptr;
+	Request->TryGetObjectField(TEXT("payload"), Payload);
+	TSharedPtr<FJsonObject> ResponsePayload = MakeShared<FJsonObject>();
+	FString ErrorCode;
+	FString ErrorMessage;
+	if (Protocol != TEXT("nlt.fusion-unreal")) { ErrorCode = TEXT("invalid_envelope"); ErrorMessage = TEXT("unknown protocol"); }
+	else if (Version != TEXT("1.0")) { ErrorCode = TEXT("unsupported_version"); ErrorMessage = TEXT("only protocol version 1.0 is supported"); }
+	else if (SessionId.IsEmpty() || MessageId.IsEmpty()) { ErrorCode = TEXT("invalid_envelope"); ErrorMessage = TEXT("session_id and message_id are required"); }
+	else if (MessageType == TEXT("ping")) { ResponsePayload->SetStringField(TEXT("status"), TEXT("accepted")); }
+	else if (MessageType == TEXT("snapshot")) { ResponsePayload->SetObjectField(TEXT("snapshot"), BuildSnapshotObject()); }
+	else if (MessageType == TEXT("action")) { FString AppliedAgentId; if (Payload != nullptr && ExecuteAuthoritativeAvatarAction(*Payload, AppliedAgentId, ErrorMessage)) { ResponsePayload->SetStringField(TEXT("agent_id"), AppliedAgentId); } else { ErrorCode = TEXT("invalid_action"); } }
+	else { ErrorCode = TEXT("unsupported_type"); ErrorMessage = FString::Printf(TEXT("unsupported message_type: %s"), *MessageType); }
+
+	ResponsePayload->SetStringField(TEXT("status"), ErrorCode.IsEmpty() ? TEXT("accepted") : TEXT("rejected"));
+	if (!ErrorCode.IsEmpty())
+	{
+		TSharedPtr<FJsonObject> Error = MakeShared<FJsonObject>();
+		Error->SetStringField(TEXT("code"), ErrorCode);
+		Error->SetStringField(TEXT("message"), ErrorMessage);
+		ResponsePayload->SetObjectField(TEXT("error"), Error);
+	}
+	TSharedPtr<FJsonObject> Response = MakeShared<FJsonObject>();
+	Response->SetStringField(TEXT("protocol"), TEXT("nlt.fusion-unreal"));
+	Response->SetStringField(TEXT("protocol_version"), TEXT("1.0"));
+	Response->SetStringField(TEXT("message_type"), TEXT("ack"));
+	Response->SetStringField(TEXT("message_id"), FGuid::NewGuid().ToString(EGuidFormats::Digits));
+	Response->SetStringField(TEXT("correlation_id"), MessageId);
+	Response->SetStringField(TEXT("session_id"), SessionId.IsEmpty() ? TEXT("invalid") : SessionId);
+	Response->SetStringField(TEXT("agent_id"), AgentId);
+	Response->SetObjectField(TEXT("payload"), ResponsePayload);
+	SendWebSocketEnvelope(Socket, Response);
+}
+
+
+
+
+
+
+
+
+bool UNLTWebServerSubsystem::ExecuteAuthoritativeAvatarAction(const TSharedPtr<FJsonObject>& Payload, FString& OutAgentId, FString& OutError)
+{
+	OutAgentId.Empty();
+	OutError.Empty();
+	if (!Payload.IsValid())
+	{
+		OutError = TEXT("payload must be an object");
+		return false;
+	}
+	FString ActionType;
+	Payload->TryGetStringField(TEXT("type"), ActionType);
+	if (ActionType.IsEmpty())
+	{
+		Payload->TryGetStringField(TEXT("action"), ActionType);
+	}
+	if (ActionType.IsEmpty())
+	{
+		OutError = TEXT("action type is required");
+		return false;
+	}
+	if (ActionType != TEXT("move_to") && ActionType != TEXT("move_by") && ActionType != TEXT("interact") && ActionType != TEXT("set_focus") && ActionType != TEXT("idle"))
+	{
+		OutError = FString::Printf(TEXT("unsupported action: %s"), *ActionType);
+		return false;
+	}
+	UWorld* World = GetSimulationWorld();
+	auto* MassSub = World ? World->GetSubsystem<UMassEntitySubsystem>() : nullptr;
+	if (!World || !MassSub || !IsInGameThread())
+	{
+		OutError = TEXT("authoritative simulation is not ready");
+		return false;
+	}
+	FMassEntityQuery& Query = NLTWebServerAvatarEntityControl::GetAvatarControlQuery(MassSub);
+	FMassExecutionContext Context(MassSub->GetMutableEntityManager());
+	FString TargetId;
+	Payload->TryGetStringField(TEXT("target_id"), TargetId);
+	Payload->TryGetStringField(TEXT("avatar_id"), TargetId);
+	if (TargetId.IsEmpty())
+	{
+		OutError = TEXT("target_id or avatar_id is required");
+		return false;
+	}
+	if (ActionType == TEXT("move_to") && (!Payload->HasField(TEXT("x")) || !Payload->HasField(TEXT("y"))))
+	{
+		OutError = TEXT("move_to requires x and y");
+		return false;
+	}
+	if (ActionType == TEXT("move_by") && (!Payload->HasField(TEXT("dx")) || !Payload->HasField(TEXT("dy"))))
+	{
+		OutError = TEXT("move_by requires dx and dy");
+		return false;
+	}
+	if (ActionType == TEXT("set_focus") && !Payload->HasField(TEXT("value")))
+	{
+		OutError = TEXT("set_focus requires value");
+		return false;
+	}
+	if (ActionType == TEXT("interact"))
+	{
+		FString InteractionTarget;
+		if (!Payload->TryGetStringField(TEXT("target"), InteractionTarget) || InteractionTarget.IsEmpty())
+		{
+			OutError = TEXT("interact requires a non-empty target");
+			return false;
+		}
+	}
+	bool bApplied = false;
+	Query.ForEachEntityChunk(Context, [&](FMassExecutionContext& Chunk)
+	{
+		const int32 Count = Chunk.GetNumEntities();
+		auto Identities = Chunk.GetFragmentView<FNLTAgentIdentityFragment>();
+		auto Locations = Chunk.GetMutableFragmentView<FNLTAgentLocationFragment>();
+		auto Cognitives = Chunk.GetMutableFragmentView<FNLTAgentCognitiveFragment>();
+		auto Intents = Chunk.GetMutableFragmentView<FNLTAgentIntentFragment>();
+		auto Behaviors = Chunk.GetMutableFragmentView<FNLTScenarioBehaviorFragment>();
+		for (int32 Index = 0; Index < Count && !bApplied; ++Index)
+		{
+			if (Identities[Index].Role != ENLTAgentRole::Avatar || (!TargetId.IsEmpty() && Identities[Index].AgentId.ToString() != TargetId)) continue;
+			FVector Target = Locations[Index].Position;
+			if (ActionType == TEXT("move_to"))
+			{
+				float X = 0.0f, Y = 0.0f; Payload->TryGetNumberField(TEXT("x"), X); Payload->TryGetNumberField(TEXT("y"), Y); Target = FVector(X, Y, 0.0f);
+			}
+			else if (ActionType == TEXT("move_by"))
+			{
+				float DX = 0.0f, DY = 0.0f; Payload->TryGetNumberField(TEXT("dx"), DX); Payload->TryGetNumberField(TEXT("dy"), DY); Target += FVector(DX, DY, 0.0f);
+			}
+			else if (ActionType == TEXT("set_focus"))
+			{
+				float Focus = -1.0f; Payload->TryGetNumberField(TEXT("value"), Focus); if (Focus < 0.0f || Focus > 1.0f) { OutError = TEXT("focus must be in [0,1]"); return; }
+				Cognitives[Index].Focus = Focus; bApplied = true; OutAgentId = Identities[Index].AgentId.ToString(); return;
+			}
+			else if (ActionType == TEXT("idle")) { bApplied = true; OutAgentId = Identities[Index].AgentId.ToString(); Behaviors[Index].bHasTarget = false; Behaviors[Index].Phase = ENLTScenarioMovementPhase::Idle; Locations[Index].bIsMoving = false; return; }
+			else if (ActionType == TEXT("interact")) { bApplied = true; OutAgentId = Identities[Index].AgentId.ToString(); Cognitives[Index].Focus = FMath::Min(1.0f, Cognitives[Index].Focus + 0.25f); return; }
+			Behaviors[Index].TargetPosition = Target; Behaviors[Index].bHasTarget = true; Behaviors[Index].Phase = ENLTScenarioMovementPhase::Moving; Behaviors[Index].TicksSinceDecision = 0; Locations[Index].TargetPosition = Target; Locations[Index].bIsMoving = true; Intents[Index].TargetLocation = Target; bApplied = true; OutAgentId = Identities[Index].AgentId.ToString();
+		}
+	});
+	if (!bApplied && OutError.IsEmpty()) OutError = TargetId.IsEmpty() ? TEXT("no avatar found") : FString::Printf(TEXT("avatar not found: %s"), *TargetId);
+	return bApplied;
 }

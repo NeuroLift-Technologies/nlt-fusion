@@ -4,7 +4,7 @@
 #include "Agents/NLTAgentSpawnerSubsystem.h"
 #include "Agents/NLTAgentFragments.h"
 #include "Simulation/NLTSimulationSubsystem.h"
-#include "Audio/SoundscapeSubsystem.h"
+#include "Audio/NLTSoundscapeSubsystem.h"
 #include "World/NLTEnvironmentVariation.h"
 #include "MassEntityManager.h"
 #include "MassEntityQuery.h"

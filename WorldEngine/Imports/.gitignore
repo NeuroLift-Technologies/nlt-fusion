@@ -1,0 +1,10 @@
+# Heavy Fab Modern_City_Environment staging files (~1.6 GB total) are NOT versioned.
+# Only the import helper scripts (.py/.js) and the geometry-only GLB splits
+# (splits_geo/) are committed so the .uassets can be reproduced on a fresh checkout.
+FabCity/*/*.gltf
+FabCity/*/*.bin
+FabCity/*/*.glb
+FabCity/*/*.blend
+FabCity/*/textures/
+FabCity/*/*.json
+FabCity/*/splits/

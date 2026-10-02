@@ -1,0 +1,28 @@
+{
+  "schema": "game_dev.job.v1",
+  "id": "job_628330f7-2a07-4d2b-b868-5b9819c1cf2e",
+  "operation": "skill.install",
+  "status": "failed",
+  "request": {
+    "positionals": [
+      "skill",
+      "install",
+      "all"
+    ],
+    "flags": {
+      "target": "C:\\Users\\joshd\\AppData\\Roaming\\npm"
+    }
+  },
+  "attempts": 1,
+  "eventCount": 1,
+  "artifacts": [],
+  "createdAt": "2026-09-20T00:15:27.197Z",
+  "updatedAt": "2026-09-20T00:15:27.468Z",
+  "startedAt": "2026-09-20T00:15:27.209Z",
+  "completedAt": "2026-09-20T00:15:27.468Z",
+  "error": {
+    "error": "UNKNOWN",
+    "message": "EPERM: operation not permitted, mkdir 'C:\\Users\\joshd\\AppData\\Roaming\\npm'",
+    "retryable": false
+  }
+}

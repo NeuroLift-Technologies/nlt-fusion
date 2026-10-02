@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NeuroLift · World Engine</title>
+    <style>
+      html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #0a0a1a; font-family: system-ui, sans-serif; color: #fff; }
+      #renderCanvas { width: 100%; height: 100%; display: block; touch-action: none; }
+      #hud-top { position: fixed; top: 10px; left: 10px; display: flex; gap: 8px; }
+      #pair-info { position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.55); padding: 8px 12px; border-radius: 8px; font-size: 13px; line-height: 1.5; }
+      #events { position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.55); padding: 8px 12px; border-radius: 8px; font-size: 12px; max-width: 300px; }
+      .hud-chip { background: rgba(0,0,0,0.55); padding: 4px 10px; border-radius: 6px; font-size: 12px; }
+      .event-row { padding: 2px 0; }
+    </style>
+  </head>
+    <body>
+      <canvas id="renderCanvas"></canvas>
+      <div id="hud-top"></div>
+      <div id="pair-info"></div>
+      <div id="events"></div>
+      <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

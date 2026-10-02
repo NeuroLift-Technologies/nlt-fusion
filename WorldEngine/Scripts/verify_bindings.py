@@ -10,7 +10,7 @@ import os
 import sys
 
 SESSION_ID = "01a05fdb5eb176e2bfb3a18d0bd1028c"
-MCP_URL = "http://127.0.0.1:8000/mcp"
+MCP_URL = "http://127.0.0.1:8001/mcp"
 
 def mcp_call(tool_name, arguments=None, toolset_name=None, request_id=1):
     """Make an MCP tools/call request and return the parsed result."""
@@ -75,7 +75,7 @@ EXPECTED_LEVEL_REFS = {
 }
 
 # Content directory for disk-level checks
-CONTENT_DIR = "/home/joshd/Desktop/nlt-repos/nlt-fusion/WorldEngine/Content"
+CONTENT_DIR = "D:/nlt-repos/nlt-fusion/WorldEngine/Content"
 
 results = {
     "dataasset_bindings": [],
@@ -183,7 +183,7 @@ for level_name, data in results["level_files_exist"].items():
     print(f"    {level_name}: {'EXISTS' if data['exists'] else 'MISSING'} ({data['disk_path']})")
 
 # Save results
-output_path = "/home/joshd/Desktop/nlt-repos/nlt-fusion/WorldEngine/Saved/Phase6BindingValidation.json"
+output_path = "D:/nlt-repos/nlt-fusion/WorldEngine/Saved/Phase6BindingValidation.json"
 os.makedirs(os.path.dirname(output_path), exist_ok=True)
 with open(output_path, "w") as f:
     json.dump(results, f, indent=2, default=str)

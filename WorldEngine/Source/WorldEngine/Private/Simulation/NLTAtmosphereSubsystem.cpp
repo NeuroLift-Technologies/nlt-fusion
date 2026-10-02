@@ -6,8 +6,10 @@
 #include "Components/SkyLightComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Engine/TextureCube.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Math/UnrealMathUtility.h"
+#include "Core/NLTNoiseLibrary.h"
 
 DEFINE_LOG_CATEGORY(LogNLTAtmosphere);
 
@@ -233,6 +235,24 @@ void UNLTAtmosphereSubsystem::UpdateSkyDome(float Hours)
 	SkyDomeMaterialInstance->SetScalarParameterValue(TEXT("SunIntensity"), Daylight * 3.0f);
 	SkyDomeMaterialInstance->SetScalarParameterValue(TEXT("CloudCoverage"),
 		0.3f + 0.2f * FMath::Sin(Hours * 0.5f));
+
+	// Procedural noise-driven cloud variation (deterministic per time-of-day)
+	// Ported from openworld-engine/src/world/sky.js cloud algorithm.
+	// Uses seeded fBm for natural-looking cloud motion and coverage variation.
+	float NoiseClouds = UNLTNoiseLibrary::Fbm2D(Hours * 0.5f, 0.0f, 42, 4, 2.0f, 0.5f);
+	SkyDomeMaterialInstance->SetScalarParameterValue(TEXT("CloudNoise"),
+		FMath::Max(0.0f, (NoiseClouds + 0.3f) * 0.7f));
+
+	// Procedural star density for the sky dome night rendering
+	float StarNoise = UNLTNoiseLibrary::Fbm2D(Hours + 7.0f, 13.0f, 99, 3, 2.0f, 0.5f);
+	SkyDomeMaterialInstance->SetScalarParameterValue(TEXT("StarDensity"),
+		FMath::Clamp(0.5f + StarNoise * 0.5f, 0.0f, 1.0f));
+
+	// Re-apply HDRI cubemap if assigned (material instance may have been recreated)
+	if (SkyboxCubemap)
+	{
+		SkyDomeMaterialInstance->SetTextureParameterValue(TEXT("SkyboxCubemap"), SkyboxCubemap);
+	}
 }
 
 // ─── Color Grading ───────────────────────────────────────────────
@@ -412,6 +432,13 @@ void UNLTAtmosphereSubsystem::FindOrCreateSkyDome()
 			SkyDomeComponent->SetMaterial(0, SkyDomeMaterialInstance);
 		}
 	}
+
+	// Apply HDRI cubemap to sky dome material if assigned
+	if (SkyDomeMaterialInstance && SkyboxCubemap)
+	{
+		// UObject wrapper types (TObjectPtr) must provide raw pointer to API that expects UTexture*
+		SkyDomeMaterialInstance->SetTextureParameterValue(TEXT("SkyboxCubemap"), SkyboxCubemap.Get());
+	}
 }
 
 void UNLTAtmosphereSubsystem::FindOrCreatePostProcessVolume()
@@ -434,5 +461,67 @@ void UNLTAtmosphereSubsystem::FindOrCreatePostProcessVolume()
 			PostProcessVolumeActor->AmbientOcclusion = 0.4f;
 			PostProcessVolumeActor->FilmGrain = 0.02f;
 		}
+	}
+}
+
+void UNLTAtmosphereSubsystem::SetSkyboxCubemap(UTextureCube* InCubemap, bool bApplyToSkyLight)
+{
+	if (!InCubemap) return;
+
+	SkyboxCubemap = InCubemap;
+	bUseSkyboxForSkyLight = bApplyToSkyLight;
+
+	// Apply to sky dome material
+	if (SkyDomeMaterialInstance)
+	{
+		SkyDomeMaterialInstance->SetTextureParameterValue(TEXT("SkyboxCubemap"), SkyboxCubemap);
+	}
+
+	// Apply to SkyLight for image-based reflections
+	FindSkyLight();
+	if (bUseSkyboxForSkyLight && SkyLight)
+	{
+		USkyLightComponent* SkyComp = SkyLight->GetLightComponent();
+			if (SkyComp)
+			{
+				// Pass raw pointer; newer engine APIs may not include SetCubemapTint.
+				SkyComp->SetCubemap(SkyboxCubemap.Get());
+				// If SetCubemapTint does not exist on this engine version, avoid calling it.
+				// Use SetLightColor on the component as a fallback for tinting if needed.
+				// SkyComp->SetLightColor(FLinearColor::White);
+			}
+	}
+
+	UE_LOG(LogNLTAtmosphere, Log, TEXT("Skybox cubemap %s applied to sky dome%s%s"),
+		SkyboxCubemap ? *SkyboxCubemap->GetName() : TEXT("(null)"),
+		bUseSkyboxForSkyLight ? TEXT(" and SkyLight") : TEXT(""),
+		bUseRealTimeSkyCapture ? TEXT(" (recapturing)") : TEXT(""));
+	
+	if (bUseRealTimeSkyCapture)
+	{
+		if (USkyLightComponent* SkyComp = SkyLight->GetLightComponent())
+		{
+			SkyComp->RecaptureSky();
+		}
+	}
+}
+
+void UNLTAtmosphereSubsystem::SetColorGradingLUT(UTexture2D* InLUT, UMaterialInterface* InLUTMaterial)
+{
+	FindOrCreatePostProcessVolume();
+	if (PostProcessVolumeActor)
+	{
+		PostProcessVolumeActor->ColorGradingLUT = InLUT;
+		PostProcessVolumeActor->ColorGradingLUTMaterial = InLUTMaterial;
+		PostProcessVolumeActor->ApplySettings();
+
+		UE_LOG(LogNLTAtmosphere, Log, TEXT("Color grading LUT %s %s via %s"),
+			InLUT ? *InLUT->GetName() : TEXT("(null — reverting to procedural)"),
+			InLUT && InLUTMaterial ? TEXT("applied") : TEXT("cleared"),
+			InLUTMaterial ? *InLUTMaterial->GetName() : TEXT("N/A"));
+	}
+	else
+	{
+		UE_LOG(LogNLTAtmosphere, Warning, TEXT("SetColorGradingLUT: PostProcessVolumeActor not found"));
 	}
 }

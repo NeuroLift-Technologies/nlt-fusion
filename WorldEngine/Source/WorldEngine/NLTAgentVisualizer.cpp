@@ -24,6 +24,7 @@ ANLTAgentVisualizer::ANLTAgentVisualizer()
 
     // Use Hierarchical ISM for better performance with many instances
     HISMComponent = CreateDefaultSubobject<UHierarchicalInstancedStaticMeshComponent>(TEXT("HISMComponent"));
+    HISMComponent->NumCustomDataFloats = 1;
     RootComponent = HISMComponent;
 
     // Default mesh: low-poly stylized sim body (already authored at ~179.5cm,
@@ -132,11 +133,16 @@ void ANLTAgentVisualizer::UpdateVisuals()
     TArray<FLinearColor> StateColors;
     TArray<int32> TeamIds;
     TArray<EMassAgentVisualState> States;
+    TArray<ENLTVisualLODLevel> InstanceLODLevels;
     ActiveStressLocations.Empty();
     ActiveFocusLocations.Empty();
 
     FMassExecutionContext Context(EntityManager);
     const float LocalAgentScale = AgentScale;
+    const FVector ViewerLocation = VisualLODPolicy.bUseViewerLocation
+        ? FNLTVisualLODPolicy::GetViewerLocation(World, GetActorLocation())
+        : GetActorLocation();
+    const FNLTVisualLODPolicy LocalLODPolicy = VisualLODPolicy;
     float PulseIntensity = GetWorld() ? FMath::Sin(GetWorld()->GetTimeSeconds() * 2.0f) * 0.5f + 0.5f : 0.5f;
 
     EntityQuery.ForEachEntityChunk(Context, [
@@ -144,7 +150,10 @@ void ANLTAgentVisualizer::UpdateVisuals()
         &StateColors, 
         &TeamIds, 
         &States,
+        &InstanceLODLevels,
         LocalAgentScale,
+        LocalLODPolicy,
+        ViewerLocation,
         this
     ](FMassExecutionContext& Context)
         {
@@ -159,6 +168,20 @@ void ANLTAgentVisualizer::UpdateVisuals()
                 const float Stress = Cognition[i].Stress;
                 const int32 TeamId = Identities[i].TeamId;
                 const EMassAgentVisualState State = GetVisualState(Stress, Focus);
+                const float Distance = LocalLODPolicy.GetDistance(Locations[i].Position, ViewerLocation);
+                ENLTVisualLODLevel PreviousLevel = ENLTVisualLODLevel::LOD0_Near;
+                const ENLTVisualLODLevel* FoundPreviousLevel = this->AgentVisualLevels.Find(Identities[i].AgentId);
+                const bool bHasPreviousLevel = FoundPreviousLevel != nullptr;
+                if (FoundPreviousLevel)
+                {
+                    PreviousLevel = *FoundPreviousLevel;
+                }
+                const ENLTVisualLODLevel LODLevel = LocalLODPolicy.ResolveLevel(Distance, PreviousLevel, bHasPreviousLevel);
+                this->AgentVisualLevels.Add(Identities[i].AgentId, LODLevel);
+                if (LODLevel == ENLTVisualLODLevel::LOD3_Hidden)
+                {
+                    continue;
+                }
 
                 // Calculate color based on team and state
                 FLinearColor BaseColor = GetTeamColor(TeamId);
@@ -197,6 +220,7 @@ void ANLTAgentVisualizer::UpdateVisuals()
                     FQuat::Identity,
                     Locations[i].Position,
                     FVector(LocalAgentScale)));
+                InstanceLODLevels.Add(LODLevel);
                 StateColors.Add(FinalColor);
                 TeamIds.Add(TeamId);
                 States.Add(State);
@@ -204,9 +228,13 @@ void ANLTAgentVisualizer::UpdateVisuals()
         });
 
     // Add instances
-    for (const FTransform& T : InstanceTransforms)
+    for (int32 InstanceIndex = 0; InstanceIndex < InstanceTransforms.Num(); ++InstanceIndex)
     {
-        HISMComponent->AddInstance(T);
+        const int32 AddedIndex = HISMComponent->AddInstance(InstanceTransforms[InstanceIndex]);
+        if (InstanceLODLevels.IsValidIndex(InstanceIndex))
+        {
+            HISMComponent->SetCustomDataValue(AddedIndex, 0, static_cast<float>(InstanceLODLevels[InstanceIndex]));
+        }
     }
     
     // Update materials based on state

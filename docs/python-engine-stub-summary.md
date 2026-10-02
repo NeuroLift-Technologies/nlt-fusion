@@ -4,12 +4,13 @@
 **Agent:** Claude Code
 **Session:** claude/claudewizardly-lovelace-7wt7h
 **Escalation:** docs/escalations/2026-05-29-python-engine-missing-modules.md (RESOLVED)
+**Status:** Archived — the Python ECS engine is now in `_archive/world-engine/` as a reference prototype.
 
 ---
 
 ## What Was Done
 
-The Python simulation engine under `world-engine/src/` previously could not run because it imported four modules that didn't exist:
+The Python simulation engine under `_archive/world-engine/src/` previously could not run because it imported four modules that didn't exist:
 - `base_avatar.py` (BaseAvatar, TaskResult)
 - `base_aide.py` (BaseAide, CoachingContext, CoachingAction)
 - `readiness_assessor.py` (ReadinessAssessor, FusionReadiness)

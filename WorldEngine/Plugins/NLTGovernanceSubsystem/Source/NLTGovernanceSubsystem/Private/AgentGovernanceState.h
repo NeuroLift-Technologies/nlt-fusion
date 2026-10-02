@@ -1,3 +1,4 @@
+#pragma warning(disable: 4668) // __GNUC__ undefined on MSVC
 // AgentGovernanceState.h — Internal per-agent governance state (not exposed to UE reflection)
 #pragma once
 

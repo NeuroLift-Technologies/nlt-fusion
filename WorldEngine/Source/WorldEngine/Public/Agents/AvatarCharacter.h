@@ -11,6 +11,7 @@
 #include "Agents/NLTEmotionStateComponent.h"
 #include "Agents/NLTCharacterAnimationComponent.h"
 #include "Agents/NLTPairChoreographyComponent.h"
+#include "Visual/NLTVisualLODPolicy.h"
 #include "AvatarCharacter.generated.h"
 
 // Visual state for character
@@ -91,6 +92,16 @@ public:
     // The static mesh component for the avatar's visible body (SimBody mesh)
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Visual|Mesh")
     UStaticMeshComponent* BodyMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual|LOD")
+	FNLTVisualLODPolicy VisualLODPolicy;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Visual|LOD")
+	ENLTVisualLODLevel CurrentVisualLOD = ENLTVisualLODLevel::LOD0_Near;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Visual|LOD")
+	ENLTVisualRepresentation CurrentVisualRepresentation = ENLTVisualRepresentation::Mesh;
+
 
     // ============== Particle Effects ==============
 
@@ -177,6 +188,8 @@ protected:
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
     // Visual update functions
+	void UpdateVisualLOD();
+
     void UpdateVisualState();
     void UpdateMaterials();
     void UpdateParticleEffects();

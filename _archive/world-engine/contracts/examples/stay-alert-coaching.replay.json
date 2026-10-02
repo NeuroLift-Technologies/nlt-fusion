@@ -1,0 +1,333 @@
+{
+  "contract_version": "nlt.world-engine.v1",
+  "replay_id": "replay-stay-alert-coaching-001",
+  "description": "StayAlert begins email processing, advances one minute, and receives a coaching intervention.",
+  "seed": 1337,
+  "initial_snapshot": {
+    "contract_version": "nlt.world-engine.v1",
+    "snapshot_id": "snapshot-stay-alert-initial",
+    "simulation": {
+      "simulation_id": "sim-stay-alert-001",
+      "state": "running",
+      "tick": 0,
+      "sim_time": 0,
+      "seed": 1337,
+      "pace": 1
+    },
+    "avatars": {
+      "stay_alert": {
+        "id": "stay_alert",
+        "name": "StayAlert",
+        "trait": "Sustained Attention",
+        "state": "idle",
+        "emotional_state": "neutral",
+        "metrics": {
+          "focus": 0.7,
+          "cognitive_load": 0.25,
+          "stress": 0.2,
+          "burnout_risk": 0.05,
+          "independence": 0.3,
+          "fusion_readiness": 0,
+          "success_rate": 0.5
+        },
+        "scenario": null,
+        "position": {
+          "room_id": "office",
+          "x": 3,
+          "y": 3,
+          "target_x": 3,
+          "target_y": 3,
+          "facing": "south"
+        },
+        "counters": {
+          "minutes_focused": 0,
+          "false_starts": 0,
+          "interventions": 0,
+          "successes": 0,
+          "failures": 0
+        },
+        "extensions": {}
+      }
+    },
+    "entities": {},
+    "extensions": {}
+  },
+  "actions": [
+    {
+      "contract_version": "nlt.world-engine.v1",
+      "action_id": "action-assign-wp-1",
+      "sequence": 1,
+      "submitted_at": {
+        "tick": 0,
+        "sim_time": 0
+      },
+      "actor": {
+        "type": "human",
+        "id": "operator"
+      },
+      "action_type": "assign_scenario",
+      "target_id": "stay_alert",
+      "payload": {
+        "scenario_id": "wp_1"
+      },
+      "extensions": {}
+    },
+    {
+      "contract_version": "nlt.world-engine.v1",
+      "action_id": "action-advance-tick-1",
+      "sequence": 2,
+      "submitted_at": {
+        "tick": 0,
+        "sim_time": 0
+      },
+      "actor": {
+        "type": "engine",
+        "id": "world_engine"
+      },
+      "action_type": "advance_tick",
+      "target_id": null,
+      "payload": {
+        "minutes": 1
+      },
+      "extensions": {}
+    },
+    {
+      "contract_version": "nlt.world-engine.v1",
+      "action_id": "action-coach-stay-alert-1",
+      "sequence": 3,
+      "submitted_at": {
+        "tick": 1,
+        "sim_time": 1
+      },
+      "actor": {
+        "type": "aide",
+        "id": "dr_vance"
+      },
+      "action_type": "coach",
+      "target_id": "stay_alert",
+      "payload": {
+        "strategy": "Attention anchor",
+        "reason": "Cognitive load increased during a sustained-focus task."
+      },
+      "extensions": {}
+    }
+  ],
+  "events": [
+    {
+      "contract_version": "nlt.world-engine.v1",
+      "event_id": "event-scenario-assigned-1",
+      "sequence": 1,
+      "clock": {
+        "tick": 0,
+        "sim_time": 0
+      },
+      "event_type": "scenario.assigned",
+      "source": {
+        "type": "human",
+        "id": "operator"
+      },
+      "subject_id": "stay_alert",
+      "scenario_id": "wp_1",
+      "message": "Assigned Email Processing to StayAlert.",
+      "payload": {},
+      "state_changes": [
+        {
+          "op": "set",
+          "path": "/avatars/stay_alert/state",
+          "value": "working"
+        },
+        {
+          "op": "set",
+          "path": "/avatars/stay_alert/scenario",
+          "value": {
+            "id": "wp_1",
+            "elapsed": 0,
+            "expected": 30
+          }
+        },
+        {
+          "op": "set",
+          "path": "/avatars/stay_alert/position/room_id",
+          "value": "office"
+        }
+      ],
+      "extensions": {}
+    },
+    {
+      "contract_version": "nlt.world-engine.v1",
+      "event_id": "event-simulation-tick-1",
+      "sequence": 2,
+      "clock": {
+        "tick": 1,
+        "sim_time": 1
+      },
+      "event_type": "simulation.tick",
+      "source": {
+        "type": "engine",
+        "id": "world_engine"
+      },
+      "subject_id": "stay_alert",
+      "scenario_id": "wp_1",
+      "message": "Advanced the simulation by one minute.",
+      "payload": {},
+      "state_changes": [
+        {
+          "op": "set",
+          "path": "/simulation/tick",
+          "value": 1
+        },
+        {
+          "op": "set",
+          "path": "/simulation/sim_time",
+          "value": 1
+        },
+        {
+          "op": "increment",
+          "path": "/avatars/stay_alert/scenario/elapsed",
+          "value": 1
+        },
+        {
+          "op": "increment",
+          "path": "/avatars/stay_alert/metrics/cognitive_load",
+          "value": 0.02
+        },
+        {
+          "op": "increment",
+          "path": "/avatars/stay_alert/metrics/focus",
+          "value": -0.01
+        }
+      ],
+      "extensions": {}
+    },
+    {
+      "contract_version": "nlt.world-engine.v1",
+      "event_id": "event-coaching-delivered-1",
+      "sequence": 3,
+      "clock": {
+        "tick": 1,
+        "sim_time": 1
+      },
+      "event_type": "aide.coaching_delivered",
+      "source": {
+        "type": "aide",
+        "id": "dr_vance"
+      },
+      "subject_id": "stay_alert",
+      "scenario_id": "wp_1",
+      "message": "Dr. Vance delivered Attention anchor.",
+      "payload": {
+        "intervention_id": "intervention-stay-alert-1"
+      },
+      "state_changes": [
+        {
+          "op": "set",
+          "path": "/snapshot_id",
+          "value": "snapshot-stay-alert-final"
+        },
+        {
+          "op": "set",
+          "path": "/avatars/stay_alert/state",
+          "value": "coached"
+        },
+        {
+          "op": "increment",
+          "path": "/avatars/stay_alert/metrics/focus",
+          "value": 0.06
+        },
+        {
+          "op": "increment",
+          "path": "/avatars/stay_alert/metrics/cognitive_load",
+          "value": -0.08
+        },
+        {
+          "op": "increment",
+          "path": "/avatars/stay_alert/metrics/stress",
+          "value": -0.1
+        },
+        {
+          "op": "increment",
+          "path": "/avatars/stay_alert/counters/interventions",
+          "value": 1
+        }
+      ],
+      "extensions": {}
+    }
+  ],
+  "interventions": [
+    {
+      "contract_version": "nlt.world-engine.v1",
+      "intervention_id": "intervention-stay-alert-1",
+      "sequence": 1,
+      "clock": {
+        "tick": 1,
+        "sim_time": 1
+      },
+      "avatar_id": "stay_alert",
+      "aide_id": "dr_vance",
+      "strategy": "Attention anchor",
+      "reason": "Cognitive load increased during a sustained-focus task.",
+      "effectiveness": 0.6,
+      "effects": {
+        "focus": 0.06,
+        "cognitive_load": -0.08,
+        "stress": -0.1
+      },
+      "extensions": {}
+    }
+  ],
+  "expected_final_snapshot": {
+    "contract_version": "nlt.world-engine.v1",
+    "snapshot_id": "snapshot-stay-alert-final",
+    "simulation": {
+      "simulation_id": "sim-stay-alert-001",
+      "state": "running",
+      "tick": 1,
+      "sim_time": 1,
+      "seed": 1337,
+      "pace": 1
+    },
+    "avatars": {
+      "stay_alert": {
+        "id": "stay_alert",
+        "name": "StayAlert",
+        "trait": "Sustained Attention",
+        "state": "coached",
+        "emotional_state": "neutral",
+        "metrics": {
+          "focus": 0.75,
+          "cognitive_load": 0.19,
+          "stress": 0.1,
+          "burnout_risk": 0.05,
+          "independence": 0.3,
+          "fusion_readiness": 0,
+          "success_rate": 0.5
+        },
+        "scenario": {
+          "id": "wp_1",
+          "elapsed": 1,
+          "expected": 30
+        },
+        "position": {
+          "room_id": "office",
+          "x": 3,
+          "y": 3,
+          "target_x": 3,
+          "target_y": 3,
+          "facing": "south"
+        },
+        "counters": {
+          "minutes_focused": 0,
+          "false_starts": 0,
+          "interventions": 1,
+          "successes": 0,
+          "failures": 0
+        },
+        "extensions": {}
+      }
+    },
+    "entities": {},
+    "extensions": {}
+  },
+  "expected_final_hash": "14fb17efde1629d5404c652f51e9aa835eca21b126c5ec9b9e342dd189d5802a",
+  "extensions": {}
+}

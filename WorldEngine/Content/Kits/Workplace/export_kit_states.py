@@ -11,8 +11,8 @@ Output:
 import bpy
 import os
 
-BLEND_FILE = "/home/joshd/Desktop/nlt-repos/nlt-fusion/WorldEngine/Content/Kits/Workplace/WorkplaceKit.blend"
-OUT_BASE = "/home/joshd/Desktop/nlt-repos/nlt-fusion/WorldEngine/Content/Kits/Workplace/SK_Desk_01"
+BLEND_FILE = "D:/nlt-repos/nlt-fusion/WorldEngine/Content/Kits/Workplace/WorkplaceKit.blend"
+OUT_BASE = "D:/nlt-repos/nlt-fusion/WorldEngine/Content/Kits/Workplace/SK_Desk_01"
 
 STATES = {
     "Clean": "KT_Clean",

@@ -1,0 +1,45 @@
+{
+  "schema": "game_dev.job.v1",
+  "id": "job_0ebb473b-80f2-4a6d-949c-d2522520a2ba",
+  "operation": "skill.install",
+  "status": "completed",
+  "request": {
+    "positionals": [
+      "skill",
+      "install",
+      "all"
+    ],
+    "flags": {
+      "target": "C:\\Users\\joshd\\Documents\\nlt-repos\\nlt-world-engine\\WorldEngine\\.skills"
+    }
+  },
+  "attempts": 1,
+  "eventCount": 1,
+  "artifacts": [
+    {
+      "path": "C:\\Users\\joshd\\Documents\\nlt-repos\\nlt-world-engine\\WorldEngine\\.skills\\game-development-studio",
+      "kind": "codex_skill"
+    },
+    {
+      "path": "C:\\Users\\joshd\\Documents\\nlt-repos\\nlt-world-engine\\WorldEngine\\.skills\\game-asset-production",
+      "kind": "codex_skill"
+    },
+    {
+      "path": "C:\\Users\\joshd\\Documents\\nlt-repos\\nlt-world-engine\\WorldEngine\\.skills\\game-asset-vendoring",
+      "kind": "codex_skill"
+    },
+    {
+      "path": "C:\\Users\\joshd\\Documents\\nlt-repos\\nlt-world-engine\\WorldEngine\\.skills\\game-visual-debugging",
+      "kind": "codex_skill"
+    },
+    {
+      "path": "C:\\Users\\joshd\\Documents\\nlt-repos\\nlt-world-engine\\WorldEngine\\.skills\\game-performance-optimization",
+      "kind": "codex_skill"
+    }
+  ],
+  "createdAt": "2026-09-20T00:15:35.444Z",
+  "updatedAt": "2026-09-20T00:15:35.852Z",
+  "startedAt": "2026-09-20T00:15:35.457Z",
+  "completedAt": "2026-09-20T00:15:35.852Z",
+  "receiptPath": "C:\\Users\\joshd\\Documents\\nlt-repos\\nlt-world-engine\\WorldEngine\\assets\\generated\\.game-dev\\jobs\\job_0ebb473b-80f2-4a6d-949c-d2522520a2ba\\receipt.json"
+}

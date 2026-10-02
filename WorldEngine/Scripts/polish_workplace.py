@@ -13,7 +13,7 @@ import sys
 
 # ─── Configuration ───────────────────────────────────────────────
 LEVEL_PATH = "/Game/Scenarios/Levels/Workplace_Level"
-PROJECT_PATH = "/home/joshd/Desktop/nlt-repos/nlt-fusion/WorldEngine"
+PROJECT_PATH = "D:/nlt-repos/nlt-fusion/WorldEngine"
 CONTENT_DIR = f"{PROJECT_PATH}/Content"
 SAVED_DIR = f"{PROJECT_PATH}/Saved"
 LOG_FILE = f"{SAVED_DIR}/PolishWorkplace.log"

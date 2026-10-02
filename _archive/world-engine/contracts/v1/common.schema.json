@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:nlt:world-engine:v1:common",
+  "title": "NLT World Engine Common Types",
+  "$defs": {
+    "contract_version": {
+      "const": "nlt.world-engine.v1"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "unit_interval": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "clock": {
+      "type": "object",
+      "required": [
+        "tick",
+        "sim_time"
+      ],
+      "properties": {
+        "tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sim_time": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Simulation minutes since replay start."
+        }
+      },
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "type",
+        "id"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "human",
+            "avatar",
+            "aide",
+            "npc",
+            "engine",
+            "scenario",
+            "controller",
+            "system"
+          ]
+        },
+        "id": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "additionalProperties": false
+    },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "focus",
+        "cognitive_load",
+        "stress",
+        "burnout_risk",
+        "independence",
+        "fusion_readiness",
+        "success_rate"
+      ],
+      "properties": {
+        "focus": {
+          "$ref": "#/$defs/unit_interval"
+        },
+        "cognitive_load": {
+          "$ref": "#/$defs/unit_interval"
+        },
+        "stress": {
+          "$ref": "#/$defs/unit_interval"
+        },
+        "burnout_risk": {
+          "$ref": "#/$defs/unit_interval"
+        },
+        "independence": {
+          "$ref": "#/$defs/unit_interval"
+        },
+        "fusion_readiness": {
+          "$ref": "#/$defs/unit_interval"
+        },
+        "success_rate": {
+          "$ref": "#/$defs/unit_interval"
+        }
+      },
+      "additionalProperties": false
+    },
+    "position": {
+      "type": "object",
+      "required": [
+        "room_id",
+        "x",
+        "y",
+        "target_x",
+        "target_y",
+        "facing"
+      ],
+      "properties": {
+        "room_id": {
+          "$ref": "#/$defs/id"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "z": {
+          "type": "number",
+          "default": 0
+        },
+        "target_x": {
+          "type": "number"
+        },
+        "target_y": {
+          "type": "number"
+        },
+        "facing": {
+          "enum": [
+            "north",
+            "east",
+            "south",
+            "west"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "scenario_state": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "required": [
+            "id",
+            "elapsed",
+            "expected"
+          ],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/id"
+            },
+            "elapsed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "expected": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

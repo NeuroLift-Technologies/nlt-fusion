@@ -148,6 +148,27 @@ mcpServers:
     headers:
       Authorization: "Bearer ${CLOUDFLARE_API_TOKEN}"
 
+  # ───────────────────────────────────────────────────────────────────────────
+  # Unreal MCP — development-plane control of the WorldEngine UE 5.8 editor
+  # Remote, HTTP transport — https://github.com/ChiR24/Unreal_mcp
+  #
+  # Server: McpAutomationBridge plugin (native Streamable HTTP transport at /mcp)
+  # Port:    8001 (project-local override; the upstream default is 3000)
+  #
+  # NOTES:
+  #   - OTOI §7 / §8 boundary: this server is a development-plane interface
+  #     (editor control, assets, level work, screenshots, inspection). It does
+  #     NOT grant simulated agents runtime authority. Runtime agent actions
+  #     must still pass through WorldEngine / ASFDK. Unreal MCP ≠ governance
+  #     bypass.
+  #   - Auth: capability-token auth is ON by default in the plugin (0.5.30+).
+  #     Token auto-generated at <Project>/Saved/MCP/capability-token, or set
+  #     manually via Project Settings → Plugins → MCP Automation Bridge.
+  # ───────────────────────────────────────────────────────────────────────────
+  unreal-mcp:
+    type: http
+    url: http://127.0.0.1:8001/mcp
+
 # ─────────────────────────────────────────────────────────────────────────────
 # mcp-remote fallback (for clients without native remote MCP support)
 #

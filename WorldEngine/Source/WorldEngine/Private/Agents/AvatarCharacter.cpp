@@ -148,6 +148,8 @@ void AAvatarCharacter::BeginPlay()
     }
     
     // Update all visual systems
+    UpdateVisualLOD();
+
     UpdateVisualState();
     UpdateMaterials();
     UpdateParticleEffects();
@@ -198,6 +200,8 @@ void AAvatarCharacter::Tick(float DeltaTime)
         CognitiveState->UpdateEmotionalState();
     }
 
+    UpdateVisualLOD();
+
     // Update all visual systems
     UpdateVisualState();
     UpdateMaterials();
@@ -224,6 +228,42 @@ void AAvatarCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 }
 
 // ============== Visual State Updates ==============
+
+void AAvatarCharacter::UpdateVisualLOD()
+{
+    const FVector ViewerLocation = VisualLODPolicy.bUseViewerLocation
+        ? FNLTVisualLODPolicy::GetViewerLocation(GetWorld(), GetActorLocation())
+        : GetActorLocation();
+    const float Distance = VisualLODPolicy.GetDistance(GetActorLocation(), ViewerLocation);
+    CurrentVisualLOD = VisualLODPolicy.ResolveLevel(Distance, CurrentVisualLOD, true);
+
+    const bool bHasPrimaryMesh = bUseSkeletalMeshCharacter && SkeletalMeshCharacter && GetMesh();
+    const bool bHasFallbackMesh = BodyMesh && BodyMesh->GetStaticMesh();
+    CurrentVisualRepresentation = VisualLODPolicy.ResolveRepresentation(
+        CurrentVisualLOD,
+        false,
+        bHasPrimaryMesh,
+        bHasFallbackMesh);
+
+    if (CurrentVisualLOD == ENLTVisualLODLevel::LOD3_Hidden && VisualLODPolicy.bHideActorsAtFarDistance)
+    {
+        SetActorHiddenInGame(true);
+        return;
+    }
+
+    SetActorHiddenInGame(false);
+    const bool bShowSkeletal = CurrentVisualRepresentation == ENLTVisualRepresentation::Mesh;
+    const bool bShowFallback = CurrentVisualRepresentation == ENLTVisualRepresentation::FallbackMesh;
+    if (GetMesh())
+    {
+        GetMesh()->SetVisibility(bShowSkeletal);
+    }
+    if (BodyMesh)
+    {
+        BodyMesh->SetVisibility(bShowFallback);
+    }
+}
+
 
 void AAvatarCharacter::UpdateVisualState()
 {

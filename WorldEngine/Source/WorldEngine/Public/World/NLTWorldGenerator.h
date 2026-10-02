@@ -7,6 +7,29 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogNLTWorldGenerator, Log, All);
 
+/**
+ * A single set-coordinate building: explicit type + exact location + yaw. Buildings are placed at
+ * these coordinates verbatim (no randomization), so the same city appears on every run.
+ */
+USTRUCT(BlueprintType)
+struct FNLTDesiredBuilding
+{
+    GENERATED_BODY()
+
+    /** Building type name (Office, Apartment, Shop, School, Factory, Park, Hut). */
+    UPROPERTY(BlueprintReadWrite)
+    FName BuildingType;
+
+    /** Fixed spawn location (cm). Z is ignored - the open-world subsystem raises each building
+     *  onto the terrain height at spawn. */
+    UPROPERTY(BlueprintReadWrite)
+    FVector Location = FVector::ZeroVector;
+
+    /** Authored rotation (usually yaw; pitch/roll kept for completeness). */
+    UPROPERTY(BlueprintReadWrite)
+    FRotator Rotation = FRotator::ZeroRotator;
+};
+
 USTRUCT(BlueprintType)
 struct FNLTWorldGenerationParams
 {
@@ -16,11 +39,12 @@ struct FNLTWorldGenerationParams
     int32 Seed = 12345;
 
     UPROPERTY(BlueprintReadWrite)
-    FVector WorldSize = FVector(5000.0f, 5000.0f, 0.0f);
+    FVector WorldSize = FVector(20000.0f, 20000.0f, 0.0f);
 
     UPROPERTY(BlueprintReadWrite)
     int32 NumDistricts = 4;
 
+    /** Legacy count kept for API compatibility - building placement is driven by BuildingLayout. */
     UPROPERTY(BlueprintReadWrite)
     int32 NumBuildings = 20;
 
@@ -35,6 +59,11 @@ struct FNLTWorldGenerationParams
 
     UPROPERTY(BlueprintReadWrite)
     float GreenSpaceRatio = 0.2f;
+
+    /** Fixed, authored building layout. When non-empty, GenerateBuildings places every entry
+     *  verbatim (type + location + yaw) instead of random placement. Empty => warning + no buildings. */
+    UPROPERTY(BlueprintReadWrite)
+    TArray<FNLTDesiredBuilding> BuildingLayout;
 };
 
 USTRUCT(BlueprintType)

@@ -1,5 +1,13 @@
 # NLT Fusion Web Viewer
 
+**NLT World Engine is an embodied multi-agent simulation where machine learning models inhabit a persistent world, control their characters, interact with environments and other agents, and transition between meaningful life scenarios.**
+
+**An AI habitat — a virtual world where AI agents live, perceive, act, and learn.** The world is rendered with realistic graphics: procedural terrain, water, sky, vegetation, and settlement. AI residents walk through this world with articulated bodies, animated walk cycles, and name labels. Humans watch through a spectator viewer.
+
+> **Core principle: Fusion owns semantic reality; Unreal owns physical reality.**
+
+---
+
 ## Quick Start
 
 ### Option 1: Demo Mode (no Unreal needed)
@@ -11,7 +19,7 @@
 1. Run Unreal headless:
    ```bash
    ~/Documents/NLT/Engine/Binaries/Linux/UnrealEditor \
-     ~/Desktop/nlt-repos/nlt-fusion/WorldEngine/WorldEngine.uproject \
+     D:\\nlt-repos/nlt-fusion/WorldEngine/WorldEngine.uproject \
      -nullrhi -benchmark -deterministic -stdout -FullStdOutLogOutput
    ```
 2. In Unreal, run console command: `NLT.SocketServer.Start 8765`
@@ -21,7 +29,7 @@
 
 ### Option 3: Serve via local HTTP
 ```bash
-cd ~/Desktop/nlt-repos/nlt-fusion/WorldEngine/Content/Web
+cd D:\\nlt-repos/nlt-fusion/WorldEngine/Content/Web
 python3 -m http.server 8080
 # Open http://localhost:8080/index.html
 ```

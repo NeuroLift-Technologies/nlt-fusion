@@ -5,12 +5,12 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogNLTFusion, Log, All);
 
-class FNLTFusionModule : public IModuleInterface
-{
-public:
-    virtual void StartupModule() override;
-    virtual void ShutdownModule() override;
-};
+// NOTE: The "WorldEngine" module is implemented exactly once, by FWorldEngineModule in
+// Source/WorldEngine/WorldEngine.cpp. Do not declare a second IModuleInterface
+// implementation for this module here: a module must have exactly one
+// IMPLEMENT_MODULE / IMPLEMENT_GAME_MODULE definition, otherwise the build fails with
+// C2084/C2086/C2374 duplicate-definition errors for InitializeWorldEngineModule,
+// WorldEngineInitializerEntry and IMPLEMENT_MODULE_WorldEngine.
 
 UENUM(BlueprintType)
 enum class ENLTAgentRole : uint8

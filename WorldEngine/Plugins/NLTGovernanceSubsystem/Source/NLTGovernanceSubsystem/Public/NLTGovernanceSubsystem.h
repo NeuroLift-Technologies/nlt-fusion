@@ -1,3 +1,4 @@
+#pragma warning(disable: 4668) // __GNUC__ undefined on MSVC
 #pragma once
 
 #include "CoreMinimal.h"

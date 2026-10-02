@@ -11,6 +11,8 @@
 #include "Serialization/JsonWriter.h"
 #include "Serialization/JsonSerializer.h"
 #include "MassEntityQuery.h"
+#include "IWebSocketServer.h"
+#include "IWebSocketNetworkingModule.h"
 #include "NLTWebServerSubsystem.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogNLTWebServer, Log, All);
@@ -30,6 +32,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "NLT|WebServer")
 	void StopServer();
+
+	UFUNCTION(BlueprintCallable, Category = "NLT|WebServer")
+	void StartWebSocketServer(int32 InWebSocketPort = 8766);
+
+	UFUNCTION(BlueprintCallable, Category = "NLT|WebServer")
+	void StopWebSocketServer();
 
 	UFUNCTION(BlueprintPure, Category = "NLT|WebServer")
 	bool IsRunning() const { return bRunning; }
@@ -60,11 +68,17 @@ private:
 	FString BuildStatusJson();
 	FString BuildEventsJson();
 	FString JsonToStr(TSharedPtr<FJsonObject> Obj);
+	void HandleWebSocketMessage(TSharedPtr<INetworkingWebSocket> Socket, const void* Data, int32 Size);
+	void SendWebSocketEnvelope(TSharedPtr<INetworkingWebSocket> Socket, const TSharedPtr<FJsonObject>& Message);
+	bool ExecuteAuthoritativeAvatarAction(const TSharedPtr<FJsonObject>& Payload, FString& OutAgentId, FString& OutError);
 
 	void BroadcastEvent(const FString& EventType, const FString& Message, const FString& SourceId, const FString& SourceType);
 
 private:
 	TSharedPtr<IHttpRouter> HttpRouter;
+	TUniquePtr<IWebSocketServer> WebSocketServer;
+	TArray<TSharedPtr<INetworkingWebSocket>> WebSocketClients;
+	int32 WebSocketPort = 8766;
 	int32 Port = 8765;
 	bool bRunning = false;
 	FString LatestSnapshot;

@@ -1,4 +1,6 @@
 #include "Simulation/PostProcessVolumeActor.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Engine/Texture2D.h"
 
 APostProcessVolumeActor::APostProcessVolumeActor()
 {
@@ -66,6 +68,33 @@ void APostProcessVolumeActor::ApplySettings()
 	Settings.ColorSaturation = FVector4(Saturation, Saturation, Saturation, 1.0f);
 	Settings.bOverride_ColorContrast = true;
 	Settings.ColorContrast = FVector4(Contrast, Contrast, Contrast, 1.0f);
+
+	// === LUT Color Grading (overrides procedural tint when assigned) ===
+	if (ColorGradingLUT && ColorGradingLUTMaterial)
+	{
+		// Build a material instance with the LUT texture parameter bound
+		UMaterialInstanceDynamic* LUTMaterial =
+			UMaterialInstanceDynamic::Create(ColorGradingLUTMaterial, this);
+		if (LUTMaterial)
+		{
+			LUTMaterial->SetTextureParameterValue(TEXT("LUT_Texture"), ColorGradingLUT);
+
+			// Add to weighted blendables at full weight
+			Settings.WeightedBlendables.Array.Empty();
+			// FWeightedBlendable member name changed in newer engine versions
+			// use the Object field or the constructor to set the blendable object.
+			FWeightedBlendable& Blendable = Settings.WeightedBlendables.Array.AddDefaulted_GetRef();
+			Blendable.Weight = 1.0f;
+			// "Blendable" was renamed to "Object" in modern UE versions.
+			// Use the Object member and pass the raw pointer from the material instance.
+			Blendable.Object = LUTMaterial;
+		}
+	}
+	else
+	{
+		// Clear any previously assigned LUT blendable
+		Settings.WeightedBlendables.Array.Empty();
+	}
 
 	// === Motion Blur ===
 	Settings.bOverride_MotionBlurAmount = true;

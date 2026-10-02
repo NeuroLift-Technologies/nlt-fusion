@@ -37,7 +37,7 @@ except ImportError:
 
 # ─── Configuration ───────────────────────────────────────────────────────────
 
-PROJECT_PATH = "/home/joshd/Desktop/nlt-repos/nlt-fusion/WorldEngine"
+PROJECT_PATH = "D:/nlt-repos/nlt-fusion/WorldEngine"
 LEVEL_PATH = "/Game/Scenarios/Levels/Workplace_Level"
 OUTPUT_DIR_DEFAULT = os.path.join(PROJECT_PATH, "Saved", "QA_Screenshots", "Workplace")
 

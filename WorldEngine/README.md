@@ -1,5 +1,11 @@
 # NLT World Engine — UE 5.8 Project
 
+**NLT World Engine is an embodied multi-agent simulation where machine learning models inhabit a persistent world, control their characters, interact with environments and other agents, and transition between meaningful life scenarios.**
+
+**An AI habitat — a virtual world where AI agents live, perceive, act, and learn.** The world is rendered with realistic graphics: procedural terrain, water, sky, vegetation, and settlement. AI residents walk through this world with articulated bodies, animated walk cycles, and name labels. Humans watch through a spectator viewer.
+
+> **Core principle: Fusion owns semantic reality; Unreal owns physical reality.**
+
 The Unreal Engine 5.8 project for the NLT simulation runtime. This is the
 authoritative physical layer: levels, doors, avatars, the SimBody pawn, and the
 local HTTP/MCP control surface that agent runtimes (LLMs, Learning Agents train)
@@ -20,7 +26,7 @@ Launch the editor (hands-on level editing + MCP server for agent tooling):
 
 ```bash
 ~/Documents/NLT/Engine/Binaries/Linux/UnrealEditor \
-  ~/Desktop/nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject \
+  D:\\nlt-repos/nlt-world-engine/WorldEngine/WorldEngine.uproject \
   -MCP -log
 ```
 
@@ -89,7 +95,7 @@ full list and the CI/governance layout.
 
 ## MCP Server
 
-The project exposes an MCP endpoint on `127.0.0.1:8000` (ModelContextProtocol
+The project exposes an MCP endpoint on `127.0.0.1:8001` (ModelContextProtocol
 plugin). Tools available for agent-driven editing:
 
 - **EditorAppToolset** — `StartPIE`, `StopPIE`, `OpenEditorForAsset`, save/inspect

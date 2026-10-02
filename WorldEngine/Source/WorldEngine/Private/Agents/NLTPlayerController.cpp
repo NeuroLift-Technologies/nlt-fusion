@@ -160,7 +160,8 @@ void ANLTPlayerController::TravelToLevel(const FName& LevelId)
 		FString LevelPath = FString::Printf(TEXT("/Game/Scenarios/Levels/%s"), *LevelId.ToString());
 		UE_LOG(LogTemp, Log, TEXT("Traveling to level: %s"), *LevelPath);
 
-		// Open the level (single-player, non-seamless)
-		UGameplayStatics::OpenLevel(World, LevelId);
+		// Open the level (single-player, non-seamless). Use the full package
+		// path so travel works for the scenario maps under /Game/Scenarios/Levels.
+		UGameplayStatics::OpenLevel(World, FName(*LevelPath));
 	}
 }

@@ -7,6 +7,20 @@
 
 ---
 
+## The Vision
+
+**NLT World Engine is an embodied multi-agent simulation where machine learning models inhabit a persistent world, control their characters, interact with environments and other agents, and transition between meaningful life scenarios.**
+
+**An AI habitat — a virtual world where AI agents live, perceive, act, and learn.** The world is rendered with realistic graphics: procedural terrain, water, sky, vegetation, and settlement. AI residents walk through this world with articulated bodies, animated walk cycles, and name labels. Humans watch through a spectator viewer.
+
+> **Core principle: Fusion owns semantic reality; Unreal owns physical reality.**
+
+The simulation has two spatial layers:
+- **Indoor scenario levels** — Workplace, Personal, Social, Academic (the original 4 maps)
+- **Open-world outdoor layer** — procedural terrain, water, sky, vegetation, and settlement with building portals that stream in the indoor levels (see `docs/procedural-openworld.md` and `docs/OPENWORLD-SETUP.md`)
+
+---
+
 ## 1. Module Boundaries
 
 The NLT Unreal plugin is a single C++ module (`WorldEngine`) with internal subsystem separation. No Blueprint-only actors exist — all logic is C++ subsystems + Mass fragments/processors.

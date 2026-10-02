@@ -1,0 +1,128 @@
+{
+  "contract_version": "nlt.world-engine.v1",
+  "scene_id": "default_home",
+  "grid": { "width": 20, "height": 14 },
+  "rooms": {
+    "bedroom": {
+      "id": "bedroom",
+      "name": "Bedroom",
+      "origin": { "x": 0, "y": 0 },
+      "size": { "w": 8, "h": 7 },
+      "color": "#4a6fa5",
+      "floor": "#2a3f5f"
+    },
+    "bathroom": {
+      "id": "bathroom",
+      "name": "Bathroom",
+      "origin": { "x": 0, "y": 7 },
+      "size": { "w": 8, "h": 7 },
+      "color": "#5a8a9a",
+      "floor": "#2a4a55"
+    },
+    "kitchen": {
+      "id": "kitchen",
+      "name": "Kitchen",
+      "origin": { "x": 8, "y": 0 },
+      "size": { "w": 6, "h": 7 },
+      "color": "#8a6a4a",
+      "floor": "#4a3a2a"
+    },
+    "living_room": {
+      "id": "living_room",
+      "name": "Living Room",
+      "origin": { "x": 8, "y": 7 },
+      "size": { "w": 12, "h": 7 },
+      "color": "#6a5a8a",
+      "floor": "#3a2a4a"
+    },
+    "office": {
+      "id": "office",
+      "name": "Office",
+      "origin": { "x": 14, "y": 0 },
+      "size": { "w": 6, "h": 7 },
+      "color": "#5a7a6a",
+      "floor": "#2a4a3a"
+    }
+  },
+  "props": [
+    {
+      "name": "bed",
+      "room": "bedroom",
+      "x": 2,
+      "y": 2,
+      "kind": "bed",
+      "affordance": "sleep",
+      "use_duration_s": 25200,
+      "need_effects": { "energy": 1.0 },
+      "solid": true
+    },
+    {
+      "name": "shower",
+      "room": "bathroom",
+      "x": 2,
+      "y": 10,
+      "kind": "shower",
+      "affordance": "shower",
+      "use_duration_s": 900,
+      "need_effects": { "hygiene": 0.9 },
+      "solid": true
+    },
+    {
+      "name": "fridge",
+      "room": "kitchen",
+      "x": 10,
+      "y": 2,
+      "kind": "fridge",
+      "affordance": "eat",
+      "use_duration_s": 1800,
+      "need_effects": { "hunger": 0.8 },
+      "solid": true
+    },
+    {
+      "name": "tv",
+      "room": "living_room",
+      "x": 11,
+      "y": 10,
+      "kind": "tv",
+      "affordance": "watch",
+      "use_duration_s": 2700,
+      "need_effects": { "fun": 0.6, "energy": -0.05 },
+      "solid": true
+    },
+    {
+      "name": "desk",
+      "room": "office",
+      "x": 16,
+      "y": 3,
+      "kind": "desk",
+      "affordance": "work",
+      "use_duration_s": 3600,
+      "need_effects": { "fun": 0.1, "energy": -0.1 },
+      "solid": true
+    },
+    {
+      "name": "bookshelf",
+      "room": "living_room",
+      "x": 17,
+      "y": 9,
+      "kind": "bookshelf",
+      "affordance": "read",
+      "use_duration_s": 2400,
+      "need_effects": { "fun": 0.4 },
+      "solid": true
+    }
+  ],
+  "npcs": [
+    {
+      "name": "roommate",
+      "room": "living_room",
+      "x": 14,
+      "y": 12,
+      "kind": "npc",
+      "affordance": "chat",
+      "use_duration_s": 1200,
+      "need_effects": { "social": 0.7, "fun": 0.2 },
+      "solid": true
+    }
+  ]
+}

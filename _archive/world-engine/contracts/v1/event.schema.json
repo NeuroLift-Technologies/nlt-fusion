@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:nlt:world-engine:v1:event",
+  "title": "NLT World Engine Event",
+  "type": "object",
+  "required": [
+    "contract_version",
+    "event_id",
+    "sequence",
+    "clock",
+    "event_type",
+    "source",
+    "subject_id",
+    "scenario_id",
+    "message",
+    "payload",
+    "state_changes",
+    "extensions"
+  ],
+  "properties": {
+    "contract_version": {
+      "$ref": "common.schema.json#/$defs/contract_version"
+    },
+    "event_id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "clock": {
+      "$ref": "common.schema.json#/$defs/clock"
+    },
+    "event_type": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Namespaced event such as simulation.tick or aide.coaching_delivered."
+    },
+    "source": {
+      "$ref": "common.schema.json#/$defs/source"
+    },
+    "subject_id": {
+      "oneOf": [
+        {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "scenario_id": {
+      "oneOf": [
+        {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "message": {
+      "type": "string"
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "state_changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "op",
+          "path",
+          "value"
+        ],
+        "properties": {
+          "op": {
+            "enum": [
+              "set",
+              "increment"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^/"
+          },
+          "value": {}
+        },
+        "additionalProperties": false
+      }
+    },
+    "extensions": {
+      "$ref": "common.schema.json#/$defs/extensions"
+    }
+  },
+  "additionalProperties": false
+}

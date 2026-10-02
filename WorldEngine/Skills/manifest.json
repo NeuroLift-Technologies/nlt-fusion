@@ -1,0 +1,38 @@
+{
+  "schema": "nlt.worldengine.skill_bundle.v1",
+  "version": "1.0.0",
+  "project": "WorldEngine",
+  "ueVersion": "5.8",
+  "skills": [
+    {
+      "id": "unreal-simulation-engine",
+      "displayName": "Unreal Simulation Engine",
+      "description": "Route asset workflows for the NLT WorldEngine UE 5.8 project",
+      "relativePath": "unreal-simulation-engine"
+    },
+    {
+      "id": "ue-asset-production",
+      "displayName": "UE Asset Production",
+      "description": "Create, inspect, validate, and package Unreal Engine assets",
+      "relativePath": "ue-asset-production"
+    },
+    {
+      "id": "ue-asset-vendoring",
+      "displayName": "UE Asset Vendoring",
+      "description": "Verify and safely admit packages into WorldEngine project",
+      "relativePath": "ue-asset-vendoring"
+    },
+    {
+      "id": "ue-render-debugging",
+      "displayName": "UE Render Debugging",
+      "description": "Diagnose rendering defects using captures and telemetry",
+      "relativePath": "ue-render-debugging"
+    },
+    {
+      "id": "ue-performance-optimization",
+      "displayName": "UE Performance Optimization",
+      "description": "Compare metrics and run bounded optimization goals",
+      "relativePath": "ue-performance-optimization"
+    }
+  ]
+}

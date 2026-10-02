@@ -1,5 +1,6 @@
 #include "Scenarios/Demo/NLTDemoScenarioProcessors.h"
 #include "Scenarios/Demo/NLTDemoScenarioFragments.h"
+#include "Scenarios/Demo/NLTDemoScenarioUtils.h"
 #include "Agents/NLTAgentFragments.h"
 #include "Simulation/NLTSimulationSubsystem.h"
 #include "World/NLTSmartObjectWorldSubsystem.h"
@@ -10,74 +11,14 @@ DEFINE_LOG_CATEGORY_STATIC(LogNLTScenario, Log, All);
 
 namespace
 {
-    /** Sorts candidate locations deterministically: score desc, distance asc, name asc. */
-    struct FNLTScenarioCandidate
-    {
-        FVector WorldLocation = FVector::ZeroVector;
-        FString DisplayName;
-        float Score = 0.0f;
-        float Distance = 0.0f;
-    };
-
-    /** Returns the most pressing need and its value (deterministic tie-break by enum order). */
-    ENLTAgentNeed HighestNeed(const FNLTScenarioNeedsFragment& Needs, float& OutValue)
-    {
-        ENLTAgentNeed Best = ENLTAgentNeed::Quiet;
-        float BestValue = Needs.Quiet;
-        if (Needs.Rest > BestValue) { Best = ENLTAgentNeed::Rest; BestValue = Needs.Rest; }
-        if (Needs.Social > BestValue) { Best = ENLTAgentNeed::Social; BestValue = Needs.Social; }
-        if (Needs.Stimulation > BestValue) { Best = ENLTAgentNeed::Stimulation; BestValue = Needs.Stimulation; }
-        OutValue = BestValue;
-        return Best;
-    }
-
-    ENLTAgentIntent IntentForNeed(const ENLTAgentNeed Need)
-    {
-        switch (Need)
-        {
-        case ENLTAgentNeed::Quiet: return ENLTAgentIntent::FindQuietPlace;
-        case ENLTAgentNeed::Rest: return ENLTAgentIntent::Rest;
-        case ENLTAgentNeed::Social: return ENLTAgentIntent::Socialize;
-        case ENLTAgentNeed::Stimulation: return ENLTAgentIntent::Drifting;
-        default: return ENLTAgentIntent::Idle;
-        }
-    }
-
-    float NeedValue(const FNLTScenarioNeedsFragment& Needs, const ENLTAgentNeed Need)
-    {
-        switch (Need)
-        {
-        case ENLTAgentNeed::Quiet: return Needs.Quiet;
-        case ENLTAgentNeed::Rest: return Needs.Rest;
-        case ENLTAgentNeed::Social: return Needs.Social;
-        case ENLTAgentNeed::Stimulation: return Needs.Stimulation;
-        default: return 0.0f;
-        }
-    }
-
-    float ScoreLocationForNeed(const FNLTWorldLocation& Location, const ENLTAgentNeed Need)
-    {
-        switch (Need)
-        {
-        case ENLTAgentNeed::Quiet:
-            return 1.0f - Location.NoiseLevel;
-        case ENLTAgentNeed::Social:
-            return Location.SocialDensity;
-        case ENLTAgentNeed::Rest:
-        case ENLTAgentNeed::Privacy:
-            return Location.Privacy;
-        case ENLTAgentNeed::Stimulation:
-            return Location.SocialDensity + Location.NoiseLevel * 0.5f;
-        default:
-            return 0.0f;
-        }
-    }
-
     /**
      * Deterministic target selection for one agent decision pass.
      * 1. Gathers unoccupied candidate locations matching the need (TArray copy)
      * 2. Sorts deterministically: score desc, distance asc, display name asc
      * 3. Falls back to a seeded deterministic wander target when no candidate exists
+     *
+     * Uses the shared utility functions from NLTDemoScenarioUtils.h to guarantee
+     * identical semantics between the legacy and StateTree behavior layers.
      */
     void DecideTarget(const int32 SimulationTick,
         const UNLTSmartObjectWorldSubsystem* SmartWorld,
@@ -188,6 +129,9 @@ UNLTScenarioDecisionProcessor::UNLTScenarioDecisionProcessor()
 {
     ExecutionOrder.ExecuteInGroup = TEXT("Tasks");
     ExecutionOrder.ExecuteAfter.Add(TEXT("NLTScenarioNeedsProcessor"));
+    // Run after the StateTree behavior processor so that StateTree-managed
+    // entities are not also handled by this legacy decision pass.
+    ExecutionOrder.ExecuteAfter.Add(TEXT("NLTStateTreeBehaviorProcessor"));
     bRequiresGameThreadExecution = true; // reads world subsystem state
 }
 
@@ -200,6 +144,9 @@ void UNLTScenarioDecisionProcessor::ConfigureQueries(const TSharedRef<FMassEntit
     EntityQuery.AddRequirement<FNLTAgentLocationFragment>(EMassFragmentAccess::ReadOnly);
     EntityQuery.AddRequirement<FNLTAgentIntentFragment>(EMassFragmentAccess::ReadWrite);
     EntityQuery.AddRequirement<FNLTAgentNeedsFragment>(EMassFragmentAccess::ReadWrite);
+    // Optional StateTree behavior fragment — if present and enabled, this
+    // legacy processor yields to UNLTStateTreeBehaviorProcessor.
+    EntityQuery.AddRequirement<FNLTStateTreeBehaviorFragment>(EMassFragmentAccess::ReadOnly);
     EntityQuery.RegisterWithProcessor(*this);
 }
 
@@ -231,8 +178,21 @@ void UNLTScenarioDecisionProcessor::Execute(FMassEntityManager& EntityManager, F
         TArrayView<FNLTAgentIntentFragment> Intents = Context.GetMutableFragmentView<FNLTAgentIntentFragment>();
         TArrayView<FNLTAgentNeedsFragment> AgentNeeds = Context.GetMutableFragmentView<FNLTAgentNeedsFragment>();
 
+        // StateTree behavior fragment — when enabled, the UNLTStateTreeBehaviorProcessor
+        // owns decision + movement; the legacy decision processor yields.
+        const bool bHasSTT = Context.GetFragmentView<FNLTStateTreeBehaviorFragment>().Num() > 0;
+        TConstArrayView<FNLTStateTreeBehaviorFragment> STTBehaviors =
+            bHasSTT ? Context.GetFragmentView<FNLTStateTreeBehaviorFragment>()
+                    : TConstArrayView<FNLTStateTreeBehaviorFragment>();
+
         for (int32 i = 0; i < NumEntities; i++)
         {
+            // Skip entities owned by the StateTree behavior layer.
+            if (bHasSTT && STTBehaviors[i].bEnabled)
+            {
+                continue;
+            }
+
             FNLTScenarioBehaviorFragment& Behavior = Behaviors[i];
             Behavior.TicksSinceDecision++;
 
@@ -265,6 +225,7 @@ UNLTScenarioMovementProcessor::UNLTScenarioMovementProcessor()
     : EntityQuery(*this)
 {
     ExecutionOrder.ExecuteInGroup = TEXT("Tasks");
+    ExecutionOrder.ExecuteAfter.Add(TEXT("NLTStateTreeBehaviorProcessor"));
     ExecutionOrder.ExecuteAfter.Add(TEXT("NLTScenarioDecisionProcessor"));
     bRequiresGameThreadExecution = false;
 }
@@ -274,13 +235,21 @@ void UNLTScenarioMovementProcessor::ConfigureQueries(const TSharedRef<FMassEntit
     EntityQuery.AddRequirement<FNLTScenarioBehaviorFragment>(EMassFragmentAccess::ReadWrite);
     EntityQuery.AddRequirement<FNLTScenarioConfigFragment>(EMassFragmentAccess::ReadOnly);
     EntityQuery.AddRequirement<FNLTAgentLocationFragment>(EMassFragmentAccess::ReadWrite);
+    // Optional StateTree behavior fragment — when enabled, the
+    // UNLTStateTreeBehaviorProcessor owns movement; this legacy processor yields.
+    EntityQuery.AddRequirement<FNLTStateTreeBehaviorFragment>(EMassFragmentAccess::ReadOnly);
     EntityQuery.RegisterWithProcessor(*this);
 }
 
 void UNLTScenarioMovementProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
     const float Dt = NLTDemoScenario::TickDeltaSeconds;
-    EntityQuery.ForEachEntityChunk(Context, [Dt](FMassExecutionContext& Context)
+    const bool bHasSTT = Context.GetFragmentView<FNLTStateTreeBehaviorFragment>().Num() > 0;
+    TConstArrayView<FNLTStateTreeBehaviorFragment> STTBehaviors =
+        bHasSTT ? Context.GetFragmentView<FNLTStateTreeBehaviorFragment>()
+                : TConstArrayView<FNLTStateTreeBehaviorFragment>();
+
+    EntityQuery.ForEachEntityChunk(Context, [Dt, bHasSTT, STTBehaviors](FMassExecutionContext& Context)
     {
         const int32 NumEntities = Context.GetNumEntities();
         TArrayView<FNLTScenarioBehaviorFragment> Behaviors = Context.GetMutableFragmentView<FNLTScenarioBehaviorFragment>();
@@ -289,6 +258,12 @@ void UNLTScenarioMovementProcessor::Execute(FMassEntityManager& EntityManager, F
 
         for (int32 i = 0; i < NumEntities; i++)
         {
+            // Skip entities owned by the StateTree behavior layer.
+            if (bHasSTT && STTBehaviors[i].bEnabled)
+            {
+                continue;
+            }
+
             FNLTAgentLocationFragment& Location = Locations[i];
 
             FNLTScenarioBehaviorFragment& Behavior = Behaviors[i];

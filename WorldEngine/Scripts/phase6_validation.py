@@ -419,7 +419,7 @@ for asset_data in asset_data_array:
             }.get(category_key, category_key)
             level_filename = LEVEL_MAP.get(category_key, "")
             if level_filename:
-                disk_path = level_filename.replace("/Game/", "/home/joshd/Desktop/nlt-repos/nlt-fusion/WorldEngine/Content/").replace(".", "/") + ".umap"
+                disk_path = level_filename.replace("/Game/", "D:/nlt-repos/nlt-fusion/WorldEngine/Content/").replace(".", "/") + ".umap"
                 if os.path.exists(disk_path):
                     binding_result["resolves"] = True
                     binding_result["valid"] = True
@@ -569,7 +569,7 @@ log("  DataAsset class available: {}".format(build_result["dataasset_class_avail
 log("  All bindings valid: {}".format(build_result["all_bindings_valid"]))
 
 # Save results to JSON
-output_path = "/home/joshd/Desktop/nlt-repos/nlt-fusion/WorldEngine/Saved/Phase6ValidationReport.json"
+output_path = "D:/nlt-repos/nlt-fusion/WorldEngine/Saved/Phase6ValidationReport.json"
 with open(output_path, "w") as f:
     json.dump(results, f, indent=2, default=str)
 

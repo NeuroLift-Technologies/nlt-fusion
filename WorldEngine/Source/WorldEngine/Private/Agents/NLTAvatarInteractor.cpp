@@ -34,7 +34,7 @@ void UNLTAvatarInteractor::GatherAgentObservation_Implementation(
     FVector Position = Avatar->GetActorLocation();
     FVector Velocity = Avatar->GetVelocity();
 
-    TArray<float> VelValues = {Velocity.X, Velocity.Y, Velocity.Z};
+    TArray<float> VelValues = {static_cast<float>(Velocity.X), static_cast<float>(Velocity.Y), static_cast<float>(Velocity.Z)};
     TArray<float> CognitiveValues = {0.5f, 0.2f, 0.15f, 0.05f, 0.2f, 0.0f, 0.5f};
 
     ULTCognitiveStateComponent* CognitiveState = Avatar->FindComponentByClass<ULTCognitiveStateComponent>();

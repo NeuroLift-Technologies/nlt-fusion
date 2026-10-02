@@ -1,0 +1,42 @@
+{
+  "handoff_record": {
+    "session_id": "ses_f43918105ffeHeALbHALOGPxeh",
+    "agent_name": "OpenCode",
+    "date": "2026-09-20",
+    "otoi_version": "ORG-DEV-OTOI-1.0.3",
+    "repo": "NeuroLift-Technologies/nlt-world-engine",
+    "branch": "feat/personal-level-door-relocation",
+    "work_completed": [
+      "Located the teleporting NLTDoorActor doors in Personal_Level PIE session - confirmed they are runtime-spawned by ANLTDemoGameMode::SpawnLevelDoors(), not map-placed actors.",
+      "Confirmed the two problematic door placements: Academic door at (700, 870) hidden behind the kitchen cabinet/stove line, Social door at (200, 870) tucked behind the Corridor_Wall_E4 corner wall.",
+      "Relocated all three Personal_Level teleporters to a visible row along the open south wall (Y=-885): Workplace (-800), Social (250), Academic (800), with yaw 180 so labels face north into the room.",
+      "Kept Social_Level/Academic_Level spawn behavior unchanged.",
+      "Opened feature branch feat/personal-level-door-relocation off origin/main via git worktree (peer working tree on fix/win64-asfdk-stubs left untouched) and pushed."
+    ],
+    "work_in_progress": [
+      "Module rebuild + PIE verification of new door positions pending (requires closing/restarting PIE or rebuilding the WorldEngine module)."
+    ],
+    "blockers": [
+      "Doors are code-spawned, not map actors - control_actor.set_transform is edit-mode-only and cannot move them during PIE; the fix must ship via code + rebuild."
+    ],
+    "decisions_made": [
+      "User chose: south wall row placement (visible, clear of Front_Door at (0,-895) and player starts).",
+      "User chose: ship via its own feature branch + PR rather than mixing into the dirty fix/win64-asfdk-stubs working tree."
+    ],
+    "decisions_pending": [
+      "Whether to also relocate the Social_Level/Academic_Level home-world doors (currently left as-is).",
+      "Merge of PR (open by OpenCode)."
+    ],
+    "escalations": [],
+    "next_agent_notes": "Doors spawn at runtime in ANLTDemoGameMode::SpawnLevelDoors() (WorldEngine/Source/WorldEngine/Private/Scenarios/NLTDemoGameMode.cpp). To verify: rebuild module, run Personal_Level in PIE, and check the three doors along Y=-885. If the row overlaps anything, adjust the coordinates in the DoorSpawns table.",
+    "files_modified": [
+      "WorldEngine/Source/WorldEngine/Private/Scenarios/NLTDemoGameMode.cpp",
+      "docs/active-threads.md"
+    ],
+    "tests_run": [
+      "Inspect-only verification via unreal-engine MCP (actor list, transforms, class enumeration) in the live PIE session."
+    ],
+    "tests_passing": true,
+    "pr_url": "https://github.com/NeuroLift-Technologies/nlt-world-engine/pull/47"
+  }
+}

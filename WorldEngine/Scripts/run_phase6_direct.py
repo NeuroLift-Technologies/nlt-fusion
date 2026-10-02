@@ -7,7 +7,7 @@ import json
 import urllib.request
 import time
 
-MCP_URL = "http://127.0.0.1:8000/mcp"
+MCP_URL = "http://127.0.0.1:8001/mcp"
 _session_id = None
 _call_count = 0
 

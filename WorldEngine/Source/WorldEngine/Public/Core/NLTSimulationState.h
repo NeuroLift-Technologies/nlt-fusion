@@ -93,11 +93,16 @@ struct FNLTRandomStream
 	UPROPERTY(BlueprintReadWrite, Category = "NLT|Simulation")
 	int32 Calls = 0;
 
+	/** Seed used to initialize the stream, retained so Reset can restore it. */
+	UPROPERTY(BlueprintReadWrite, Category = "NLT|Simulation")
+	int32 InitialSeed = 0;
+
 	FNLTRandomStream() = default;
 
 	explicit FNLTRandomStream(int32 InSeed)
 		: Seed(InSeed)
 		, Calls(0)
+		, InitialSeed(InSeed)
 	{
 	}
 
@@ -120,6 +125,7 @@ struct FNLTRandomStream
 
 	void Reset()
 	{
+		Seed = InitialSeed;
 		Calls = 0;
 	}
 };

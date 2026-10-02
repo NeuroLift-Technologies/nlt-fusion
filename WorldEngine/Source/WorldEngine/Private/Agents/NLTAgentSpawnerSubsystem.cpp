@@ -1,5 +1,6 @@
 #include "Agents/NLTAgentSpawnerSubsystem.h"
 #include "Agents/NLTAgentFragments.h"
+#include "Agents/NLTStateTreeFragments.h"
 #include "Scenarios/Demo/NLTDemoScenarioFragments.h"
 #include "MassEntityManager.h"
 #include "MassEntitySubsystem.h"
@@ -83,6 +84,20 @@ void UNLTAgentSpawnerSubsystem::AppendScenarioFragments(TArray<FInstancedStruct>
     Fragments.Add(FInstancedStruct::Make(Needs));
     Fragments.Add(FInstancedStruct::Make(Config));
     Fragments.Add(FInstancedStruct::Make(FNLTScenarioBehaviorFragment()));
+
+    // StateTree behavior layer fragments — enables the UNLTStateTreeBehaviorProcessor
+    // to drive decision + movement for this entity.  The config fragment points at
+    // the default behavior definition; the StateTree behavior fragment tracks
+    // runtime state.
+    FNLTStateTreeBehaviorFragment STBehavior;
+    STBehavior.State = ENLTStateTreeBehaviorState::Idle;
+    STBehavior.bEnabled = true;
+    STBehavior.bUsingFallback = false;
+    Fragments.Add(FInstancedStruct::Make(STBehavior));
+
+    FNLTStateTreeBehaviorConfigFragment STConfig;
+    STConfig.NeedGrowthOverride = 1.0f;
+    Fragments.Add(FInstancedStruct::Make(STConfig));
 }
 
 void UNLTAgentSpawnerSubsystem::SpawnAgents(int32 Count, const FVector& Origin, float Radius)

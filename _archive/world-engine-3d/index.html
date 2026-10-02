@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NeuroLift · World Engine</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{overflow:hidden;background:#1a1a3e;font-family:system-ui,sans-serif;color:#fff}
+#ui{position:fixed;top:16px;left:16px;z-index:10;background:rgba(10,10,30,.92);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:16px 20px;min-width:220px;backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,.5)}
+#ui h1{font-size:18px;margin-bottom:4px;font-weight:700;letter-spacing:-0.3px}
+#ui .sub{font-size:12px;color:#8892b0;margin-bottom:12px}
+#ui .stat{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
+#ui .stat .label{color:#8892b0}
+#ui .stat .value{font-weight:600;color:#ccd6f6}
+#sim-info{position:fixed;bottom:16px;left:16px;z-index:10;background:rgba(10,10,30,.92);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:16px 20px;min-width:260px;backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,.5);display:none;max-width:300px}
+#sim-info h2{font-size:16px;margin-bottom:4px;font-weight:700}
+#sim-info .trait{font-size:12px;color:#8892b0;margin-bottom:12px}
+#sim-info .need-bar{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:12px}
+#sim-info .need-bar .name{width:70px;color:#8892b0;text-transform:capitalize;font-size:11px}
+#sim-info .need-bar .bar{flex:1;height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden}
+#sim-info .need-bar .fill{height:100%;border-radius:3px;transition:width .4s}
+#controls{position:fixed;bottom:16px;right:16px;z-index:10;background:rgba(10,10,30,.92);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:12px 16px;font-size:12px;color:#8892b0;backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,.5)}
+#event-feed{position:fixed;top:16px;right:16px;z-index:10;background:rgba(10,10,30,.92);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px 18px;width:280px;max-height:360px;backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,.5);display:flex;flex-direction:column}
+#event-feed h3{font-size:13px;margin-bottom:10px;color:#8892b0;font-weight:600;letter-spacing:0.3px}
+#event-feed .events{overflow-y:auto;flex:1;font-size:11px}
+#event-feed .event-item{padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);line-height:1.4}
+#event-feed .event-time{color:#666;margin-right:6px;font-size:10px}
+#loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#1a1a3e;z-index:100;font-size:14px;color:#8892b0}
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="loading">Loading World Engine…</div>
+<div id="ui">
+  <h1>NeuroLift World Engine</h1>
+  <div class="sub" id="time-display">Day 1 · 10:00 AM</div>
+  <div class="stat"><span class="label">Sims</span><span class="value" id="sim-count">0</span></div>
+  <div class="stat"><span class="label">Pairs</span><span class="value" id="pair-count">0</span></div>
+  <div class="stat"><span class="label">Tick</span><span class="value" id="tick-count">0</span></div>
+</div>
+<div id="sim-info">
+  <h2 id="sim-name">Sim Name</h2>
+  <div class="trait" id="sim-trait"></div>
+  <div id="sim-needs"></div>
+</div>
+<div id="event-feed">
+  <h3>Event Feed</h3>
+  <div class="events" id="events"></div>
+</div>
+<div id="controls">
+  <strong>1</strong> Free Cam | <strong>2</strong> Follow | <strong>3</strong> Cinematic<br>
+  <strong>Click</strong> a Sim | <strong>Space</strong> Pause
+</div>
+
+<script src="data.js"></script>
+<script src="sim-core.js"></script>
+<script src="assets.js"></script>
+<script src="live-client.js"></script>
+<script type="module" src="iso-world.js"></script>
+<script>
+(function () {
+  // Show which entry point the browser actually executed. Module scripts
+  // (iso-world.js) are blocked on file:// by CORS, so write a marker
+  // synchronously: if this text never changes, no module ran at all.
+  var el = document.getElementById('loading');
+  window.__weBootLog = ['classic scripts ran'];
+  window.__weMarkBoot = function (msg) {
+    window.__weBootLog.push(msg);
+    if (el) el.textContent = 'Loading World Engine… [' + msg + ']';
+  };
+  window.addEventListener('error', function (e) {
+    window.__weBootLog.push('error: ' + (e.message || e.type));
+    if (el) el.textContent = 'Loading World Engine… [error: ' + (e.message || e.type) + ']';
+  }, true);
+  window.__weMarkBoot('classic scripts ran');
+})();
+</script>
+</body>
+</html>

@@ -32,7 +32,7 @@ void UNLTEventBus::RaiseEvent(const FNLTSimulationEvent& Event)
 	++TotalEventCount;
 
 	UE_LOG(LogNLTEventBus, Verbose, TEXT("Event raised: %s for agent %s at tick %d"),
-		*UEnum::GetValueAsString(Event.EventType),
+		*StaticEnum<ENLTSimulationEventType>()->GetNameStringByValue((int64)Event.EventType),
 		*Event.AgentId.ToString(),
 		Event.Tick);
 

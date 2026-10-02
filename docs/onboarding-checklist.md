@@ -45,69 +45,44 @@ make WorldEngine
 
 ---
 
-## Step 3: Python Engine (read-only demo)
+## Step 3: Python Engine (read-only demo, archived prototype)
 
 ```bash
 # 4. Run the Python demo (no UE needed)
-cd world-engine
+cd _archive/world-engine
 python3 demo.py
 # Expected: Prints "Day complete" + avatar stats
 ```
 
 - [ ] `python3 demo.py` runs successfully
 
+> **Note:** The Python ECS engine is a reference implementation, not the authoritative simulation. The authoritative runtime is `WorldEngine/` (UE 5.8 C++).
+
 ---
 
-## Step 4: SSE Service (Studio viewer)
+## Step 4: Babylon.js Viewer (archived prototype)
 
 ```bash
-# 5. Start the SSE/REST service on port 8766
-cd world-engine
-python3 service/server.py &
-# Expected: "SSE server started on :8766"
-
-# 6. In another terminal, test the endpoint
-curl http://localhost:8766/api/status
-# Expected: JSON with "status": "ok", "sim_state": {...}
-curl http://localhost:8766/api/scene
-# Expected: JSON with scene graph
-# Kill the server:
-kill %1
+# 5. Start the Babylon.js viewer (not wired to UE yet)
+cd _archive/world-engine-v2
+npm install
+npm run dev
+# Expected: http://localhost:5173
 ```
 
-- [ ] Server starts on port 8766
-- [ ] `/api/status` returns JSON
-- [ ] `/api/scene` returns JSON
+- [ ] Viewer starts on port 5173
+
+> **Note:** The Babylon.js viewer is a prototype spectator shell. The authoritative simulation is `WorldEngine/` (UE 5.8 C++).
 
 ---
 
-## Step 5: Studio Viewer (browser)
-
-```bash
-# 7. Start static file server
-cd nlt-world-engine
-python3 -m http.server 8765 --directory world-engine &
-
-# 8. Start SSE service in another terminal on port 8766
-cd nlt-world-engine
-python3 world-engine/service/server.py &
-
-# 9. Open in browser:
-#    http://127.0.0.1:8765/index.html?live=1
-```
-
-- [ ] Live viewer shows avatar moving through a day
-- [ ] HUD panels show cognitive state, event stream, aide log
-
----
-
-## Step 6: Training (the ML part)
+## Step 5: Training (the ML part)
 
 ```bash
 # 10. Build the training binaries (already done in Step 2)
 
 # 11. Launch UE5 in headless training mode
-cd nlt-world-engine
+cd WorldEngine
 ~/Documents/NLT/Engine/Binaries/Linux/UnrealEditor \
   WorldEngine.uproject \
   -nullrhi -game -server -log \
@@ -121,12 +96,8 @@ grep "NLTTrainingManager" Saved/Logs/WorldEngine.log
 - [ ] UE5 headless training mode launches cleanly
 - [ ] `NLTTrainingManager` initializes without errors
 
-```bash
-
-```
-
-# 14. Monitor TensorBoard
-python3 -m tensorboard --logdir=/home/joshd/Desktop/nlt-repos/nlt-world-engine/WorldEngine/Saved/LearningAgents/TensorBoard/ --port 6006 &
+# 13. Monitor TensorBoard
+python3 -m tensorboard --logdir=D:/nlt-repos/nlt-world-engine/WorldEngine/Saved/LearningAgents/TensorBoard/ --port 6006 &
 # Open http://localhost:6006 → look for "Loss/AvatarPolicy", "Reward/AvatarMean", "Independence/AvatarMean"
 
 ---
@@ -136,21 +107,11 @@ python3 -m tensorboard --logdir=/home/joshd/Desktop/nlt-repos/nlt-world-engine/W
 Before you commit anything:
 
 ```bash
-# 15. Run flake8 (Python critical errors)
-cd nlt-world-engine
-flake8 world-engine/src/ --count --select=E9,F63,F7,F82 --show-source --statistics
-```
-
-# 16. Validate governance
+# 14. Validate governance
 bash .nltotoi/scripts/validate-governance.sh
-
-# 17. Run Python tests
-cd world-engine && python3 -m pytest tests/ -v
 ```
 
-- [ ] flake8: 0 errors
 - [ ] Governance validation: passes
-- [ ] Tests: all pass
 
 ---
 
@@ -161,10 +122,9 @@ cd world-engine && python3 -m pytest tests/ -v
 | `make: command not found` | Install `make` via package manager |
 | `UnrealEditor not found` | Check `~/Documents/NLT/Engine/Binaries/Linux/` |
 | `Module LearningAgents not found` | Enable plugin in `WorldEngine.uproject` |
-| `python3: command not found` | Install Python 3.11+ |
-| Port 8765 already in use | `kill $(lsof -t -i:8765)` \| or use a different port |
 | UE build fails on Niagara | Ensure `Niagara` plugin is enabled in `.uproject` |
-| Python imports fail | `pip install -r world-engine/requirements.txt` |
+| Port 8765 already in use | `kill $(lsof -t -i:8765)` \| or use a different port |
+| Python imports fail (archived demo) | `pip install -r _archive/world-engine/requirements.txt` |
 
 ---
 

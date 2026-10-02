@@ -1,0 +1,16 @@
+# Optional RL training dependencies — NOT required to run the world engine.
+#
+# The kernel itself stays stdlib-only (see requirements.txt and
+# docs/world-engine/DESIGN.md §8). Install these only if you want to train
+# a policy with src/simulation/training/train_ppo.py.
+#
+#   py -3.14 -m venv .venv
+#   .\.venv\Scripts\python.exe -m pip install -r requirements-training.txt
+#
+# Verified on Python 3.14 and 3.11 (both produce identical eval results).
+#
+# CPU-only torch is what PyPI ships on Windows by default, which is all these
+# MLP-sized policies need (no CUDA/GPU required).
+stable-baselines3>=2.3
+gymnasium>=0.29
+tensorboard>=2.14
