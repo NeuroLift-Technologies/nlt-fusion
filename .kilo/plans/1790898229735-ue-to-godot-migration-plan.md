@@ -337,6 +337,7 @@ Retarget decision: port `Asfdk` down to `net8.0` rather than bumping the Godot p
 - Do not change any UE simulation behavior after Phase 1.6 — UE is a frozen oracle
 - Do not change the wire contract (`nlt.fusion-unreal` 1.0 / `nlt.world-engine.v1`) — Fusion is an external consumer
 - Do not hardcode an LLM provider
+- Do not exceed **100 changed files** in a single PR. CodeRabbit skips review entirely above that limit, so an over-sized PR ships with no automated review at all — which is how a correctness fix can end up unverified. Put mechanical churn (untracking build caches, relocating binary assets, regenerating lockfiles) in its own PR. Enforced as a checklist item in `.github/PULL_REQUEST_TEMPLATE.md`. PR #65 hit 123 files and was skipped; accepted as a one-off with human review in its place
 
 ---
 
