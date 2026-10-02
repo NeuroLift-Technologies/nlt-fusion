@@ -64,5 +64,13 @@ public class WorldEngine : ModuleRules
             "Sockets",
             "NLTGovernanceSubsystem"
         });
+
+        // Item 1.7: the PIE fixture-capture automation test starts a play session
+        // itself, which needs GEditor (UEditorEngine) and lives in UnrealEd. Editor
+        // only, so the game and server targets never gain an editor dependency.
+        if (Target.bBuildEditor)
+        {
+            PrivateDependencyModuleNames.Add("UnrealEd");
+        }
     }
 }
