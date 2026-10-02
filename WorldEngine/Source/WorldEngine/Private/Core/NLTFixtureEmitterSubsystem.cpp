@@ -31,10 +31,11 @@ void UNLTFixtureEmitterSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-void UNLTFixtureEmitterSubsystem::BeginCapture(int32 InSeed, int32 InMaxTicks)
+void UNLTFixtureEmitterSubsystem::BeginCapture(int32 InSeed, int32 InMaxTicks, const FString& InLabel)
 {
 	CaptureSeed = InSeed;
 	CaptureMaxTicks = FMath::Max(1, InMaxTicks);
+	CaptureLabel = InLabel;
 	CurrentCaptureTick = 0;
 	bCapturing = true;
 
@@ -49,15 +50,21 @@ void UNLTFixtureEmitterSubsystem::BeginCapture(int32 InSeed, int32 InMaxTicks)
 	FinalStateHash.Reset();
 	FinalTick = 0;
 
-	// Build output directory: Saved/Fixtures/seed{N}/
+	// Build output directory: Saved/Fixtures/seed{N}[_{Label}]/
+	// The label keeps concurrent or successive scenario captures from clobbering
+	// each other — plan item 1.3 wants several scenarios at the same seed.
 	OutputDirectory = FPaths::ProjectSavedDir() / TEXT("Fixtures") / FString::Printf(TEXT("seed%d"), CaptureSeed);
+	if (!InLabel.IsEmpty())
+	{
+		OutputDirectory += FString::Printf(TEXT("_%s"), *InLabel);
+	}
 
 	// Ensure directory exists
 	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 	PlatformFile.CreateDirectoryTree(*OutputDirectory);
 
-	UE_LOG(LogNLTFixtureEmitter, Log, TEXT("Fixture capture started: seed=%d, maxTicks=%d, dir=%s"),
-		CaptureSeed, CaptureMaxTicks, *OutputDirectory);
+	UE_LOG(LogNLTFixtureEmitter, Log, TEXT("Fixture capture started: seed=%d, maxTicks=%d, label=%s, dir=%s"),
+		CaptureSeed, CaptureMaxTicks, *InLabel, *OutputDirectory);
 }
 
 void UNLTFixtureEmitterSubsystem::EndCapture()
@@ -397,6 +404,10 @@ void UNLTFixtureEmitterSubsystem::WriteFixturesToDisk()
 		Content += TEXT("# Fixture Provenance\n\n");
 		Content += FString::Printf(TEXT("- **Seed:** %d\n"), CaptureSeed);
 		Content += FString::Printf(TEXT("- **Max Ticks:** %d\n"), CaptureMaxTicks);
+		if (!CaptureLabel.IsEmpty())
+		{
+			Content += FString::Printf(TEXT("- **Scenario:** %s\n"), *CaptureLabel);
+		}
 		Content += FString::Printf(TEXT("- **UE Build:** WorldEngineEditor Win64 Development\n"));
 		Content += FString::Printf(TEXT("- **Commit:** (see git log)\n"));
 		Content += FString::Printf(TEXT("- **Date:** %s\n"), *FDateTime::Now().ToString());

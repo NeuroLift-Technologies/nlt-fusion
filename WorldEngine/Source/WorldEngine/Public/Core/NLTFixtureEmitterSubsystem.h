@@ -61,8 +61,10 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 
-	/** Begin fixture capture for a given seed and max tick count. */
-	void BeginCapture(int32 InSeed, int32 InMaxTicks);
+	/** Begin fixture capture for a given seed and max tick count.
+	 *  InLabel optionally qualifies the output directory (e.g. the scenario id)
+	 *  so multiple scenarios can be captured in one run without overwriting. */
+	void BeginCapture(int32 InSeed, int32 InMaxTicks, const FString& InLabel = FString());
 
 	/** End fixture capture and write all accumulated data to disk. */
 	void EndCapture();
@@ -116,6 +118,7 @@ private:
 	bool bCapturing = false;
 	int32 CaptureSeed = 0;
 	int32 CaptureMaxTicks = 0;
+	FString CaptureLabel;
 	int32 CurrentCaptureTick = 0;
 	FString OutputDirectory;
 
