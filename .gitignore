@@ -97,3 +97,8 @@ Plugins/**/ThirdParty/ASFDK/
 export.cfg
 export_presets.cfg
 
+# Godot .NET build output (Godot.NET.Sdk emits under .godot/mono/, but keep
+# bin/obj ignored in case the SDK layout changes or a plain dotnet build is run)
+world-engine-godot/**/bin/
+world-engine-godot/**/obj/
+
