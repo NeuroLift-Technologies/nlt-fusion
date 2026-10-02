@@ -133,6 +133,18 @@ private:
 	// without re-parsing canonical text.
 	TArray<FString> PerTickAgentPositions;
 
+	/** Whether the capture ran in a PIE world. This is the single most important
+	 *  provenance field: Mass processors only run when a game loop is active, so an
+	 *  editor-world capture is structurally incapable of producing live state. */
+	bool bCapturedInPIE = false;
+
+	/** Best-effort world name for the provenance record. */
+	FString GetWorldNameForProvenance() const
+	{
+		const UWorld* World = GetWorld();
+		return World ? World->GetName() : TEXT("(no world)");
+	}
+
 	// Final state for replay
 	FString FinalCanonicalState;
 	FString FinalRngState;
