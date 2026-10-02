@@ -73,8 +73,8 @@ The structured projection is what makes the metacognitive self-model possible: b
     "supportNeedLevel":  0.40
   },
 
-  // scalar projection — 1.0 = fully satisfied. Order-independent.
-  "needs": { "quiet": 0.8, "rest": 0.5, "social": 0.6, "privacy": 0.7, "stimulation": 0.4 },
+  // scalar projection — 1.0 = fully satisfied. Exactly four keys; see 4.3.
+  "needs": { "quiet": 0.8, "rest": 0.5, "social": 0.6, "stimulation": 0.4 },
 
   // structured projection
   "state": "drifting",           // see §4.1
@@ -105,7 +105,24 @@ The vocabulary is **presentation**, not simulation. It exists so the observer re
 
 Colour must never be the only channel (`WorldView.ts` already used a colour-per-intent approach; that mapping needs a non-colour channel too).
 
-### 4.2 Walk animation
+### 4.3 Why four needs, and not five or seven
+
+An earlier draft of this contract specified a `privacy` need. That was wrong, and the error is worth recording so it is not reintroduced.
+
+UE declares **seven** values in `ENLTAgentNeed` (`NLTFusionCore.h:55-65`): Quiet, Rest, Social, Stimulation, Food, Movement, Privacy. But `FNLTScenarioNeedsFragment` (`NLTDemoScenarioFragments.h:15-29`) carries state for only **four** — Quiet, Rest, Social, Stimulation. Food, Movement and Privacy are enum-only: declared, never held.
+
+`NLTSmartObjectWorldSubsystem` keeps match and score branches for `Privacy` (`:129-130`, `:152-153`) that **can never fire**, because an agent's need is never `Privacy`. Reading those branches and inferring a five-need model is the trap.
+
+Two different things were being conflated:
+
+| | Fields | Owner |
+|---|---|---|
+| **Agent needs** — what the agent is short of | quiet, rest, social, stimulation | Fusion, delivered in this feed |
+| **Location affordance axes** — what a place offers | noiseLevel, socialDensity, privacy | **The renderer.** Godot owns the locations, so their axes are renderer-side and are *not* in this feed |
+
+So `privacy` is a real location axis with no live agent need driving it. That is a genuine gap in UE's model, not a missing feed field, and it is not this contract's job to close. If Fusion's schema defines a privacy need, adding it here is a schema-version bump.
+
+### 4.4 Walk animation
 
 **`velocity` is required, not optional.** `appearance.walkPhase` may be supplied by Fusion; if omitted the renderer derives phase from its own integration of velocity. Speed below a threshold is idle — do not animate a standing agent.
 
@@ -191,8 +208,8 @@ Plain-language by requirement: the audience must understand the simulation witho
 
 ## 9. Validation
 
-- `nlt.state-feed.v1` is a closed schema. Unknown keys must be ignored; **missing required keys must fail loudly**, because a silently-defaulted `needs` map would make burnout undetectable.
-- `needs` must carry all five keys. `Quiet` and `Rest` are distinct from `Privacy`: `Privacy` is stricter, and conflating them loses the distinction between *somewhere to sit down* and *somewhere you cannot be interrupted*.
+- `nlt.state-feed.v1` is forward-compatible: unknown keys are **ignored**, while missing required keys **fail loudly** — a silently-defaulted `needs` map would make burnout undetectable.
+- `needs` must carry the four keys `quiet`, `rest`, `social`, `stimulation`, each `0.0..1.0`. A **non-agent-need key raises a warning, not a failure** — Fusion may legitimately add needs later, but `privacy` is a location affordance axis rather than an agent need (§4.3), and silently accepting it is the exact mistake that draft made.
 - `agents` may be empty only during a scene transition.
 
 ## 10. Open

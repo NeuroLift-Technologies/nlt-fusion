@@ -20,7 +20,7 @@ from typing import Any
 
 SCHEMA_VERSION = "nlt.state-feed.v1"
 
-NEEDS = ("quiet", "rest", "social", "privacy", "stimulation")
+NEEDS = ("quiet", "rest", "social", "stimulation")
 LEVELS = (
     "attentionEnergy",
     "stressLevel",
@@ -73,11 +73,17 @@ class Errors(list):
             self.append(msg)
 
 
-def validate(doc: Any) -> Errors:
+class Warnings(list):
+    """Non-fatal. Forward-compatible: Fusion may legitimately add needs later,
+    but a need that UE could never hold (see contract 4.3) is worth surfacing."""
+
+
+def validate(doc: Any) -> tuple[Errors, Warnings]:
     err = Errors()
+    warn = Warnings()
     err.check(isinstance(doc, dict), "top level must be an object")
     if not isinstance(doc, dict):
-        return err
+        return err, warn
 
     err.check(doc.get("schemaVersion") == SCHEMA_VERSION,
               f"schemaVersion must be {SCHEMA_VERSION!r}, got {doc.get('schemaVersion')!r}")
@@ -130,6 +136,13 @@ def validate(doc: Any) -> Errors:
                     val = needs.get(n)
                     err.check(isinstance(val, (int, float)) and 0.0 <= val <= 1.0,
                               f"{where}.needs.{n} must be a number in 0..1, got {val!r}")
+                for extra in sorted(set(needs) - set(NEEDS)):
+                    warn.append(
+                        f"{where}.needs has non-agent-need key {extra!r} — UE's "
+                        f"FNLTScenarioNeedsFragment holds only {', '.join(NEEDS)}; "
+                        f"privacy is a location affordance axis, not an agent need "
+                        f"(contract 4.3)"
+                    )
 
             err.check(a.get("state") in NAMED_STATES,
                       f"{where}.state {a.get('state')!r} not in {sorted(NAMED_STATES)}")
@@ -177,7 +190,7 @@ def validate(doc: Any) -> Errors:
         t = ev.get("tick")
         err.check(isinstance(t, int) and t <= tick, f"{where}.tick must be <= envelope tick {tick}")
 
-    return err
+    return err, warn
 
 
 def main() -> int:
@@ -205,7 +218,9 @@ def main() -> int:
         print(f"FAIL: {origin}: not valid JSON: {exc}", file=sys.stderr)
         return 2
 
-    errs = validate(doc)
+    errs, warns = validate(doc)
+    for w in warns:
+        print(f"WARN: {w}", file=sys.stderr)
     if errs:
         print(f"FAIL: {origin}: {len(errs)} problem(s)", file=sys.stderr)
         for e in errs:
@@ -213,8 +228,9 @@ def main() -> int:
         return 1
 
     n = len(doc.get("agents") or [])
+    suffix = f", {len(warns)} warning(s)" if warns else ""
     print(f"OK: {origin} — {SCHEMA_VERSION}, tick {doc['tick']}, {n} agent(s), "
-          f"{len(doc.get('events') or [])} event(s)")
+          f"{len(doc.get('events') or [])} event(s){suffix}")
     return 0
 
 
