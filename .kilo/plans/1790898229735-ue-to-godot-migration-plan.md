@@ -138,7 +138,7 @@ UE builds today; it may not tomorrow. Capturing golden fixtures is only possible
   - Current honest state: `Automation RunTests NLT.FixtureCapture.PIE` starts its own PIE session (no manual Play step) and reports `Verdict: FAIL`. **That failure output is the correct result, not a test to be made to pass.**
 - [x] 1.8 **Retire the second, weaker hash — do not port it.** `UNLTScenarioManagerSubsystem::ComputeAgentStateHash()` is a separate FNV-1a over agent id + position quantised to 1/1000, distinct from `NLTSimulationStateHash`. It has no RNG, no events, no needs, and its comment calls 1/1000 "micrometers" when it is millimetres. The port ships **one** hash (v2, per 1.2); `ComputeAgentStateHash` is deleted, not reimplemented. Its `BeginHeadlessSelfTest` / `NLT_HEADLESS_TEST_COMPLETE` harness is kept and re-pointed at v2
 - [x] 1.9 **DONE 2026-10-02.** `BuildCanonicalStateTextV2` narrowed agent position: it called `AppendFloatHex(…, Agent.Position.X)`, but `FNLTAgentState::Position` is an `FVector`, which is `FVector3d` under UE5 large-world coordinates — a silent 53-bit → 24-bit mantissa truncation inside the encoding whose purpose is bit-exactness. `WorldTime` correctly used `AppendDoubleHex` two lines earlier, so it read as an oversight. Now uses `AppendDoubleHex` for X/Y/Z, with the header documenting the encoding contract and warning that changing a width invalidates prior captures. **Confirmed empirically 2026-10-02** — two captures on seed 42, pre-fix `c4909e76;c4b87875;42c80000` vs post-fix `c09213cec0000000;c0970f0e9e0000000;4059000000000000` (8 hex chars float32 → 16 float64). **Consequence: the only fixture on disk was captured under the old encoding and is unusable.** It must be recaptured regardless of every other blocker
-- [ ] 1.10 **Fix SIM-001 so capture produces live state — BLOCKS 1.5, 1.7b, and Tier 2.** UE builds and runs but cannot produce a meaningful capture: `DespawnAllAgents: MassEntity not initialized`, authoritative clock disconnected, processors unregistered. Result: 600 tick blocks containing 1 unique, 0 events, no movement. Escalated by Cline as [#67](https://github.com/NeuroLift-Technologies/nlt-world-engine/issues/67). An earlier version of this plan deferred it to **Phase 6.6** — that deferral is **wrong**, because Phase 1 depends on it and Phase 1 gates Tier 2. Permitted inside the freeze via the 1.6 carve-out. Note the plan's own finding that **Mass movement is unused** (agents step closed-form), so the fix is likely registration/binding rather than movement
+- [ ] 1.10 **Fix SIM-001 so capture produces live state — BLOCKS 2-scenario, and therefore UE retirement.** **In progress — Cline, as of 2026-10-02.** UE builds and runs but cannot produce a meaningful capture: `DespawnAllAgents: MassEntity not initialized`, authoritative clock disconnected, processors unregistered. Result: 600 tick blocks containing 1 unique, 0 events, no movement. Escalated as [#67](https://github.com/NeuroLift-Technologies/nlt-world-engine/issues/67). An earlier version of this plan deferred it to **Phase 6.6** — that deferral is **wrong**: Phase 1's scenario fixtures depend on it, and those fixtures gate UE retirement. Permitted inside the freeze via the 1.6 carve-out. Note the plan's own finding that **Mass movement is unused** (agents step closed-form), so the fix is likely registration/binding rather than movement. **Scope:** blocks 2-scenario only — Tier 1, 2-core, 3 and 4 all proceed meanwhile
 - [ ] 1.11 **Three pre-existing crash bugs — all fixed 2026-10-02** on `fix/scenario-movement-fragment-view` (`b2c487a`). Found by Cline; none introduced by this work. Each independently prevented any capture from completing:
   - Fragment view read before `ForEachEntityChunk` binds it — `NLTDemoScenarioProcessors.cpp:247`. Asserted on **every** scenario start. Traces to `d590bcb` (2026-09-25). `UNLTScenarioDecisionProcessor` has the same access but already reads it inside its lambda, so it was unaffected
   - `EndCapture` no-ops once the tick cap flips `bCapturing` — `NLTFixtureEmitterSubsystem.cpp:65`. 600 ticks collected in memory, **zero files written**
@@ -246,7 +246,12 @@ Port these from UE, preserving semantics exactly:
 
 ### Phase 10 — Cutover
 
-- [ ] 10.1 Only after Tier 2 passes: move `WorldEngine/` (UE) to archive; delete the UE-only plugins (`McpAutomationBridge` ~50 files, `VisualStudioTools`)
+- [ ] 10.1 **Preconditions for retiring UE — all three required.** Archiving the behavioural oracle is only safe when the port has been measured against it on behaviour, not just mechanics:
+  1. **Tier 2-scenario passes** — multi-tick scenario behaviour reproduced from live UE fixtures. Requires SIM-001 (1.10) and a committed fixture set (1.5)
+  2. **Tier 2-core passes** — core conformance. Available earlier; necessary but **not sufficient**
+  3. **Tier 2b has run once with a real controller** — a learned policy's run replays identically from recorded actions
+
+  **On (3):** 2b needs an ML controller, which lands in Phase D1. **As originally sequenced, D1 sits after Phase 10 — meaning UE could be retired before the embodied path has ever been validated.** For a repo whose vision is *"machine learning models inhabit a persistent world, **control their characters**"*, retiring the reference while that claim is unproven is premature by definition. **Therefore: a minimum viable forward-pass policy must land before 10.1.** Decision 3 still stands — the *PPO trainer* stays out-of-process and deferred; what is required here is only enough of a real policy to exercise 2b once. Consider promoting a minimal `RLPolicyController` from Phase D1 to before Phase 10.
 - [ ] 10.2 Reverse `docs/world-engine/DESIGN.md:15` and `:84` — they currently argue *against* Godot and are the strongest in-repo statement contradicting this plan
 - [ ] 10.3 Rewrite `AGENTS.md`, `CLAUDE.md`, `ARCHITECTURE.md`, `README.md`, `DEPLOYMENT.md`, `ONBOARDING.md`, `file-structure.md`, `.hermes.md`; fix the stale `world-engine-v2/` and `world-engine/` root-directory entries (both are now under `_archive/`)
 - [ ] 10.4 Remove the `unreal-mcp` entry from `mcp-config.yaml` (superseded by `addons/godot_ai/`, see 0.8); re-check `.claude/agents/` — the 5 Godot specialists currently fail because `docs/engine-reference/godot/VERSION.md` is missing
@@ -256,17 +261,28 @@ Port these from UE, preserving semantics exactly:
 
 ## 5. Validation plan
 
-| Tier | Gate | Runs where | Blocks |
+| Tier | Gate | Needs a ticking world? | Blocks |
 |---|---|---|---|
-| 1 | `dotnet test` on `NltWorldEngine.Core.Tests` | CI, stock runner, no Godot | Every later phase |
-| 2 | Golden-vector equality vs fixtures from Phase 1 | CI, headless | **UE retirement** |
-| 2b | Recorded-action replay determinism — an ML-controlled run replays identically | CI, headless | Declaring the embodied path reproducible |
-| 3 | `fusion_protocol.py` + new conformance script vs sidecar | CI, no engine | Phase 9 |
-| 4 | Headless Godot run reproduces canonical state text | CI with Godot | Cutover |
+| 1 | `dotnet test` on `NltWorldEngine.Core.Tests` | No | Every later phase |
+| **2-core** | Core-conformance vectors vs UE: RNG, canonical text v2, replay codec, event-bus ordering, LOD policy. These take explicit state inputs and do not read a live world | **No — available now** | Porting fidelity of the core (Phase 2) |
+| **2-scenario** | Multi-tick scenario behaviour vs UE: agent movement, needs decay, decision ordering, stressor firing | **Yes — needs SIM-001 (1.10)** | **UE retirement (Phase 10)** |
+| **2b** | Recorded-action replay determinism — an ML-controlled run replays identically | Yes, **and** needs an ML controller (Phase D1) | Declaring the embodied path reproducible — **and, per 10.1, UE retirement** |
+| 3 | `fusion_protocol.py` + new conformance script vs sidecar | No | Phase 9 |
+| 4 | Headless Godot run reproduces canonical state text | No | Cutover |
+
+**Why Tier 2 is split.** It conflated two different things: the *encoding and mechanics* of the deterministic core, versus *scenario behaviour* over thousands of ticks. They have different prerequisites. Evidence that the core half is achievable today: **8/8 `NLT.Simulation` and 4/4 `NLT.VisualLOD.Policy` pass right now, with Mass never ticking** — those tests construct states directly instead of reading a ticking world.
+
+**What the split buys.** Phases 2–5 are porting exactly those core functions, and they are verifiable against vectors UE can emit immediately. The earlier claim that "Phases 2–5 and UE retirement are all downstream of a gate that cannot yet be exercised" was **too strong**: retirement genuinely needs 2-scenario and 2b; Phases 2–5 do not.
+
+**What the split does not buy, stated plainly.** 2-core catches RNG drift, hash mismatch, and replay corruption. It does **not** catch the errors most likely to bite — wrong needs decay, wrong decision ordering. Those live in 2-scenario. **2-core is necessary, not sufficient, and must never be read as a green light to retire UE.**
+
+**Controller provenance — why 2-scenario needs no ML model.** Agent movement today is produced by `UNLTStateTreeBehaviorProcessor`, a deterministic state machine, not a learned policy. That is exactly why 2.6b makes `DeterministicUtilityController` both the baseline and the fixture controller: reproducible without a model. The ML controller arrives later behind the same `IAgentController` seam.
+
+So what 2-scenario validates is **environment mechanics under a scripted policy** — not policy behaviour. Those are different gates and must not be conflated. **Policy reproducibility is 2b, and it is a separate claim.**
 
 **Tier 2 is the load-bearing gate.** Until it passes, UE stays alive as the oracle. It is also the gate most sensitive to the float-representation decision in 1.2 — if canonical text stays `%.9g`, Tier 2 will produce false failures on float formatting rather than real divergence.
 
-> **⚠️ Tier 2 is currently unsatisfiable (2026-10-02).** Tier 2 compares against golden fixtures, and **no live fixture can yet be produced**: UE runs but Mass never ticks (SIM-001, [#67](https://github.com/NeuroLift-Technologies/nlt-world-engine/issues/67)), so every capture collapses to a single unique state. Decision 7 defined the whole validation strategy in terms of Tier 2, and **that assumption does not currently hold.** This reaches Phase 6 and Phase 10 planning, not just 1.5/1.7b: Phases 2–5 and the retirement of UE are all downstream of a gate that cannot yet be exercised. Resolve 1.10 before treating any Tier 2 result — pass or fail — as meaningful.
+> **⚠️ Tier 2-scenario and 2b are currently unsatisfiable (2026-10-02).** UE runs but Mass never ticks (SIM-001, [#67](https://github.com/NeuroLift-Technologies/nlt-world-engine/issues/67)), so every capture collapses to a single unique state. **Cline is working SIM-001.** Until it lands, **2-core, Tier 1, 3 and 4 all remain valid and usable** — only 2-scenario is blocked. Phases 2–5 proceed. What must not happen: retiring UE on the strength of 2-core alone (see 10.1).
 
 **Tier 2b is what makes the vision testable.** Tier 2 proves the physics/logic port is faithful but runs with a scripted controller, so it says nothing about whether a model can actually drive the world reproducibly. Tier 2b is the gate that closes that question — and it is a stronger claim than UE ever made, since UE never executed replayed action payloads at all.
 
