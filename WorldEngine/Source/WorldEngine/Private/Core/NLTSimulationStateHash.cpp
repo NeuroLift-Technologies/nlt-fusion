@@ -173,9 +173,13 @@ FString FNLTDeterministicStateHash::BuildCanonicalStateTextV2(
 		AppendInt(Canonical, static_cast<int32>(Agent.Role));
 		AppendName(Canonical, Agent.ProfileId);
 		AppendName(Canonical, Agent.DisplayName);
-		AppendFloatHex(Canonical, Agent.Position.X);
-		AppendFloatHex(Canonical, Agent.Position.Y);
-		AppendFloatHex(Canonical, Agent.Position.Z);
+		// Position is an FVector, which is FVector3d (double) under UE5 large-world
+		// coordinates. Encoding it via AppendFloatHex would silently narrow a 53-bit
+		// mantissa to 24 bits, which is exactly the ambiguity v2 exists to remove.
+		// Use AppendDoubleHex here even though the other cognitive scalars below are float.
+		AppendDoubleHex(Canonical, Agent.Position.X);
+		AppendDoubleHex(Canonical, Agent.Position.Y);
+		AppendDoubleHex(Canonical, Agent.Position.Z);
 		AppendInt(Canonical, static_cast<int32>(Agent.Intent));
 		AppendFloatHex(Canonical, Agent.Focus);
 		AppendFloatHex(Canonical, Agent.CognitiveLoad);

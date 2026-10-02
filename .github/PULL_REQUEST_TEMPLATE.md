@@ -11,6 +11,15 @@
 - [ ] Code quality improvement
 - [ ] Other (please describe):
 
+## Review Scope
+
+- [ ] **This PR changes 100 files or fewer**
+<!-- CodeRabbit skips review entirely above 100 files, which means a correctness fix
+     can ship with no automated review at all. Keep mechanical churn in its own PR:
+     untracking build caches, relocating binary assets, regenerating lockfiles.
+     If a single unavoidable change genuinely exceeds 100 files, say so explicitly
+     in Additional Notes so a human reviewer compensates. -->
+
 ## Checklist
 
 - [ ] Build passes (`npm run build` / `pip install && pytest`)

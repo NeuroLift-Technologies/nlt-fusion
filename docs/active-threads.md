@@ -2,11 +2,34 @@
 
 > This file tracks active work threads. Agents must read this at session start and update it during and at the end of each session.
 
-**Last updated:** 2026-09-24
+**Last updated:** 2026-10-02
 
 ---
 
 ## Active Threads
+
+### 🔀 MIGRATE-001 — UE 5.8 → Godot 4.7.2 engine migration
+- **Status:** open (Phase 0 in progress; Phase 1 capture infrastructure merged)
+- **Owner:** Kilo · **Joined by:** Hermes (Phase 1)
+- **Started:** 2026-10-02
+- **Last updated:** 2026-10-02
+- **Branch:** `fix/hash-v2-double-precision` · **Escalation:** [`docs/escalations/2026-10-02-godot-migration.md`](escalations/2026-10-02-godot-migration.md) — ✅ **RESOLVED 2026-10-02** by Joshua (framework change approved under OTOI §4.4) · **Governance proposal:** [#64](https://github.com/NeuroLift-Technologies/nlt-world-engine/issues/64) (core-principle amendment, awaiting written approval per OTOI §9)
+- **Scope:** Replace the UE 5.8 authoritative simulation with Godot 4.7.2 (C#) as this repo's deterministic runtime and training environment, retaining UE as a frozen behavioural oracle until the port passes conformance.
+- **Plan:** `.kilo/plans/1790898229735-ue-to-godot-migration-plan.md` (canonical), mirrored at `world-engine-godot/MIGRATION-PLAN.md`
+- **Settled terms:** staged validated port · C#/.NET 8 with an engine-agnostic `net8.0` core · training-environment surfaces in scope but PPO deferred · Python sidecar owns ports 8765/8766 · 4 interior scenarios rebuilt procedurally as instanced sub-scenes · governance via in-process `asfdk-csharp` · four-tier validation gate · character embodiment in scope.
+- **Delivered:**
+  - Phase 1.1–1.2 merged in [#61](https://github.com/NeuroLift-Technologies/nlt-world-engine/pull/61) (`ca98e54f`…`248874ea`): `NLTFixtureEmitterSubsystem`, `BuildCanonicalStateTextV2` / `ComputeStateHashV2` (bit-exact IEEE-754 hex, signed-zero and NaN canonicalisation), console command + editor/PIE capture tests, `WITH_DEV_AUTOMATION_TESTS` on both targets. 8/8 `NLT.Simulation` + 4/4 `NLT.VisualLOD.Policy` green.
+  - `asfdk-csharp` cloned to a sibling repo and retargeted `net10.0` → `net8.0` (PR [#2](https://github.com/NeuroLift-Technologies/asfdk-csharp/pull/2)); library builds clean, 14/14 xUnit tests pass on net8.0.
+  - Four interior level FBX exports obtained from UE (`Workplace`, `Personal`, `Social`, `Academic`) and relocated to `world-engine-godot/assets/levels/`. `OpenWorld_Level` cannot be FBX-exported (World Partition + Landscape + runtime generation) and is rebuilt procedurally instead.
+  - Fixed `double`→`float` narrowing of `Agent.Position` in `BuildCanonicalStateTextV2` — `FVector` is `FVector3d` under UE5 LWC, so v2 was truncating a 53-bit mantissa to 24 bits inside the bit-exact encoding.
+  - Untracked 119 committed Godot build-cache files and relocated the level FBX assets.
+- **Blockers / human-owned:**
+  - **1.5 — fixtures must be committed** under `fixtures/` with `PROVENANCE.md`. Hermes can write the emitter but cannot produce or commit artifacts: `Saved/Fixtures/` is gitignored and dynamic capture needs an interactive PIE session.
+  - **1.7b — non-degeneracy must be *proven*,** not just asserted. Editor-context capture yields static state (Mass processors need a game loop), so a fixture can be N byte-identical ticks encoding no behaviour — which would make Tier 2 go green on the gate that retires UE.
+  - `asfdk-csharp` is pre-1.0 (v0.3.0, single merged PR) — pin the commit.
+  - `addons/godot_ai/` third-party MCP bridge added outside any thread: OTOI §4.4 external-integration approval unrecorded; bootstraps Python via `uv`; C#/mono compatibility unverified.
+- **Named gaps the migration does not close** (unmet in UE too — own threads needed, not inherited): agent↔agent interaction, NPC population (no NPC system exists), realistic graphics.
+- **Next action:** human-run PIE capture to satisfy 1.5 + 1.7b, then Phase 2 (`NltWorldEngine.Core` + Tier 1 xUnit gate). UE stays frozen from 1.6 onward.
 
 ### 🧪 DET-001 — Deterministic state verification and headless build foundation
 - **Status:** open

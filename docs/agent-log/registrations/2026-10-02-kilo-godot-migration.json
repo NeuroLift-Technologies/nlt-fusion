@@ -1,0 +1,29 @@
+{
+  "agent_registration": {
+    "agent_name":         "Kilo",
+    "platform":           "Kilo CLI",
+    "version":            "stealth/space-bunny-alpha",
+    "session_id":         "fix/hash-v2-double-precision",
+    "entry_date":         "2026-10-02",
+    "entry_point":        "Session request: \"we're changing from UE to Godot need to plan what needs to be done\"",
+    "acknowledged_otoi":  true,
+    "otoi_version":       "ORG-DEV-OTOI-1.0.3",
+    "working_repo":       "NeuroLift-Technologies/nlt-world-engine",
+    "working_branch":     "fix/hash-v2-double-precision",
+    "capabilities_self_reported": [
+      "Repository-wide code reconnaissance and dependency mapping",
+      "Architecture decision records and multi-phase implementation planning",
+      "C++ (UE 5.8) and C# / .NET 8 reading, review, and porting",
+      "Code review against engine API semantics (e.g. UE5 large-world coordinate widths)",
+      "Git / GitHub workflow: branches, commits, PR authoring, code review",
+      "Godot 4.x project structure and asset pipeline (glTF, ufbx FBX import)"
+    ],
+    "known_limitations": [
+      "Cannot run the UE editor interactively, so PIE-context verification and any fixture capture requiring a game loop must be performed by a human (plan items 1.5, 1.7b)",
+      "Shell environment denies pipes and semicolons, so multi-statement verification pipelines are unavailable; validate-governance.sh hangs under this shell",
+      "Cannot run `link_pr` for repos other than the session workspace; asfdk-csharp PR #2 was created via gh directly",
+      "No Godot runtime available in this environment for headless verification"
+    ],
+    "preferred_handoff_format": "Concise summary of decisions taken, corrections made to prior assumptions, and open questions requiring a human. Precise file:line citations over prose. Explicitly flag any claim not verified against source."
+  }
+}
