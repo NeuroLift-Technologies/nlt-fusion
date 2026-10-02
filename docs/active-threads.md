@@ -13,7 +13,8 @@
 - **Owner:** Kilo · **Joined by:** Hermes (Phase 1)
 - **Started:** 2026-10-02
 - **Last updated:** 2026-10-02
-- **Branch:** `fix/hash-v2-double-precision` · **Escalation:** [`docs/escalations/2026-10-02-godot-migration.md`](escalations/2026-10-02-godot-migration.md) — ✅ **RESOLVED 2026-10-02** by Joshua (framework change approved under OTOI §4.4) · **Governance proposal:** [#64](https://github.com/NeuroLift-Technologies/nlt-world-engine/issues/64) (core-principle amendment, awaiting written approval per OTOI §9)
+- **Branch:** `docs/tier2-split-and-retirement-gates` (plan updates, PR #68) · **Escalation:** [`docs/escalations/2026-10-02-godot-migration.md`](escalations/2026-10-02-godot-migration.md) — ✅ **RESOLVED 2026-10-02** by Joshua (framework change approved under OTOI §4.4) · **Governance proposal:** [#64](https://github.com/NeuroLift-Technologies/nlt-world-engine/issues/64) — ✅ **closed**, implemented in PR #66
+- **Ownership:** **Cline owns all of Phase 1** (1.5, 1.7b, 1.10, 1.11) as of 2026-10-02. Kilo is not to duplicate that work. Kilo completed Phase 0 (PR #65, merged `04b049e`) and the plan corrections in PR #66 / #68.
 - **Scope:** Replace the UE 5.8 authoritative simulation with Godot 4.7.2 (C#) as this repo's deterministic runtime and training environment, retaining UE as a frozen behavioural oracle until the port passes conformance.
 - **Plan:** `.kilo/plans/1790898229735-ue-to-godot-migration-plan.md` (canonical), mirrored at `world-engine-godot/MIGRATION-PLAN.md`
 - **Settled terms:** staged validated port · C#/.NET 8 with an engine-agnostic `net8.0` core · training-environment surfaces in scope but PPO deferred · Python sidecar owns ports 8765/8766 · 4 interior scenarios rebuilt procedurally as instanced sub-scenes · governance via in-process `asfdk-csharp` · four-tier validation gate · character embodiment in scope.
