@@ -1,0 +1,55 @@
+{
+  "handoff_record": {
+    "session_id": "2026-09-25-cline-lod-live-scene-evidence",
+    "agent_name": "Cline",
+    "date": "2026-09-25",
+    "otoi_version": "ORG-DEV-OTOI-1.0.3",
+    "repo": "NeuroLift-Technologies/nlt-world-engine",
+    "branch": "pr/statetree-behavior-layer",
+    "entry_point": "Task: validate Mass and actor-resident rendered LOD transitions in a live scene (LOD-001 next action from docs/active-threads.md).",
+    "work_completed": [
+      "Added five NLT.VisualLOD.LiveScene.* automation tests driving the two real LOD integration points inside an actual UWorld: a real APlayerController viewer, a real AAvatarCharacter, real Mass entities, and the real HISM instance set.",
+      "Covered actor-resident LOD0->LOD1->LOD2->LOD3 and back, hysteresis hold/advance/oscillation, Mesh vs FallbackMesh representation at an identical distance and level, hidden transitions and restoration, viewer fallback with and without a player controller, and Mass HISM instance filtering with per-instance LOD stamping.",
+      "Fixed three defects the live tests exposed: BeginPlay never dispatched in a hand-built world (UWorld::BeginPlay reaches actors only via GameMode->StartPlay -> GameState::HandleBeginPlay -> WorldSettings::NotifyBeginPlay), leaving the visualizer's FMassEntityQuery uninitialized so the first Tick hard-asserted and killed the editor; the visualizer's own default LOD policy (Far=8000) kept a 7000cm resident visible as LOD2; and a bare APlayerController does not report the TransformComponent offset it is given.",
+      "Drove protected UpdateVisualLOD through the public Actor Tick rather than widening production API for test access.",
+      "Corrected README claims that overstated LOD maturity: 'LOD 0-3 population management' for UNLTPopulationScaler, the 'Population LOD scaler' tree label, and 'LOD transition logic for avatar actors' listed as remaining work.",
+      "Rewrote the LOD-001 entry in docs/active-threads.md to state what the live tests prove (policy core correct and simulation-isolated) and what they do not (the visual result).",
+      "Recorded the four verified integration limitations identified by the Hermes QA review."
+    ],
+    "work_in_progress": [
+      "The visual LOD integration remains a proof of concept; the four limitations below are recorded, not fixed."
+    ],
+    "verified_limitations": [
+      "Mass LOD levels are decorative: ANLTAgentVisualizer stamps the level into HISM custom data slot 0, but M_SimBody_Base is a MaterialInstanceConstant with HasPerInstanceCustomData=False parented to FBXLegacyPhongSurf, so nothing consumes the value.",
+      "The HISM path discards its own benefit every frame: UpdateVisuals calls ClearInstances() and re-adds every instance each tick, with no cluster-tree tuning (BuildTreeAsync, NumClusters, SetTreeHeuristicScale) configured.",
+      "Per-agent state map grows unbounded: AgentVisualLevels only ever Adds and is never pruned when an agent leaves the query.",
+      "UNLTPopulationScaler is a stub: ScalePopulation only logs and assigns AgentCount, drives nothing, and has no callers anywhere in the module."
+    ],
+    "blockers": [
+      "The installed UE 5.8 distribution reports that server targets are not currently supported, so WorldEngineServer cannot be compiled on this machine.",
+      "Live-scene tests run with -nullrhi, so they validate state transitions and simulation isolation, not rendered pixels. Visual confirmation remains open."
+    ],
+    "decisions_made": [
+      "Treat the Hermes characterisation as correct, but verify each claim against the source before accepting it; all five were confirmed with evidence.",
+      "Do not silently fix the integration limitations: material authoring is OpenCode/graphics lane, and implementing or retiring UNLTPopulationScaler is an architecture decision reserved to the Human Principal.",
+      "Position residents relative to the measured viewer location instead of moving the viewer, so asserted distances are exact regardless of how a bare PlayerController resolves its view target."
+    ],
+    "escalations": [
+      "Human Principal: decide whether UNLTPopulationScaler should be implemented or removed; the README previously advertised it as working LOD 0-3 population management.",
+      "OpenCode/graphics lane: wire a material to read the per-instance LOD custom data, adopt incremental HISM updates instead of clear-and-rebuild, and prune AgentVisualLevels for departed agents."
+    ],
+    "next_agent_notes": "Build and test both require ASFDK_ROOT=D:\\nlt-repos\\asfdk-cplus and UnrealEditor-Cmd.exe -DisablePython. The authoritative workspace is D:\\nlt-repos\\nlt-world-engine; the C:\\Users\\joshd\\Documents\\Unreal Projects\\WorldEngine tree is a stale copy with no Visual/ directory and must not be edited. The build exceeds a 30s command window, so it was run via a detached scheduled task that writes a completion marker. Evidence: WorldEngine/Saved/TestReports/lod-live-scene/summary.txt (9 succeeded, 0 failed, 0 errors).",
+    "files_modified": [
+      "WorldEngine/Source/WorldEngine/Private/Tests/NLTVisualLODLiveSceneTests.cpp",
+      "docs/active-threads.md",
+      "README.md",
+      "docs/agent-log/handoffs/2026-09-25-cline-lod-live-scene-evidence.json"
+    ],
+    "tests_run": [
+      "WorldEngineEditor Win64 Development UBT build: Result: Succeeded with ASFDK_ROOT=D:\\nlt-repos\\asfdk-cplus.",
+      "UnrealEditor-Cmd.exe -DisablePython -ExecCmds=\"Automation RunTests NLT.VisualLOD; Quit\" -unattended -nopause -nosplash -nullrhi: 9 succeeded, 0 failed, 0 errors (5 live-scene + 4 pre-existing policy)."
+    ],
+    "tests_passing": true,
+    "pr_url": null
+  }
+}

@@ -9,5 +9,6 @@ public class WorldEngineEditorTarget : TargetRules
         IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
         bOverrideBuildEnvironment = true;
         ExtraModuleNames.AddRange(new string[] { "WorldEngine" });
+        GlobalDefinitions.Add("WITH_DEV_AUTOMATION_TESTS=1");
     }
 }

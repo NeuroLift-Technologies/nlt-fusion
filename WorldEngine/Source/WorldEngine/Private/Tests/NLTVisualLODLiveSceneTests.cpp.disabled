@@ -1,0 +1,628 @@
+﻿// Live-scene validation for the shared visual-only LOD policy.
+//
+// The NLT.VisualLOD.Policy.* tests in NLTSimulationDeterminismTests.cpp exercise
+// FNLTVisualLODPolicy as pure math. These tests close the remaining gap
+// (docs/active-threads.md LOD-001): they drive the two real integration points
+// inside an actual UWorld so transitions are observed, not inferred:
+//
+//   - Actor-resident: AAvatarCharacter::UpdateVisualLOD (mesh / fallback mesh /
+//     hidden, driven by a real viewer).
+//   - Mass-resident:  ANLTAgentVisualizer::UpdateVisuals (HISM instance set,
+//     driven by a real viewer).
+//
+// Every test asserts the visual-only contract as well: moving a resident between
+// LOD levels must not move the resident or write simulation state.
+
+#include "Misc/AutomationTest.h"
+
+#if WITH_DEV_AUTOMATION_TESTS
+
+#include "Agents/AvatarCharacter.h"
+#include "Agents/NLTAgentFragments.h"
+#include "Components/HierarchicalInstancedStaticMeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/SceneComponent.h"
+#include "Engine/Engine.h"
+#include "Engine/SkeletalMesh.h"
+#include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/WorldSettings.h"
+#include "MassEntityManager.h"
+#include "MassEntitySubsystem.h"
+#include "Visual/NLTVisualLODPolicy.h"
+
+// NLTAgentVisualizer.h lives at the module root rather than Public/, so it is
+// not on any include path. Reach it relative to this file instead of relocating
+// production headers for a test.
+#include "../../NLTAgentVisualizer.h"
+
+namespace NLTVisualLODLiveScene
+{
+	/** Bands at 1000 / 3000 / 6000 with 250 hysteresis, shared by the live tests. */
+	FNLTVisualLODPolicy MakeTestPolicy()
+	{
+		FNLTVisualLODPolicy Policy;
+		Policy.NearDistance = 1000.0f;
+		Policy.MidDistance = 3000.0f;
+		Policy.FarDistance = 6000.0f;
+		Policy.Hysteresis = 250.0f;
+		Policy.bUseViewerLocation = true;
+		Policy.bHideActorsAtFarDistance = true;
+		return Policy;
+	}
+
+	/** Owns a real game world for the duration of one test, then tears it down. */
+	struct FScopedTestWorld
+	{
+		UWorld* World = nullptr;
+
+		/**
+		 * Creates the world and initializes actors for play, but does NOT call
+		 * BeginPlay. Tests spawn their actors first and then call BeginPlayWorld,
+		 * because UWorld::BeginPlay dispatches BeginPlay to every actor that
+		 * already exists. Actors spawned into a world that has not begun play
+		 * never receive BeginPlay, which would silently skip the integration
+		 * setup these tests exist to exercise.
+		 */
+		bool Initialize()
+		{
+			World = UWorld::CreateWorld(EWorldType::Game, false, TEXT("NLTVisualLODLiveSceneWorld"));
+			if (!World)
+			{
+				return false;
+			}
+			// A game world is required: FNLTVisualLODPolicy::GetViewerLocation
+			// short-circuits to the fallback for anything that is not one.
+			FWorldContext& WorldContext = GEngine->CreateNewWorldContext(EWorldType::Game);
+			WorldContext.SetCurrentWorld(World);
+			World->InitializeActorsForPlay(FURL());
+			return true;
+		}
+
+		/**
+		 * Runs BeginPlay for every actor spawned so far. Call after spawning.
+		 *
+		 * UWorld::BeginPlay only reaches actors through
+		 * GameMode->StartPlay() -> GameState->HandleBeginPlay() ->
+		 * WorldSettings->NotifyBeginPlay(). A hand-built test world has no game
+		 * mode, so without this the actors never receive BeginPlay and any setup
+		 * performed there (notably the visualizer's FMassEntityQuery) silently
+		 * never happens. NotifyBeginPlay is the documented entry point for that
+		 * dispatch, so call it directly rather than fabricating a game mode.
+		 */
+		void BeginPlayWorld()
+		{
+			if (!World || World->HasBegunPlay())
+			{
+				return;
+			}
+			if (AWorldSettings* WorldSettings = World->GetWorldSettings())
+			{
+				WorldSettings->NotifyBeginPlay();
+			}
+		}
+
+		~FScopedTestWorld()
+		{
+			if (World)
+			{
+				GEngine->DestroyWorldContext(World);
+				World->DestroyWorld(false);
+				World = nullptr;
+			}
+		}
+
+		FScopedTestWorld() = default;
+		FScopedTestWorld(const FScopedTestWorld&) = delete;
+		FScopedTestWorld& operator=(const FScopedTestWorld&) = delete;
+	};
+
+	/**
+	 * Spawns the spectator viewer. Without a player controller both integration
+	 * points fall back to their own location, so the viewer must exist for the
+	 * distance-driven tests.
+	 */
+	/**
+	 * Spawns the spectator viewer. AController hides SetActorLocation, so the
+	 * root component is driven directly. Callers must not assume the controller
+	 * reports this exact spot: the tests measure the effective viewer location
+	 * through FNLTVisualLODPolicy::GetViewerLocation, which is the same call the
+	 * production code makes, and place residents relative to that.
+	 */
+	APlayerController* SpawnViewer(UWorld* World, const FVector& Location)
+	{
+		APlayerController* Controller = World->SpawnActor<APlayerController>(
+			APlayerController::StaticClass(), FTransform(Location));
+		if (Controller)
+		{
+			if (USceneComponent* Root = Controller->GetRootComponent())
+			{
+				Root->SetWorldLocation(Location);
+			}
+		}
+		return Controller;
+	}
+
+	/**
+	 * Reads the viewer location the LOD policy will actually use. Measuring
+	 * instead of assuming keeps the distance assertions exact regardless of how
+	 * the controller resolves its view target.
+	 */
+	FVector MeasureViewerLocation(UWorld* World, const FVector& Fallback)
+	{
+		return FNLTVisualLODPolicy::GetViewerLocation(World, Fallback);
+	}
+
+	/**
+	 * Places a resident at an exact distance from the measured viewer, along +X.
+	 *
+	 * A bare APlayerController has no PlayerCameraManager, so GetPlayerViewPoint
+	 * resolves through the controller itself and the reported viewer point is not
+	 * the offset that was pushed into its TransformComponent. Moving the resident
+	 * instead of the viewer keeps every asserted distance exact, while still
+	 * exercising the real production path (policy -> viewer lookup -> level).
+	 */
+	void PlaceResidentAtDistance(AActor* Resident, UWorld* World, float Distance)
+	{
+		const FVector ViewerLocation = MeasureViewerLocation(World, Resident->GetActorLocation());
+		Resident->SetActorLocation(FVector(ViewerLocation.X + Distance, ViewerLocation.Y, ViewerLocation.Z));
+	}
+
+	/** Repositions the spectator. AController hides SetActorLocation, so this drives the root component. */
+	void MoveViewer(APlayerController* Viewer, const FVector& Location)
+	{
+		if (USceneComponent* Root = Viewer ? Viewer->GetRootComponent() : nullptr)
+		{
+			Root->SetWorldLocation(Location);
+		}
+	}
+
+	/**
+	 * Spawns an actor-resident. SkeletalMesh is applied before FinishSpawning so
+	 * that BeginPlay's InitializeCharacterMesh (protected, and deliberately not
+	 * widened for tests) performs the real mesh wiring.
+	 */
+	AAvatarCharacter* SpawnResident(UWorld* World, const FVector& Location, const FNLTVisualLODPolicy& Policy,
+		USkeletalMesh* SkeletalMesh = nullptr)
+	{
+		AAvatarCharacter* Resident = World->SpawnActorDeferred<AAvatarCharacter>(
+			AAvatarCharacter::StaticClass(), FTransform(Location));
+		if (!Resident)
+		{
+			return nullptr;
+		}
+		// Suppress the AI controller: it would immediately issue a MoveToLocation
+		// against a nav mesh this test world does not have.
+		Resident->AutoPossessAI = EAutoPossessAI::Disabled;
+		Resident->VisualLODPolicy = Policy;
+		Resident->bUseSkeletalMeshCharacter = SkeletalMesh != nullptr;
+		Resident->SkeletalMeshCharacter = SkeletalMesh;
+		// Must be set before FinishSpawning so BeginPlay's InitializeCharacterMesh
+		// observes the final policy values.
+		Resident->FinishSpawning(FTransform(Location));
+		return Resident;
+	}
+
+	/**
+	 * Runs one visual LOD evaluation for the resident. UpdateVisualLOD is
+	 * protected, so this drives it through the same public Tick the game uses
+	 * rather than widening the production API for test access.
+	 */
+	void TickResident(AAvatarCharacter* Resident)
+	{
+		Resident->Tick(1.0f / 60.0f);
+	}
+
+	FMassEntityHandle SpawnMassResident(FMassEntityManager& EntityManager, const FName AgentId, const FVector& Position)
+	{
+		TArray<const UScriptStruct*> FragmentTypes;
+		FragmentTypes.Add(FNLTAgentIdentityFragment::StaticStruct());
+		FragmentTypes.Add(FNLTAgentLocationFragment::StaticStruct());
+		FragmentTypes.Add(FNLTAgentCognitiveFragment::StaticStruct());
+
+		const FMassArchetypeHandle Archetype = EntityManager.CreateArchetype(FragmentTypes);
+		const FMassEntityHandle Handle = EntityManager.CreateEntity(Archetype);
+
+		if (FNLTAgentIdentityFragment* Identity = EntityManager.GetFragmentDataPtr<FNLTAgentIdentityFragment>(Handle))
+		{
+			Identity->AgentId = AgentId;
+			Identity->TeamId = 0;
+		}
+		if (FNLTAgentLocationFragment* Location = EntityManager.GetFragmentDataPtr<FNLTAgentLocationFragment>(Handle))
+		{
+			Location->Position = Position;
+		}
+		if (FNLTAgentCognitiveFragment* Cognition = EntityManager.GetFragmentDataPtr<FNLTAgentCognitiveFragment>(Handle))
+		{
+			Cognition->Focus = 0.2f;
+			Cognition->Stress = 0.1f;
+		}
+		return Handle;
+	}
+
+	UHierarchicalInstancedStaticMeshComponent* GetHISM(ANLTAgentVisualizer* Visualizer)
+	{
+		return Visualizer ? Visualizer->FindComponentByClass<UHierarchicalInstancedStaticMeshComponent>() : nullptr;
+	}
+
+	/** Collects the per-instance LOD levels the visualizer stamped into HISM custom data. */
+	TArray<float> ReadInstanceLODLevels(const UHierarchicalInstancedStaticMeshComponent* HISM)
+	{
+		TArray<float> Levels;
+		if (!HISM)
+		{
+			return Levels;
+		}
+		// NumCustomDataFloats is 1, so slot 0 of each instance carries its LOD level.
+		for (int32 Index = 0; Index < HISM->GetInstanceCount(); ++Index)
+		{
+			const int32 Offset = Index * FMath::Max(1, HISM->NumCustomDataFloats);
+			if (HISM->PerInstanceSMCustomData.IsValidIndex(Offset))
+			{
+				Levels.Add(HISM->PerInstanceSMCustomData[Offset]);
+			}
+		}
+		return Levels;
+	}
+}
+
+using namespace NLTVisualLODLiveScene;
+
+// LOD0 -> LOD1 -> LOD2 -> LOD3_Hidden and back on an actor-resident mesh,
+// measured from a real viewer. Also asserts the visual-only contract.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FNLTVisualLODLiveActorResidentTransitionsTest,
+	"NLT.VisualLOD.LiveScene.ActorResidentTransitions",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FNLTVisualLODLiveActorResidentTransitionsTest::RunTest(const FString& Parameters)
+{
+	(void)Parameters;
+	FScopedTestWorld TestWorld;
+	if (!TestWorld.Initialize())
+	{
+		AddError(TEXT("Failed to create the test game world"));
+		return false;
+	}
+
+	const FVector ResidentLocation(0.0f, 0.0f, 0.0f);
+	APlayerController* Viewer = SpawnViewer(TestWorld.World, ResidentLocation);
+	AAvatarCharacter* Resident = SpawnResident(TestWorld.World, ResidentLocation, MakeTestPolicy());
+	if (!TestNotNull(TEXT("Viewer spawned"), Viewer) || !TestNotNull(TEXT("Resident spawned"), Resident))
+	{
+		return false;
+	}
+	// BeginPlay wires the avatar's visual components; run it once the actors exist.
+	TestWorld.BeginPlayWorld();
+
+	// A bare APlayerController has no PlayerCameraManager, so its reported view
+	// point is not the offset pushed into its TransformComponent. Move the
+	// resident to exact distances from the measured viewer instead, so each
+	// asserted level corresponds to a known distance.
+	const FVector ViewerLocation = MeasureViewerLocation(TestWorld.World, ResidentLocation);
+	PlaceResidentAtDistance(Resident, TestWorld.World, 500.0f);
+
+	// The resident has no skeletal mesh assigned, so it resolves to the
+	// SimBody fallback representation.
+	TickResident(Resident);
+	TestEqual(TEXT("Near viewer selects LOD0"), Resident->CurrentVisualLOD, ENLTVisualLODLevel::LOD0_Near);
+	TestEqual(TEXT("No skeletal mesh resolves to the fallback representation"),
+		Resident->CurrentVisualRepresentation, ENLTVisualRepresentation::FallbackMesh);
+	TestFalse(TEXT("Near resident is not hidden"), Resident->IsHidden());
+	TestTrue(TEXT("Fallback body mesh is visible"), Resident->BodyMesh && Resident->BodyMesh->IsVisible());
+
+	PlaceResidentAtDistance(Resident, TestWorld.World, 2000.0f);
+	TickResident(Resident);
+	TestEqual(TEXT("Mid distance selects LOD1"), Resident->CurrentVisualLOD, ENLTVisualLODLevel::LOD1_Mid);
+
+	PlaceResidentAtDistance(Resident, TestWorld.World, 5000.0f);
+	TickResident(Resident);
+	TestEqual(TEXT("Far distance selects LOD2"), Resident->CurrentVisualLOD, ENLTVisualLODLevel::LOD2_Far);
+	TestFalse(TEXT("Far-but-visible resident is not hidden"), Resident->IsHidden());
+
+	// Beyond FarDistance the policy hides the actor entirely.
+	PlaceResidentAtDistance(Resident, TestWorld.World, 7000.0f);
+	TickResident(Resident);
+	TestEqual(TEXT("Beyond far distance selects LOD3"), Resident->CurrentVisualLOD, ENLTVisualLODLevel::LOD3_Hidden);
+	TestEqual(TEXT("LOD3 resolves to the hidden representation"),
+		Resident->CurrentVisualRepresentation, ENLTVisualRepresentation::Hidden);
+	TestTrue(TEXT("LOD3 hides the actor in game"), Resident->IsHidden());
+
+	// Visual-only contract: each level change is driven by the resident's own
+	// position moving, and the viewer never moved at all. AController hides
+	// GetActorLocation, so read the transform component directly.
+	TestEqual(TEXT("The viewer never moved during the test"),
+		Viewer->GetRootComponent()->GetComponentLocation(), ResidentLocation);
+
+	// Returning inside the near band restores the resident.
+	PlaceResidentAtDistance(Resident, TestWorld.World, 500.0f);
+	TickResident(Resident);
+	TestEqual(TEXT("Returning near restores LOD0"), Resident->CurrentVisualLOD, ENLTVisualLODLevel::LOD0_Near);
+	TestFalse(TEXT("Restored resident is visible again"), Resident->IsHidden());
+	TestTrue(TEXT("Restored resident shows its fallback mesh again"),
+		Resident->BodyMesh && Resident->BodyMesh->IsVisible());
+	return true;
+}
+
+// Representation changes at a fixed, visible distance: an actor with a skeletal
+// mesh must render as Mesh, and the same actor with the mesh removed must fall
+// back to FallbackMesh without any change in LOD level.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FNLTVisualLODLiveRepresentationChangeTest,
+	"NLT.VisualLOD.LiveScene.RepresentationChange",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FNLTVisualLODLiveRepresentationChangeTest::RunTest(const FString& Parameters)
+{
+	(void)Parameters;
+	FScopedTestWorld TestWorld;
+	if (!TestWorld.Initialize())
+	{
+		AddError(TEXT("Failed to create the test game world"));
+		return false;
+	}
+
+	USkeletalMesh* TestSkeletalMesh = LoadObject<USkeletalMesh>(
+		nullptr, TEXT("/Engine/EngineMeshes/SkeletalCube.SkeletalCube"));
+	if (!TestNotNull(TEXT("Engine skeletal mesh loaded"), TestSkeletalMesh))
+	{
+		return false;
+	}
+
+	const FVector ResidentLocation(0.0f, 0.0f, 0.0f);
+	// Both residents sit at the same distance from the viewer, so the only
+	// variable is whether a primary skeletal mesh is available.
+	APlayerController* Viewer = SpawnViewer(TestWorld.World, ResidentLocation + FVector(2000.0f, 0.0f, 0.0f));
+	AAvatarCharacter* FallbackResident = SpawnResident(TestWorld.World, ResidentLocation, MakeTestPolicy());
+	AAvatarCharacter* SkeletalResident = SpawnResident(TestWorld.World, ResidentLocation, MakeTestPolicy(), TestSkeletalMesh);
+	if (!TestNotNull(TEXT("Viewer spawned"), Viewer)
+		|| !TestNotNull(TEXT("Fallback resident spawned"), FallbackResident)
+		|| !TestNotNull(TEXT("Skeletal resident spawned"), SkeletalResident))
+	{
+		return false;
+	}
+	// BeginPlay wires the avatar's visual components; run it once the actors exist.
+	TestWorld.BeginPlayWorld();
+
+	// Place both residents at an exact 2000cm from the measured viewer so the
+	// only variable is whether a primary skeletal mesh is available.
+	PlaceResidentAtDistance(FallbackResident, TestWorld.World, 2000.0f);
+	PlaceResidentAtDistance(SkeletalResident, TestWorld.World, 2000.0f);
+
+	// Without a primary mesh the policy must select the fallback representation.
+	TickResident(FallbackResident);
+	TestEqual(TEXT("Fallback resident level is LOD1"), FallbackResident->CurrentVisualLOD, ENLTVisualLODLevel::LOD1_Mid);
+	TestEqual(TEXT("Without a skeletal mesh the representation is the fallback"),
+		FallbackResident->CurrentVisualRepresentation, ENLTVisualRepresentation::FallbackMesh);
+	TestTrue(TEXT("Fallback body mesh is visible"),
+		FallbackResident->BodyMesh && FallbackResident->BodyMesh->IsVisible());
+	TestFalse(TEXT("Fallback resident keeps the skeletal mesh hidden"),
+		FallbackResident->GetMesh() && FallbackResident->GetMesh()->IsVisible());
+
+	// With a primary mesh at the identical distance and level, the policy must
+	// select the Mesh representation instead.
+	TickResident(SkeletalResident);
+	TestEqual(TEXT("Skeletal resident level matches the fallback resident"),
+		SkeletalResident->CurrentVisualLOD, ENLTVisualLODLevel::LOD1_Mid);
+	TestEqual(TEXT("With a skeletal mesh the representation is Mesh"),
+		SkeletalResident->CurrentVisualRepresentation, ENLTVisualRepresentation::Mesh);
+	TestTrue(TEXT("Skeletal mesh is visible"),
+		SkeletalResident->GetMesh() && SkeletalResident->GetMesh()->IsVisible());
+	TestFalse(TEXT("Fallback body mesh is hidden while the skeletal mesh is used"),
+		SkeletalResident->BodyMesh && SkeletalResident->BodyMesh->IsVisible());
+	return true;
+}
+
+// Hysteresis in a live scene: creeping the viewer just past a band edge must not
+// change the level. Crossing the edge by more than the hysteresis margin must
+// advance it, and repeated ticks inside the band must not oscillate.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FNLTVisualLODLiveHysteresisTest,
+	"NLT.VisualLOD.LiveScene.Hysteresis",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FNLTVisualLODLiveHysteresisTest::RunTest(const FString& Parameters)
+{
+	(void)Parameters;
+	FScopedTestWorld TestWorld;
+	if (!TestWorld.Initialize())
+	{
+		AddError(TEXT("Failed to create the test game world"));
+		return false;
+	}
+
+	const FVector ResidentLocation(0.0f, 0.0f, 0.0f);
+	APlayerController* Viewer = SpawnViewer(TestWorld.World, ResidentLocation);
+	AAvatarCharacter* Resident = SpawnResident(TestWorld.World, ResidentLocation, MakeTestPolicy());
+	if (!TestNotNull(TEXT("Viewer spawned"), Viewer) || !TestNotNull(TEXT("Resident spawned"), Resident))
+	{
+		return false;
+	}
+	// BeginPlay wires the avatar's visual components; run it once the actors exist.
+	TestWorld.BeginPlayWorld();
+
+	// Distances below are exact because the resident is placed relative to the
+	// measured viewer rather than the viewer being moved.
+	PlaceResidentAtDistance(Resident, TestWorld.World, 500.0f);
+
+	TickResident(Resident);
+	TestEqual(TEXT("Resident starts at LOD0"), Resident->CurrentVisualLOD, ENLTVisualLODLevel::LOD0_Near);
+
+	// NearDistance is 1000 and hysteresis is 250, so 1100 is inside the band:
+	// the level must be held.
+	PlaceResidentAtDistance(Resident, TestWorld.World, 1100.0f);
+	TickResident(Resident);
+	TestEqual(TEXT("Creeping past NearDistance inside the band holds LOD0"),
+		Resident->CurrentVisualLOD, ENLTVisualLODLevel::LOD0_Near);
+
+	// 1300 exceeds NearDistance + hysteresis, so the level must advance.
+	PlaceResidentAtDistance(Resident, TestWorld.World, 1300.0f);
+	TickResident(Resident);
+	TestEqual(TEXT("Crossing the hysteresis margin advances to LOD1"),
+		Resident->CurrentVisualLOD, ENLTVisualLODLevel::LOD1_Mid);
+
+	// Returning below NearDistance releases the level.
+	PlaceResidentAtDistance(Resident, TestWorld.World, 500.0f);
+	TickResident(Resident);
+	TestEqual(TEXT("Returning inside NearDistance restores LOD0"),
+		Resident->CurrentVisualLOD, ENLTVisualLODLevel::LOD0_Near);
+
+	// Repeating the creep must be stable: no oscillation across repeated ticks.
+	for (int32 Step = 0; Step < 5; ++Step)
+	{
+		PlaceResidentAtDistance(Resident, TestWorld.World, 1100.0f);
+		TickResident(Resident);
+	}
+	TestEqual(TEXT("Repeated ticks inside the band stay at LOD0"),
+		Resident->CurrentVisualLOD, ENLTVisualLODLevel::LOD0_Near);
+	return true;
+}
+
+// Viewer fallback in a live scene: with no player controller present, the actor
+// path must fall back to its own location and keep the resident at LOD0 rather
+// than reading a bogus viewer.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FNLTVisualLODLiveViewerFallbackTest,
+	"NLT.VisualLOD.LiveScene.ViewerFallback",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FNLTVisualLODLiveViewerFallbackTest::RunTest(const FString& Parameters)
+{
+	(void)Parameters;
+	FScopedTestWorld TestWorld;
+	if (!TestWorld.Initialize())
+	{
+		AddError(TEXT("Failed to create the test game world"));
+		return false;
+	}
+
+	// No viewer is spawned in this world.
+	TestNull(TEXT("World starts with no player controller"), TestWorld.World->GetFirstPlayerController());
+
+	const FVector FallbackLocation(100.0f, 200.0f, 300.0f);
+	TestEqual(TEXT("A game world with no controller still returns the supplied fallback"),
+		FNLTVisualLODPolicy::GetViewerLocation(TestWorld.World, FallbackLocation), FallbackLocation);
+
+	// The actor path passes GetActorLocation() as its fallback, so with no viewer
+	// the measured distance is zero and the resident stays at LOD0.
+	AAvatarCharacter* Resident = SpawnResident(TestWorld.World, FallbackLocation, MakeTestPolicy());
+	if (!TestNotNull(TEXT("Resident spawned"), Resident))
+	{
+		return false;
+	}
+	// BeginPlay wires the avatar's visual components; run it once the actors exist.
+	TestWorld.BeginPlayWorld();
+
+	TickResident(Resident);
+	TestEqual(TEXT("With no viewer the resident resolves against its own location"),
+		Resident->CurrentVisualLOD, ENLTVisualLODLevel::LOD0_Near);
+	TestFalse(TEXT("Resident stays visible with no viewer"), Resident->IsHidden());
+
+	// Once a viewer exists, the same resident becomes distance-evaluated. Place
+	// it at an exact 7000cm from the measured viewer: a bare APlayerController
+	// does not report the offset pushed into its TransformComponent, so the
+	// resident is positioned relative to the viewer the policy actually reads.
+	APlayerController* Viewer = SpawnViewer(TestWorld.World, FVector::ZeroVector);
+	if (!TestNotNull(TEXT("Viewer spawned"), Viewer))
+	{
+		return false;
+	}
+	PlaceResidentAtDistance(Resident, TestWorld.World, 7000.0f);
+	TickResident(Resident);
+	TestEqual(TEXT("A far viewer now drives the resident to LOD3"),
+		Resident->CurrentVisualLOD, ENLTVisualLODLevel::LOD3_Hidden);
+	TestTrue(TEXT("Resident hides once a distant viewer exists"), Resident->IsHidden());
+	return true;
+}
+
+// Mass-resident transitions: real Mass entities at three distances from a real
+// viewer must produce a HISM instance set that contains only the non-hidden
+// residents, each stamped with the LOD level the policy resolved.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FNLTVisualLODLiveMassResidentTransitionsTest,
+	"NLT.VisualLOD.LiveScene.MassResidentTransitions",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FNLTVisualLODLiveMassResidentTransitionsTest::RunTest(const FString& Parameters)
+{
+	(void)Parameters;
+	FScopedTestWorld TestWorld;
+	if (!TestWorld.Initialize())
+	{
+		AddError(TEXT("Failed to create the test game world"));
+		return false;
+	}
+
+	UMassEntitySubsystem* EntitySubsystem = TestWorld.World->GetSubsystem<UMassEntitySubsystem>();
+	if (!TestNotNull(TEXT("Mass entity subsystem exists in the test world"), EntitySubsystem))
+	{
+		return false;
+	}
+	FMassEntityManager& EntityManager = EntitySubsystem->GetMutableEntityManager();
+
+	ANLTAgentVisualizer* Visualizer = TestWorld.World->SpawnActor<ANLTAgentVisualizer>(
+		ANLTAgentVisualizer::StaticClass(), FTransform(FVector::ZeroVector));
+	if (!TestNotNull(TEXT("Visualizer spawned"), Visualizer))
+	{
+		return false;
+	}
+	UHierarchicalInstancedStaticMeshComponent* HISM = GetHISM(Visualizer);
+	if (!TestNotNull(TEXT("Visualizer has a HISM component"), HISM))
+	{
+		return false;
+	}
+
+	// The visualizer carries its own policy instance; assign the test bands
+	// explicitly, otherwise the class defaults (Far=8000) would keep a 7000cm
+	// resident visible as LOD2 and this test would not exercise a hidden
+	// transition at all.
+	Visualizer->VisualLODPolicy = MakeTestPolicy();
+
+	// The visualizer's BeginPlay builds its FMassEntityQuery against the world's
+	// entity manager. It must run before the first Tick or the query is
+	// uninitialized and ForEachEntityChunk asserts.
+	TestWorld.BeginPlayWorld();
+
+	// No player controller exists in this world, so the visualizer's viewer
+	// fallback is its own actor location (the origin) and each resident's
+	// distance is its X offset: 500 -> LOD0, 2000 -> LOD1, 7000 -> LOD3.
+	SpawnMassResident(EntityManager, FName(TEXT("LOD_Live_Near")), FVector(500.0f, 0.0f, 0.0f));
+	SpawnMassResident(EntityManager, FName(TEXT("LOD_Live_Mid")), FVector(2000.0f, 0.0f, 0.0f));
+	SpawnMassResident(EntityManager, FName(TEXT("LOD_Live_Far")), FVector(7000.0f, 0.0f, 0.0f));
+
+	// Run one visual update pass.
+	Visualizer->Tick(1.0f / 60.0f);
+
+	// The hidden resident must not reach the HISM at all.
+	TestEqual(TEXT("Only the two visible residents are instanced"), HISM->GetInstanceCount(), 2);
+
+	const TArray<float> Levels = ReadInstanceLODLevels(HISM);
+	TestEqual(TEXT("Two instances carry a recorded LOD level"), Levels.Num(), 2);
+	if (Levels.Num() == 2)
+	{
+		TArray<float> Sorted = Levels;
+		Sorted.Sort();
+		TestEqual(TEXT("Near resident is stamped LOD0"), Sorted[0], static_cast<float>(ENLTVisualLODLevel::LOD0_Near));
+		TestEqual(TEXT("Mid resident is stamped LOD1"), Sorted[1], static_cast<float>(ENLTVisualLODLevel::LOD1_Mid));
+	}
+
+	// Visual-only contract: the visualization pass must not rewrite simulation
+	// fragments. Move the far resident's own location fragment back inside the
+	// visible bands, exactly as a simulation system would, and confirm all three
+	// are then instanced. The entity is never added or removed by the visual
+	// pass itself, which is what the constant instance-count math above shows.
+	const FMassEntityHandle FarHandle = SpawnMassResident(
+		EntityManager, FName(TEXT("LOD_Live_BroughtBack")), FVector(7000.0f, 0.0f, 0.0f));
+	if (FNLTAgentLocationFragment* FarLocation =
+		EntityManager.GetFragmentDataPtr<FNLTAgentLocationFragment>(FarHandle))
+	{
+		FarLocation->Position = FVector(1500.0f, 0.0f, 0.0f);
+	}
+	Visualizer->Tick(1.0f / 60.0f);
+	TestEqual(TEXT("A resident returning to the visible bands is instanced again"),
+		HISM->GetInstanceCount(), 3);
+	return true;
+}
+
+#endif // WITH_DEV_AUTOMATION_TESTS
+

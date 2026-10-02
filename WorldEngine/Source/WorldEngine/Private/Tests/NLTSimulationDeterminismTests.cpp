@@ -107,6 +107,72 @@ bool FNLTDeterministicStateHashTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+// ----- v2 canonical state tests -----
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FNLTDeterministicStateHashV2Test,
+	"NLT.Simulation.Determinism.StateHashV2",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FNLTDeterministicStateHashV2Test::RunTest(const FString& Parameters)
+{
+	(void)Parameters;
+	FNLTSimulationState State;
+	State.SimulationTick = 12;
+	State.WorldTime = 3.25;
+	State.TimeOfDay = 14.5f;
+	State.Mode = ESimulationMode::DeterministicTest;
+	State.RandomSeed = 1337;
+	State.ActiveEvents = { FName(TEXT("event.b")), FName(TEXT("event.a")) };
+
+	FNLTAgentState First;
+	First.AgentId = FName(TEXT("Agent_B"));
+	First.DisplayName = FName(TEXT("Bee"));
+	First.Position = FVector(10.0, 20.0, 30.0);
+	First.Focus = 0.75f;
+	FNLTAgentState Second;
+	Second.AgentId = FName(TEXT("Agent_A"));
+	Second.DisplayName = FName(TEXT("Ay"));
+	Second.Position = FVector(-10.0, -20.0, -30.0);
+	State.Agents = { First, Second };
+
+	const FString Hash = FNLTDeterministicStateHash::ComputeStateHashV2(State);
+	TestEqual(TEXT("V2 hash is a full BLAKE3 digest"), Hash.Len(), 64);
+
+	FNLTSimulationState Reordered = State;
+	Reordered.Agents = { Second, First };
+	Reordered.ActiveEvents = { FName(TEXT("event.a")), FName(TEXT("event.b")) };
+	TestEqual(
+		TEXT("V2 canonical hash ignores entity and event storage order"),
+		FNLTDeterministicStateHash::ComputeStateHashV2(Reordered),
+		Hash);
+
+	Reordered.SimulationTick++;
+	TestNotEqual(
+		TEXT("V2: Changing authoritative state changes the hash"),
+		FNLTDeterministicStateHash::ComputeStateHashV2(Reordered),
+		Hash);
+
+	FNLTRandomStream Rng(99);
+	Rng.GetFraction();
+	const FString StateWithRng = FNLTDeterministicStateHash::ComputeStateHashV2(State, &Rng);
+	Rng.GetFraction();
+	TestNotEqual(
+		TEXT("V2: RNG progress changes the state hash"),
+		FNLTDeterministicStateHash::ComputeStateHashV2(State, &Rng),
+		StateWithRng);
+
+	// Verify v2 canonical text starts with the v2 version string
+	const FString CanonicalV2 = FNLTDeterministicStateHash::BuildCanonicalStateTextV2(State, &Rng);
+	TestTrue(TEXT("V2 canonical text starts with v2 version string"), CanonicalV2.StartsWith(TEXT("NLT.WorldEngine.State.v2")));
+
+	// Verify v1 and v2 produce different hashes for the same state
+	const FString HashV1 = FNLTDeterministicStateHash::ComputeStateHash(State);
+	TestNotEqual(TEXT("V1 and V2 hashes differ for the same state"), Hash, HashV1);
+
+	return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS
 
 

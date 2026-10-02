@@ -32,6 +32,30 @@ namespace
 		const FString Name = Value.ToString();
 		Output += FString::Printf(TEXT("%d:%s;"), Name.Len(), *Name);
 	}
+
+	// ----- v2 helpers: bit-exact IEEE-754 hex encoding -----
+
+	void AppendFloatHex(FString& Output, float Value)
+	{
+		if (Value == 0.0f)
+		{
+			Value = 0.0f;
+		}
+		uint32 Bits = 0;
+		FMemory::Memcpy(&Bits, &Value, sizeof(uint32));
+		Output += FString::Printf(TEXT("%08x;"), Bits);
+	}
+
+	void AppendDoubleHex(FString& Output, double Value)
+	{
+		if (Value == 0.0)
+		{
+			Value = 0.0;
+		}
+		uint64 Bits = 0;
+		FMemory::Memcpy(&Bits, &Value, sizeof(uint64));
+		Output += FString::Printf(TEXT("%016llx;"), Bits);
+	}
 }
 
 FString FNLTDeterministicStateHash::BuildCanonicalStateText(
@@ -108,5 +132,78 @@ FString FNLTDeterministicStateHash::ComputeStateHash(
 FString FNLTDeterministicStateHash::ComputeTextHash(const FString& CanonicalText)
 {
 	const FTCHARToUTF8 Utf8(*CanonicalText);
+	return LexToString(FBlake3::HashBuffer(Utf8.Get(), static_cast<uint64>(Utf8.Length())));
+}
+
+// ----- v2 implementation -----
+
+FString FNLTDeterministicStateHash::BuildCanonicalStateTextV2(
+	const FNLTSimulationState& State,
+	const FNLTRandomStream* RNG)
+{
+	FString Canonical = TEXT("NLT.WorldEngine.State.v2\n");
+	AppendInt(Canonical, State.SimulationTick);
+	AppendDoubleHex(Canonical, State.WorldTime);
+	AppendFloatHex(Canonical, State.TimeOfDay);
+	AppendInt(Canonical, static_cast<int32>(State.Mode));
+	AppendInt(Canonical, State.RandomSeed);
+
+	TArray<FNLTAgentState> SortedAgents = State.Agents;
+	SortedAgents.Sort([](const FNLTAgentState& A, const FNLTAgentState& B)
+	{
+		return A.AgentId.ToString() < B.AgentId.ToString();
+	});
+
+	AppendInt(Canonical, SortedAgents.Num());
+	for (const FNLTAgentState& Agent : SortedAgents)
+	{
+		Canonical += TEXT("agent\n");
+		AppendName(Canonical, Agent.AgentId);
+		AppendInt(Canonical, static_cast<int32>(Agent.Role));
+		AppendName(Canonical, Agent.ProfileId);
+		AppendName(Canonical, Agent.DisplayName);
+		AppendFloatHex(Canonical, Agent.Position.X);
+		AppendFloatHex(Canonical, Agent.Position.Y);
+		AppendFloatHex(Canonical, Agent.Position.Z);
+		AppendInt(Canonical, static_cast<int32>(Agent.Intent));
+		AppendFloatHex(Canonical, Agent.Focus);
+		AppendFloatHex(Canonical, Agent.CognitiveLoad);
+		AppendFloatHex(Canonical, Agent.Stress);
+		AppendFloatHex(Canonical, Agent.Burnout);
+		AppendFloatHex(Canonical, Agent.Independence);
+		AppendFloatHex(Canonical, Agent.FusionReady);
+		AppendFloatHex(Canonical, Agent.SuccessRate);
+		AppendName(Canonical, Agent.EmotionalState);
+		AppendInt(Canonical, static_cast<int32>(Agent.PrimaryNeed));
+	}
+
+	TArray<FName> SortedEvents = State.ActiveEvents;
+	SortedEvents.Sort([](const FName& A, const FName& B)
+	{
+		return A.ToString() < B.ToString();
+	});
+	AppendInt(Canonical, SortedEvents.Num());
+	for (const FName& Event : SortedEvents)
+	{
+		AppendName(Canonical, Event);
+	}
+
+	if (RNG != nullptr)
+	{
+		Canonical += TEXT("rng\n");
+		AppendInt(Canonical, RNG->InitialSeed);
+		AppendInt(Canonical, RNG->Seed);
+		AppendInt(Canonical, RNG->Calls);
+	}
+
+	return Canonical;
+}
+
+FString FNLTDeterministicStateHash::ComputeStateHashV2(
+	const FNLTSimulationState& State,
+	const FNLTRandomStream* RNG)
+{
+	const FString Canonical = BuildCanonicalStateTextV2(State, RNG);
+	const FTCHARToUTF8 Utf8(*Canonical);
 	return LexToString(FBlake3::HashBuffer(Utf8.Get(), static_cast<uint64>(Utf8.Length())));
 }
