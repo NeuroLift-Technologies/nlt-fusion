@@ -244,17 +244,19 @@ void UNLTScenarioMovementProcessor::ConfigureQueries(const TSharedRef<FMassEntit
 void UNLTScenarioMovementProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
     const float Dt = NLTDemoScenario::TickDeltaSeconds;
-    const bool bHasSTT = Context.GetFragmentView<FNLTStateTreeBehaviorFragment>().Num() > 0;
-    TConstArrayView<FNLTStateTreeBehaviorFragment> STTBehaviors =
-        bHasSTT ? Context.GetFragmentView<FNLTStateTreeBehaviorFragment>()
-                : TConstArrayView<FNLTStateTreeBehaviorFragment>();
 
-    EntityQuery.ForEachEntityChunk(Context, [Dt, bHasSTT, STTBehaviors](FMassExecutionContext& Context)
+    // The StateTree view must be read INSIDE the query iteration. The processor
+    // context has no fragment views bound until ForEachEntityChunk runs, so
+    // calling GetFragmentView here asserts "Requested fragment type not bound".
+    // That made every PIE/game scenario start crash before a single tick.
+    EntityQuery.ForEachEntityChunk(Context, [Dt](FMassExecutionContext& Context)
     {
         const int32 NumEntities = Context.GetNumEntities();
         TArrayView<FNLTScenarioBehaviorFragment> Behaviors = Context.GetMutableFragmentView<FNLTScenarioBehaviorFragment>();
         TConstArrayView<FNLTScenarioConfigFragment> Configs = Context.GetFragmentView<FNLTScenarioConfigFragment>();
         TArrayView<FNLTAgentLocationFragment> Locations = Context.GetMutableFragmentView<FNLTAgentLocationFragment>();
+        TConstArrayView<FNLTStateTreeBehaviorFragment> STTBehaviors = Context.GetFragmentView<FNLTStateTreeBehaviorFragment>();
+        const bool bHasSTT = STTBehaviors.Num() == NumEntities;
 
         for (int32 i = 0; i < NumEntities; i++)
         {
