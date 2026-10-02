@@ -70,8 +70,25 @@ Agents are frozen for a different reason. Ruled out by inspection: `UNLTSmartObj
 
 **Attempted and reverted.** `FNLTStateTreeBehaviorFragment::bEnabled` defaults to `true`, which hands every agent to the StateTree layer while both legacy processors defer to it, and there are **0 `.sttree` assets** in `Content/`. Flipping the default to `false` was tested and **did not move agents**, so it was reverted rather than shipped as an unverified change to the oracle. That default is still a latent trap for whoever continues, but it is not the blocker.
 
-**Still open.** The decision and movement processors execute without producing movement, and the event stream is empty across all 600 ticks. Most likely remaining cause is the processors Mass phase / execution-group wiring, or scenario config defaults (`DecisionIntervalTicks`, `MovementSpeed`, `ArrivalRadius`), rather than the StateTree ownership flag. Not yet isolated. Tier 2 remains unsatisfiable until it is.
+**Still open.** *(Superseded — see Progress 2026-10-02T14:20:00Z below. Both the movement claim and the event-stream cause in this paragraph are now corrected.)* The decision and movement processors execute without producing movement, and the event stream is empty across all 600 ticks. Most likely remaining cause is the processors Mass phase / execution-group wiring, or scenario config defaults (`DecisionIntervalTicks`, `MovementSpeed`, `ArrivalRadius`), rather than the StateTree ownership flag. Not yet isolated. Tier 2 remains unsatisfiable until it is.
 
+### Progress 2026-10-02T14:20:00Z - Supersedes the 10:05 "Still open" paragraph; event-stream cause corrected
+
+Both halves of the 10:05 "Still open" note are now resolved or corrected.
+
+**Movement — resolved, and it was never a Mass wiring problem.** The processors do produce movement. `NLTAgentSpawnerSubsystem` hardcoded `FNLTStateTreeBehaviorFragment::bEnabled = true`, handing every agent to the StateTree layer while both legacy processors defer to it, with 0 `.sttree` assets present. The 10:05 entry was right that flipping the *struct default* did nothing — the spawner sets the field explicitly, so the default was never the lever. Mass phase wiring and the scenario config defaults (`DecisionIntervalTicks`, `MovementSpeed`, `ArrivalRadius`) were both ruled out. Capture now reports 600/600 unique blocks, clock 1 → 600, `WorldTime` 0.0166 → 10.0 min, `Agents move: yes`.
+
+**Event stream — cause corrected.** This record previously said `UNLTEventBus` has **zero writers**, and concluded the empty stream was therefore new behaviour outside the 1.6 carve-out. Both halves were wrong. The grep behind the claim (`EventBus->(Add|Publish|Broadcast|Emit)`) missed `RaiseEnvironmentEvent`.
+
+- Writers **do** exist: `UNLTWorkplaceEnvironmentSubsystem::RefreshRooms` raises `EnvLightingChanged` / `EnvRoomStateChanged`; `PublishTimeOfDay` raises `EnvTimeOfDayChanged` / `EnvLightingChanged`.
+- The chain is simply never driven. `UNLTSimulationClockSubsystem::AdvanceTick()` is the only broadcaster of `OnAuthoritativeTick`; its only caller is `UNLTWorkplaceEnvironmentSubsystem::StepEnvironmentSimulation`; and `StepEnvironmentSimulation` has **zero** call sites, despite its own header documenting *"Each frame while running, call `StepEnvironmentSimulation(1)`"*.
+- The 10:05 guess (Mass phase / execution-group wiring) was therefore not the cause either.
+
+**Consequence for the carve-out — this removes the need for a ruling.** The empty stream is the **same defect class as SIM-001**: documented behaviour that is not wired up. It is **inside** the 1.6 carve-out, not outside it. Fixing it is a defect fix like 1.10, not a new-behaviour decision, so it does not need to wait on Joshua. **Not yet implemented** — driving `StepEnvironmentSimulation` changes what the sim emits and would invalidate all four committed captures, so it needs its own verification pass and should be sequenced deliberately.
+
+**Also now known, and still open:** the capture is non-degenerate but **not deterministic**. Repeat runs of the identical command first diverge at **tick 59** and then differ across **1,941 of 2,000 ticks** — most likely Mass-vs-GameMode tick ordering. Until the capture read point is pinned, these fixtures are not usable as Tier 2 golden vectors.
+
+---
 ---
 
 ### Decision Required
