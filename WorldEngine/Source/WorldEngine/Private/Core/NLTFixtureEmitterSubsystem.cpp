@@ -62,7 +62,11 @@ void UNLTFixtureEmitterSubsystem::BeginCapture(int32 InSeed, int32 InMaxTicks)
 
 void UNLTFixtureEmitterSubsystem::EndCapture()
 {
-	if (!bCapturing)
+	// Guard on captured data, NOT on bCapturing. CaptureTick flips bCapturing off
+	// once the tick cap is reached, so when max ticks equals the requested tick
+	// count -- the normal case -- bCapturing is already false here and a guard on
+	// it silently discards everything collected in memory.
+	if (PerTickCanonicalState.Num() == 0)
 	{
 		return;
 	}
