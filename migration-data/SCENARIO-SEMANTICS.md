@@ -22,7 +22,7 @@ Every claim below is anchored to a file:line. Verified 2026-10-02 against
 | `Category` | no | — | not read by simulation code; used only by capture/fixture tooling |
 | `DurationMinutes` | no | — | inert |
 | `Complexity` | no | — | inert |
-| `BaseSuccessRate` | no | — | inert |
+| `BaseSuccessRate` | no | — | unread by UE — **but consumed by Fusion's orchestrator** (`RENDERER-PLAN.md` §9), so live across the repo boundary |
 | `bRequiresSustainedFocus` | no | — | inert |
 | `ContextParams` | no | — | inert — despite carrying per-scenario detail (`email_count`, `word_count`, `anxiety_level`, …) |
 | `LevelReference` | no | — | inert in C++; validated only by `Scripts/verify_bindings.py` |
@@ -37,11 +37,10 @@ repo-wide search (`git grep -w`) across `.cpp/.h/.py/.cs`: `DurationMinutes`,
 simulation. That accounts for six. `DisplayName` and `Description` are UI metadata
 and `Category` is read only by tooling, which makes the remaining three.
 
-> **Do not "fix" this.** Six inert data fields is a real design gap — the data looks
-> scenario-specific but only three values reach the sim — but wiring them up is *new
-> behaviour* and therefore **outside the 1.6 freeze carve-out**. Record it, do not
-> implement it in UE. The Godot port should likewise treat them as data-only, and
-> should not claim to consume them.
+> **Do not "fix" this.** Six UE-unread data fields is a real design gap — the data
+> looks scenario-specific but only three values reach UE's simulation — but wiring
+> them up would be *new behaviour*. Record it, do not implement it in UE. See §4 for
+> why this is now moot: the C# port that was to consume them was withdrawn.
 
 ---
 
@@ -172,25 +171,58 @@ deterministic system list must reproduce the *observable* order, not the threadi
 The capture read happens **after** `StepTick` *within the same manager tick*, but
 `ANLTDemoGameMode::Tick` is what invokes `TickScenarioManager`, and Mass phases run
 from their own tick. That interleave is the documented source of the **tick-59
-divergence** (plan 1.5 / fixtures README). **The capture read point is not yet pinned
-to a deterministic point in the Mass pipeline** — the committed fixtures are therefore
-not trustworthy as Tier 2 vectors yet, independent of anything in this document.
+divergence**. The capture read point was never pinned to a deterministic point in the
+Mass pipeline.
+
+Historical note: this mattered under the withdrawn plan, where the committed
+fixtures gated Tier 2. Under `RENDERER-PLAN.md` the fixtures are retired, so the
+nondeterminism no longer blocks anything — it is recorded here only as a fact about
+UE.
 
 ---
 
-## 4. Porting guidance for `Scenarios.cs`
+## 4. What this means now — the port target was withdrawn
 
-1. **Load all 12 properties** — they are the data of record even though 9 are unread.
-2. **Wire only `Aversiveness` + `CognitiveDemand`** into need growth; nothing else
-   reaches agent state.
-3. **Reproduce the multiplier as `float`**, with both clamps and both terms.
-4. **Use `float` for the growth constants and the per-tick arithmetic.** This is the
-   single most likely source of a Tier 2 text mismatch.
-5. **Emit the multiplier once at spawn**, never per tick.
-6. **Keep the three-process order** needs → decision → movement.
-7. **Do not implement** anything for the inert properties. If the port needs them to
-   do something, that is new behaviour and needs its own record — it must not be
-   back-ported into UE to make the oracle match.
+**This document was written against a target that no longer exists.**
+`world-engine-godot/RENDERER-PLAN.md` §1 withdraws the C# port: *"That scope is
+withdrawn."* Godot is a **renderer + spectator**, not a simulation; Fusion's Python
+owns the simulation, and determinism/replay/golden fixtures are out of scope.
+
+So there is **no `Scenarios.cs`**, and the earlier porting guidance is void. What
+survives is the factual record:
+
+1. **The extracted data is still accurate.** `ue-scenarios.v1.json` describes what
+   UE actually holds. It remains useful as scenario *content* if Fusion or the
+   renderer needs the 13 scenarios — but the consumer is now Fusion, not a C# port.
+2. **The field-consumption analysis is still true and still useful.** It is a fact
+   about the UE codebase, independent of who consumes it.
+3. **`BaseSuccessRate` is not "inert" in practice.** `RENDERER-PLAN.md` §9 records
+   that it *"is consumed by Fusion's orchestrator but has zero C++ readers in UE."*
+   The zero-reader finding holds; "inert" was the wrong word, because the field is
+   live across the repo boundary. Treat it as **cross-repo live, UE-unread** —
+   the same category as the other fields, but with a real consumer.
+4. **Do not port anything.** Nothing here is a spec for C# or for Godot. If the
+   renderer needs needs-driven targeting, `RENDERER-PLAN.md` C.3 has it — and see
+   the caveat below.
+
+### Caveat on `RENDERER-PLAN.md` C.3 — it says five needs; UE has four
+
+C.3's affordance table lists five needs and calls `Privacy` *"distinct from `Rest`
+and gates at a stricter threshold."* In UE that is only half true:
+
+- `ENLTAgentNeed` (`NLTFusionCore.h:55-65`) declares `Quiet`, `Rest`, `Social`,
+  `Stimulation`, **`Food`**, **`Movement`**, `Privacy` — seven.
+- `FNLTScenarioNeedsFragment` (`NLTDemoScenarioFragments.h:15-27`) carries state for
+  only **four**: `Quiet`, `Rest`, `Social`, `Stimulation`.
+- `UNLTScenarioNeedsProcessor` grows only those four (§2.2 above).
+- `NLTSmartObjectWorldSubsystem` still has match/score branches for `Privacy`
+  (`:129-130`, `:152-153`) — **unreachable**, because nothing ever sets a `Privacy`
+  need value. `Food` and `Movement` are likewise state-less.
+
+So if C.3 ports the UE model as written, the `Privacy` axis can never fire, and
+C.4's *"watching an Avatar deliberately walk to the quiet corner"* would only
+demonstrate `Quiet`. Whether `Privacy` exists at all now depends on **Fusion's**
+schema, not UE's. Worth resolving before C.3 is implemented.
 
 ---
 

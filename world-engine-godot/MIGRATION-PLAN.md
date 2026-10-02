@@ -4,7 +4,13 @@
 
 **Repo:** `NeuroLift-Technologies/nlt-world-engine`
 **Date:** 2026-10-02
-**Status:** implementation-ready (1 open question, §9)
+**Status:** **SUPERSEDED 2026-10-02 — see [`RENDERER-PLAN.md`](RENDERER-PLAN.md).** The scope below is *withdrawn, not deferred*: Godot is a **renderer + spectator**, not a simulation. Retained for historical record only; do not execute.
+
+> ## ⚠️ This plan is withdrawn
+>
+> Per `RENDERER-PLAN.md` §1, the C# port, `NltWorldEngine.Core`, the Tier 2 conformance
+> gates, the golden fixtures and the UE oracle are **retired**. The items below remain
+> only as a record of what was planned and why.
 **Authority:** Joshua W. Dorsey, Sr. (OTOI §4.4 — framework change, approved via this plan)
 
 > Canonical plan copy lives at `.kilo/plans/1790898229735-ue-to-godot-migration-plan.md`.
