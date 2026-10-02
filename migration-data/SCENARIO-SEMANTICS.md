@@ -22,7 +22,7 @@ Every claim below is anchored to a file:line. Verified 2026-10-02 against
 | `Category` | no | — | not read by simulation code; used only by capture/fixture tooling |
 | `DurationMinutes` | no | — | inert |
 | `Complexity` | no | — | inert |
-| `BaseSuccessRate` | no | — | inert |
+| `BaseSuccessRate` | no | — | unread by UE — **but consumed by Fusion's orchestrator** (`RENDERER-PLAN.md` §9), so live across the repo boundary |
 | `bRequiresSustainedFocus` | no | — | inert |
 | `ContextParams` | no | — | inert — despite carrying per-scenario detail (`email_count`, `word_count`, `anxiety_level`, …) |
 | `LevelReference` | no | — | inert in C++; validated only by `Scripts/verify_bindings.py` |
@@ -37,11 +37,10 @@ repo-wide search (`git grep -w`) across `.cpp/.h/.py/.cs`: `DurationMinutes`,
 simulation. That accounts for six. `DisplayName` and `Description` are UI metadata
 and `Category` is read only by tooling, which makes the remaining three.
 
-> **Do not "fix" this.** Six inert data fields is a real design gap — the data looks
-> scenario-specific but only three values reach the sim — but wiring them up is *new
-> behaviour* and therefore **outside the 1.6 freeze carve-out**. Record it, do not
-> implement it in UE. The Godot port should likewise treat them as data-only, and
-> should not claim to consume them.
+> **Do not "fix" this.** Six UE-unread data fields is a real design gap — the data
+> looks scenario-specific but only three values reach UE's simulation — but wiring
+> them up would be *new behaviour*. Record it, do not implement it in UE. See §4 for
+> why this is now moot: the C# port that was to consume them was withdrawn.
 
 ---
 
@@ -172,41 +171,114 @@ deterministic system list must reproduce the *observable* order, not the threadi
 The capture read happens **after** `StepTick` *within the same manager tick*, but
 `ANLTDemoGameMode::Tick` is what invokes `TickScenarioManager`, and Mass phases run
 from their own tick. That interleave is the documented source of the **tick-59
-divergence** (plan 1.5 / fixtures README). **The capture read point is not yet pinned
-to a deterministic point in the Mass pipeline** — the committed fixtures are therefore
-not trustworthy as Tier 2 vectors yet, independent of anything in this document.
+divergence**. The capture read point was never pinned to a deterministic point in the
+Mass pipeline.
+
+Historical note: this mattered under the withdrawn plan, where the committed
+fixtures gated Tier 2. Under `RENDERER-PLAN.md` the fixtures are retired, so the
+nondeterminism no longer blocks anything — it is recorded here only as a fact about
+UE.
 
 ---
 
-## 4. Porting guidance for `Scenarios.cs`
+## 4. What this means now — the port target was withdrawn
 
-1. **Load all 12 properties** — they are the data of record even though 9 are unread.
-2. **Wire only `Aversiveness` + `CognitiveDemand`** into need growth; nothing else
-   reaches agent state.
-3. **Reproduce the multiplier as `float`**, with both clamps and both terms.
-4. **Use `float` for the growth constants and the per-tick arithmetic.** This is the
-   single most likely source of a Tier 2 text mismatch.
-5. **Emit the multiplier once at spawn**, never per tick.
-6. **Keep the three-process order** needs → decision → movement.
-7. **Do not implement** anything for the inert properties. If the port needs them to
-   do something, that is new behaviour and needs its own record — it must not be
-   back-ported into UE to make the oracle match.
+**This document was written against a target that no longer exists.**
+`world-engine-godot/RENDERER-PLAN.md` §1 withdraws the C# port: *"That scope is
+withdrawn."* Godot is a **renderer + spectator**, not a simulation; Fusion's Python
+owns the simulation, and determinism/replay/golden fixtures are out of scope.
+
+So there is **no `Scenarios.cs`**, and the earlier porting guidance is void. What
+survives is the factual record:
+
+1. **The extracted data is still accurate.** `ue-scenarios.v1.json` describes what
+   UE actually holds. It remains useful as scenario *content* if Fusion or the
+   renderer needs the 13 scenarios — but the consumer is now Fusion, not a C# port.
+2. **The field-consumption analysis is still true and still useful.** It is a fact
+   about the UE codebase, independent of who consumes it.
+3. **`BaseSuccessRate` is not "inert" in practice.** `RENDERER-PLAN.md` §9 records
+   that it *"is consumed by Fusion's orchestrator but has zero C++ readers in UE."*
+   The zero-reader finding holds; "inert" was the wrong word, because the field is
+   live across the repo boundary. Treat it as **cross-repo live, UE-unread** —
+   the same category as the other fields, but with a real consumer.
+4. **Do not port anything.** Nothing here is a spec for C# or for Godot. If the
+   renderer needs needs-driven targeting, `RENDERER-PLAN.md` C.3 has it — and see
+   the caveat below.
+
+### Caveat on `RENDERER-PLAN.md` C.3 — it says five needs; UE has four
+
+C.3's affordance table lists five needs and calls `Privacy` *"distinct from `Rest`
+and gates at a stricter threshold."* In UE that is only half true:
+
+- `ENLTAgentNeed` (`NLTFusionCore.h:55-65`) declares `Quiet`, `Rest`, `Social`,
+  `Stimulation`, **`Food`**, **`Movement`**, `Privacy` — seven.
+- `FNLTScenarioNeedsFragment` (`NLTDemoScenarioFragments.h:15-27`) carries state for
+  only **four**: `Quiet`, `Rest`, `Social`, `Stimulation`.
+- `UNLTScenarioNeedsProcessor` grows only those four (§2.2 above).
+- `NLTSmartObjectWorldSubsystem` still has match/score branches for `Privacy`
+  (`:129-130`, `:152-153`) — **unreachable**, because nothing ever sets a `Privacy`
+  need value. `Food` and `Movement` are likewise state-less.
+
+So if C.3 ports the UE model as written, the `Privacy` axis can never fire, and
+C.4's *"watching an Avatar deliberately walk to the quiet corner"* would only
+demonstrate `Quiet`. Whether `Privacy` exists at all now depends on **Fusion's**
+schema, not UE's. Worth resolving before C.3 is implemented.
 
 ---
 
 ## 5. Provenance notes
 
-- **Descriptions are not from the committed generator.** `create_scenario_assets.py`
-  supplies e.g. `"Study for exam (2 hours focused study)"`, but every asset on disk
-  reads `"Auto-generated scenario: <DisplayName>"`. All 13 differ this way, while
-  **every other field matches the generator exactly**. So the numeric data is faithful
-  and the descriptions came from a different (later) writer.
-  `tools/verify_scenario_extraction.py` asserts the former and reports the latter.
-- **`ScenarioId` values are short codes** (`wp_1`, `pers_1`, …), **not** the
+- **Lineage: these scenarios are ports from `neurolift-ai-fusion`.** Fusion is the
+  original source. `WorldEngine/docs/SCENARIO_PLAN.md:5` states the task verbatim:
+  *"Port the 13 scenarios from `neurolift-ai-fusion-org` to UE 5.8 scenario levels."*
+  `UScenarioDataAsset.h:29` names the origin
+  (`neurolift-ai-fusion-org/src/simulation/environment/scenarios.py`), and
+  `create_scenario_assets.py:1` says it *"mirrors scenarios.py"*.
+
+  ```
+  Fusion scenarios.py          <- AUTHORITATIVE (per RENDERER-PLAN.md section 2)
+        |  create_scenario_assets.py  (manual transcription, see below)
+        v
+  UE .uasset x 13
+        |  extract_scenario_data.py  (this work)
+        v
+  migration-data/ue-scenarios.v1.json   <- THIRD-generation copy
+  ```
+
+  So `ue-scenarios.v1.json` is **not authoritative**. It records what UE holds, and
+  UE is now historical reference. It is useful for reconciling against Fusion, not
+  as a definition of anything.
+
+- **The transcription is manual, so drift is unguarded.** `create_scenario_assets.py`
+  hardcodes 13 literal rows rather than importing them from Fusion. Nothing syncs the
+  two sides, and now that UE is historical nothing ever will. If Fusion's
+  `scenarios.py` has changed since the port, the UE copies are silently stale.
+
+- **The lineage is already broken: two writers, and the committed one did not produce
+  what is on disk.** Every asset reads `"Auto-generated scenario: <DisplayName>"`, but
+  `create_scenario_assets.py` supplies specific text (e.g.
+  `"Study for exam (2 hours focused study)"`). All 13 differ, while every other field
+  matches the committed generator exactly. A second, later writer produced the current
+  assets. **Which of the two was faithful to Fusion cannot be determined from this
+  repo** — `neurolift-ai-fusion` is not available locally.
+  `tools/verify_scenario_extraction.py` asserts the numeric agreement and reports the
+  description divergence; it cannot resolve which writer is correct.
+
+- **Cross-repo naming, and a known gap.** `verify_bindings.py:155` maps UE's
+  camelCase `baseSuccessRate` onto Fusion's snake_case `base_success_rate`.
+  `RENDERER-PLAN.md` section 9 adds that `base_success_rate` *"is consumed by Fusion's
+  orchestrator but has zero C++ readers in UE, and `task_type` exists in neither
+  schema."*
+
+- **`ScenarioId` values are short codes** (`wp_1`, `pers_1`, ...), **not** the
   `"workplace_deadline"` / `"social_networking"` examples in the class doc comment
   (`UScenarioDataAsset.h:38`). The comment is wrong; do not derive the schema from it.
+  These short codes are UE-local identifiers and are unlikely to match Fusion's own
+  scenario ids, so do not treat `scenarioId` as a cross-repo join key without
+  confirming it.
+
 - **`verify_bindings.py` is stale** — it hardcodes `Wor_EmailProcessing`-style names,
-  but the assets are `Wor_wp_1` … `Wor_wp_5`. The extractor discovers assets by
+  but the assets are `Wor_wp_1` ... `Wor_wp_5`. The extractor discovers assets by
   walking `/Game/Scenarios` specifically to avoid inheriting that.
 
 ---

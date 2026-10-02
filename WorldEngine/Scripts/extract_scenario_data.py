@@ -229,6 +229,25 @@ def main():
         "source": "extracted from UScenarioDataAsset .uasset via UE reflection",
         "extractedBy": "WorldEngine/Scripts/extract_scenario_data.py",
         "class": "/Script/WorldEngine.ScenarioDataAsset",
+        # This file is a THIRD-generation copy. Stated inline so the data cannot be
+        # mistaken for a definition: the 13 scenarios are ports from neurolift-ai-fusion
+        # (WorldEngine/docs/SCENARIO_PLAN.md:5), Fusion is authoritative under
+        # world-engine-godot/RENDERER-PLAN.md section 2, and UE is historical reference.
+        "lineage": {
+            "origin": "neurolift-ai-fusion",
+            "originFile": "src/simulation/environment/scenarios.py",
+            "authority": "Fusion is authoritative; this file is NOT",
+            "chain": [
+                "Fusion scenarios.py (authoritative)",
+                "create_scenario_assets.py (manual transcription)",
+                "UE .uasset x 13",
+                "migration-data/ue-scenarios.v1.json (this file)",
+            ],
+            "caveat": (
+                "Ported by hand, not imported; nothing syncs Fusion and these copies. "
+                "Treat as a record of what UE held, not as current scenario definitions."
+            ),
+        },
         "count": len(records),
         "byCategory": by_category,
         "scenarios": records,
