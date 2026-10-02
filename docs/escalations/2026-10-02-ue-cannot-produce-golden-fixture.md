@@ -58,6 +58,22 @@ LogNLTAgentSpawner: Warning: DespawnAllAgents: MassEntity not initialized; clear
 
 Agents are spawned, but the Mass entity system is not initialized, so no processor runs. This is the pre-existing finding already recorded as **SIM-001** in `docs/active-threads.md` — *"the authoritative clock is disconnected and processors unregistered"* — which the plan defers to Phase 6.6.
 
+### Progress 2026-10-02T10:05:00Z - SIM-001 partially fixed, diagnosis corrected
+
+Work continued on `fix/sim-001-mass-ticking` under a recorded exception to the section 10 freeze.
+
+**Fixed and verified - the clock half.** `UNLTSimulationSubsystem` owns the only real tick counter, but `UNLTSimulationStateSubsystem` (the state the emitter, hash, replay and HTTP surface all read) only ever had `SimulationTick` written by `ResetState`/`RestoreFromSnapshot`. Nothing subscribed to `OnSimulationTick`, so the canonical clock stayed 0 for entire runs. `StepTick` now publishes tick and time. Verified: a 600-tick capture reports `Canonical text varies: yes`, where previously every block was byte-identical. Full suite 18/19 (sole failure is the degeneracy detection itself).
+
+**Corrected diagnosis.** The section above states Mass is not initialized and no processor runs. **That is wrong**, and the correction matters. A crash stack captured while bisecting showed `UNLTScenarioMovementProcessor::Execute()` being *called by Mass*, so Mass is initialized, phases are built, and processors do execute. The earlier `DespawnAllAgents: MassEntity not initialized` line is emitted on **teardown**, not at spawn, and is a red herring.
+
+Agents are frozen for a different reason. Ruled out by inspection: `UNLTSmartObjectWorldSubsystem` is a plain `UWorldSubsystem` and always exists, so the decision processor null guard is not firing; `DecideTarget` sets `bHasTarget = true` and has a deterministic wander fallback, so targets are armed.
+
+**Attempted and reverted.** `FNLTStateTreeBehaviorFragment::bEnabled` defaults to `true`, which hands every agent to the StateTree layer while both legacy processors defer to it, and there are **0 `.sttree` assets** in `Content/`. Flipping the default to `false` was tested and **did not move agents**, so it was reverted rather than shipped as an unverified change to the oracle. That default is still a latent trap for whoever continues, but it is not the blocker.
+
+**Still open.** The decision and movement processors execute without producing movement, and the event stream is empty across all 600 ticks. Most likely remaining cause is the processors Mass phase / execution-group wiring, or scenario config defaults (`DecisionIntervalTicks`, `MovementSpeed`, `ArrivalRadius`), rather than the StateTree ownership flag. Not yet isolated. Tier 2 remains unsatisfiable until it is.
+
+---
+
 ### Decision Required
 
 1. **May UE simulation behavior be changed to make Mass tick**, as a recorded, scoped exception to the Phase 1.6 freeze — solely to produce golden fixtures? If yes, what is the acceptable scope?
