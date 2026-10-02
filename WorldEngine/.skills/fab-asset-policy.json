@@ -1,0 +1,15 @@
+{
+  "maxDimensionMeters": 10,
+  "minDimensionMeters": 0.01,
+  "maxMaterials": 20,
+  "maxTriangles": 500000,
+  "minTextureSize": 4,
+  "requireBaseColorTexture": true,
+  "requireNormals": true,
+  "requireUVs": true,
+  "requireTangentsWithNormalMap": true,
+  "requirePowerOfTwoTextures": true,
+  "source": "FAB_Unreal_Engine_Materials",
+  "license": "Community_Structured",
+  "validationTarget": "WorldEngine_UE5.8"
+}

@@ -1,0 +1,13 @@
+{
+  "normalize": true,
+  "unwrapMissingUVs": true,
+  "cleanGeometry": true,
+  "normalizeMaterials": true,
+  "angleLimitDegrees": 66,
+  "islandMargin": 0.002,
+  "timeoutSeconds": 300,
+  "source": "FAB_Download",
+  "targetEngine": "UnrealEngine5.8",
+  "targetPlatform": "Linux",
+  "notes": "Pre-normalization settings for FAB Megascans/Quixel Bridge assets"
+}

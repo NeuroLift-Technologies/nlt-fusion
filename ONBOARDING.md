@@ -4,9 +4,19 @@
 
 ---
 
+## The Vision
+
+**NLT World Engine is an embodied multi-agent simulation where machine learning models inhabit a persistent world, control their characters, interact with environments and other agents, and transition between meaningful life scenarios.**
+
+**An AI habitat — a virtual world where AI agents live, perceive, act, and learn.** The world is rendered with realistic graphics: procedural terrain, water, sky, vegetation, and settlement. AI residents walk through this world with articulated bodies, animated walk cycles, and name labels. Humans watch through a spectator viewer.
+
+> **Core principle: Fusion owns semantic reality; Unreal owns physical reality.**
+
+---
+
 ## What Is This?
 
-**NLT World Engine** is the **deterministic simulation environment** where AI Avatars (modeled on ADHD trait profiles) live, fail, and are trained via reinforcement learning.
+**NLT World Engine** is the **deterministic simulation environment** — the embodied multi-agent world itself — where AI Avatars (modeled on ADHD trait profiles) live, fail, and are trained via reinforcement learning.
 
 It is **NOT** the intelligence. The environment is here; the ADHD trait modeling, Aide coaching, training loop, and fusion logic live in [`neurolift-ai-fusion`](https://github.com/NeuroLift-Technologies/neurolift-ai-fusion).
 
@@ -44,12 +54,12 @@ Headless: UnrealEditor-Cmd -nullrhi -game -unattended -MAP=/Game/Scenarios/Level
 
 ---
 
-### 🐍 `world-engine/` — Python ECS Engine (Reference / Data Pipeline)
+### 🐍 `_archive/world-engine/` — Python ECS Engine (Reference / Data Pipeline)
 
 ```
 What:     Deterministic tick-loop engine. Pure Python stdlib.
 Why:      Original simulation approach; retained for data pipeline and reference.
-Run:      cd world-engine && python3 demo.py
+Run:      cd _archive/world-engine && python3 demo.py
 Tests:    python3 -m unittest discover tests
 ```
 
@@ -69,15 +79,15 @@ Tests:    python3 -m unittest discover tests
 
 ---
 
-### 🌐 `world-engine-v2/` — Babylon.js Viewer (Frontend Shell)
+### 🌐 `_archive/world-engine-v2/` — Babylon.js Viewer (Frontend Shell)
 
 ```
 What:     TypeScript + Vite + Babylon.js. Visualizes a pair's world.
 Status:   Not yet wired to Python/UE engine.
-Run:      cd world-engine-v2 && npm install && npm run dev
+Run:      cd _archive/world-engine-v2 && npm install && npm run dev
 ```
 
-**`studio/`** — Product-facing Claude Design shell (also un-wired visualization).
+**`_archive/studio/`** — Product-facing Claude Design shell (also un-wired visualization).
 
 ---
 
@@ -113,13 +123,13 @@ Run:      cd world-engine-v2 && npm install && npm run dev
 
 | I want to work on... | Go to... |
 |----------------------|----------|
-| **Scenario design** (what happens in a workplace/academic scenario) | `WorldEngine/Content/Scenarios/` (DataAssets) or `world-engine/src/simulation/environment/scenarios.py` |
+| **Scenario design** (what happens in a workplace/academic scenario) | `WorldEngine/Content/Scenarios/` (DataAssets) or `_archive/world-engine/src/simulation/environment/scenarios.py` |
 | **Environment art / props / lighting / sound** | `WorldEngine/Content/` (Materials, Audio, Kits) or `WorldEngine/Scripts/` |
-| **Simulation systems** (tick loop, needs, RNG, clock) | `world-engine/src/` (Python) or `WorldEngine/Source/WorldEngine/Public/` (C++) |
+| **Simulation systems** (tick loop, needs, RNG, clock) | `_archive/world-engine/src/` (Python) or `WorldEngine/Source/WorldEngine/Public/` (C++) |
 | **AI behavior / movement / navigation** | `WorldEngine/Source/WorldEngine/Public/Agents/` + `AAvatarAIController` |
 | **Training / RL / PPO** | `neurolift-ai-fusion` (not this repo) — this repo provides the `agent_interface` seam |
-| **Contracts / API / replay format** | `world-engine/contracts/v1/` |
-| **Frontend viewer** | `world-engine-v2/` (Babylon.js) |
+| **Contracts / API / replay format** | `_archive/world-engine/contracts/v1/` |
+| **Frontend viewer** | `_archive/world-engine-v2/` (Babylon.js) |
 | **Documentation** | `docs/`, `README.md`, `ARCHITECTURE.md` |
 | **Governance / onboarding / agent protocol** | `NLT-DEV-OTOI.md`, `AGENTS.md`, `agents/`, `SOPs/` |
 
@@ -129,7 +139,7 @@ Run:      cd world-engine-v2 && npm install && npm run dev
 
 ```
 README.md                              ← Full project docs (read after this)
-ARCHITECTURE.md                        ← MMO topology (DOs, Workers, WebSockets)
+ARCHITECTURE.md                        ← UE 5.8 architecture + subsystems
 CLAUDE.md                              ← Claude Code repo instructions
 NLT-DEV-OTOI.md                        ← Canonical governance contract (read FIRST)
 AGENTS.md                              ← Internal coordination gateway
@@ -142,16 +152,12 @@ WorldEngine/                            ← UE 5.8 authoritative sim (C++)
 ├── Config/                           ← DefaultEngine.ini, MCP settings
 └── Scripts/                          ← Python (scenario creation, QA, lighting)
 
-world-engine/                          ← Python ECS engine (reference / data pipeline)
-├── demo.py                           ← "Day in the life" autonomous agent run
-├── src/
-│   ├── core/                         ← events.py, state_machine.py
-│   └── simulation/environment/       ← ecs.py, systems.py, world_engine.py, scenarios.py, agent_interface.py
-├── contracts/v1/                     ← Provider-neutral transport + replay schemas
-└── tests/                            ← test_contracts.py, test_environment.py
-
-world-engine-v2/                       ← Babylon.js viewer (TypeScript, Vite)
-studio/                                ← Product-facing Claude Design shell
+_archive/                              ← Prototype directories (reference only)
+├── world-engine/                     ← Python ECS engine + React prototype
+├── world-engine-v2/                  ← Babylon.js viewer (superseded)
+├── world-engine-3d/                  ← Early Three.js experiment
+├── openworld-engine/                 ← Open-world exploration variant
+└── studio/                           ← Claude Design shell (superseded)
 ```
 
 ---
@@ -201,7 +207,7 @@ npm run dev                                # localhost:5173
 2. `README.md` — full project documentation, quick start, CI, troubleshooting
 3. `ARCHITECTURE.md` — MMO topology, Durable Objects, WebSocket fan-out, pair lifecycle
 4. `NLT-DEV-OTOI.md` — governance, guardrails, escalation protocol (non-negotiable)
-5. `world-engine/contracts/v1/` — the API contract between environment and training
+5. `_archive/world-engine/contracts/v1/` — the API contract between environment and training
 
 ---
 

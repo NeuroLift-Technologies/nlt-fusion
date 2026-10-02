@@ -1,304 +1,163 @@
-# NeuroLift World Engine — MMO for AI Training
+# NeuroLift World Engine — UE 5.8 Authoritative Simulation
+
+## The Vision
+
+**NLT World Engine is an embodied multi-agent simulation where machine learning models inhabit a persistent world, control their characters, interact with environments and other agents, and transition between meaningful life scenarios.**
+
+**An AI habitat — a virtual world where AI agents live, perceive, act, and learn.** The world is rendered with realistic graphics: procedural terrain, water, sky, vegetation, and settlement. AI residents walk through this world with articulated bodies, animated walk cycles, and name labels. Humans watch through a spectator viewer.
+
+> **Core principle: Fusion owns semantic reality; Unreal owns physical reality.**
+
+UE 5.8 is the **driving engine** for the Avatar-Aide-Advocate system.
+This document supersedes the earlier Cloudflare/Vercel MMO architecture.
+
+---
 
 ## Core Concept
 
-> Each Avatar+Aide pair is a **persistent world** with its own **login URL**.
-> Observers log in to watch **one specific pair's journey** — from onboarding to fusion.
-> It's an MMO where the players are AI, and the spectators are humans.
+> Each Avatar+Aide pair is an **isolated UE simulation instance** — a living habitat.
+> Observers connect to watch **one specific pair's journey** — from onboarding to fusion.
+> UE owns the world, the tick loop, the state, and the physics.
 
 ---
 
 ## Architecture Overview
 
+**Primary runtime:** UE 5.8 Editor or a rendered standalone game running on the developer's machine. The human watches the same Unreal world in which the agents simulate and train. A headless `WorldEngineServer` is optional later infrastructure for running the same physical world without a rendered viewport; it is not the primary training architecture.
+
+The optional `WorldEngineServer` target remains available for a future headless deployment path, but server compilation and deployment are not prerequisites for the Editor-based training loop.
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        Cloudflare Edge                              │
+│                     NLT World Engine (UE 5.8)                       │
 │                                                                     │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │              Workers API Gateway (world-engine.workers.dev)  │   │
-│  │  POST /api/pairs          → Create new pair, returns URL     │   │
-│  │  GET  /api/pairs/:id      → Pair metadata                   │   │
-│  │  GET  /api/pairs/:id/ws   → WebSocket upgrade               │   │
-│  │  GET  /                   → Pair directory (pairlist)       │   │
-│  └─────────────────────────────────────────────────────────────┘   │
+│  ┌───────────────────────────────────────────────────────────────┐ │
+│  │                  UE 5.8 Editor / rendered game                   │ │
+│  │                                                               │ │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌──────────────────────┐  │ │
+│  │  │ Simulation  │  │   World     │  │   Learning Agents    │  │ │
+│  │  │   Clock     │  │   State     │  │   (PPO Training)     │  │ │
+│  │  │  (1Hz tick) │  │  (Mass ECS) │  │                      │  │ │
+│  │  └─────────────┘  └─────────────┘  └──────────────────────┘  │ │
+│  │                                                               │ │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌──────────────────────┐  │ │
+│  │  │  Scenario   │  │  Governance │  │   WebSocket / HTTP   │  │ │
+│  │  │  Manager    │  │  Boundary   │  │   Control API        │  │ │
+│  │  │(DataAssets) │  │(ASFDK-C++)  │  │   (Observer Feed)    │  │ │
+│  │  └─────────────┘  └─────────────┘  └──────────────────────┘  │ │
+│  └───────────────────────────────────────────────────────────────┘ │
 │                                                                     │
-│  ┌─────────────────────┐ ┌─────────────────────┐ ┌──────────────┐ │
-│  │  DO: pair-stayalert │ │  DO: pair-focusflow │ │  DO: pair-…  │ │
-│  │  ┌───────────────┐  │ │  ┌───────────────┐  │ │              │ │
-│  │  │ Avatar: SA-01 │  │ │  │ Avatar: FF-01 │  │ │              │ │
-│  │  │ Aide:  Aide-A │  │ │  │ Aide:  Aide-B │  │ │              │ │
-│  │  │ State: ticking │  │ │  │ State: ticking │  │ │              │ │
-│  │  └───────────────┘  │ │  └───────────────┘  │ │              │ │
-│  │  ┌───────────────┐  │ │  ┌───────────────┐  │ │              │ │
-│  │  │ WS Observers  │  │ │  │ WS Observers  │  │ │              │ │
-│  │  │ - user_123    │  │ │  │ - user_456    │  │ │              │ │
-│  │  │ - user_789    │  │ │  │ - user_abc    │  │ │              │ │
-│  │  └───────────────┘  │ │  └───────────────┘  │ │              │ │
-│  │  URL:               │ │  URL:               │ │              │ │
-│  │  pair-sa01.d.workers.dev                │ │              │ │
-│  └─────────────────────┘ └─────────────────────┘ └──────────────┘ │
-└─────────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────────┐
-│                         Vercel Edge                                 │
-│                                                                     │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │              Next.js Frontend (world-engine.vercel.app)      │   │
-│  │                                                              │   │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │   │
-│  │  │ Pairlist    │  │ Pair Page   │  │ Babylon.js Viewer   │ │   │
-│  │  │ - Browse    │  │ - Stats     │  │ - Connects to DO    │ │   │
-│  │  │ - Search    │  │ - Timeline  │  │ - 3D scene          │ │   │
-│  │  │ - Filter    │  │ - Skills    │  │ - Camera controls   │ │   │
-│  │  │             │  │ - Events    │  │ - Click to inspect  │ │   │
-│  │  └─────────────┘  └─────────────┘  └─────────────────────┘ │   │
-│  └─────────────────────────────────────────────────────────────┘   │
+│  ┌───────────────────────────────────────────────────────────────┐ │
+│  │              WebSocket / HTTP Observer Gateway                 │ │
+│  │  • Real-time state broadcast                                  │ │
+│  │  • Pair directory + metadata                                  │ │
+│  │  • Authentication (optional)                                  │ │
+│  └───────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## The Login Flow
+## UE 5.8 as the Driving Engine
+
+### What Replaced What
+
+| Old Concept | UE 5.8 Equivalent |
+|-------------|-------------------|
+| Cloudflare Durable Object (per pair) | UE Editor or rendered standalone game instance (Dedicated Server optional later) |
+| 1Hz tick loop in JS | UE deterministic tick (UNLTSimulationClockSubsystem) |
+| WebSocket fan-out | UE WebSocketNetworking plugin + UNLTWebServerSubsystem |
+| Babylon.js viewer (frontend) | UE Web/2D canvas viewer (Content/Web/) or external web viewer |
+| Cloudflare Workers API | UE HTTP control server |
+| Vercel frontend | UE-integrated web viewer or external deployment |
+
+---
+
+## The Pair Model
+
+Each **pair** (Avatar + Aide) runs as an isolated UE simulation:
 
 ```
-1. Admin creates pair via POST /api/pairs
-   → Response: { id: "pair-sa01", url: "https://pair-sa01.world-engine.workers.dev" }
-
-2. Observer visits URL
-   → Cloudflare Worker routes to correct Durable Object
-   → DO serves the Babylon.js viewer (or redirects to Vercel with pair ID)
-   → Viewer connects to DO via WebSocket
-   → Observer watches pair train in real-time
-
-3. Observer can:
-   - Watch Avatar move between rooms
-   - See needs change in real-time
-   - Watch coaching interventions
-   - See fusion ceremony when ready
-   - View pair stats, timeline, skills
+┌─────────────────────────────────────────────────────────────────┐
+│                     PAIR INSTANCE (UE)                          │
+│                                                                 │
+│   ┌──────────────┐    coaching    ┌──────────────┐             │
+│   │   Avatar     │ ◄──────────── │    Aide      │             │
+│   │ (ADHD trait) │ ─────────────► │  (expertise) │             │
+│   └──────┬───────┘   feedback    └──────────────┘             │
+│          │                                                      │
+│          │ lives in                                             │
+│          ▼                                                      │
+│   ┌──────────────────────────────────────────────────────────┐ │
+│   │              SCENARIO (e.g. Workplace_1)                 │ │
+│   │  Rooms, objects, NPCs, stress, consequences              │ │
+│   │  Avatar needs: Focus, Stress, Energy, Hunger, Burnout    │ │
+│   └──────────────────────────────────────────────────────────┘ │
+│                                                                 │
+│   Lifecycle: Onboarding → Training → Setback → Breakthrough    │
+│              → Fusion Ready → Fusion Ceremony → Advocate       │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Durable Object Per Pair
+## UE Subsystems (C++)
 
-Each pair is a **Durable Object** that:
-- Runs its own **tick loop** (1Hz default, configurable)
-- Maintains **full state** (sims, needs, skills, bond, fusion)
-- Holds **WebSocket connections** from all observers
-- **Broadcasts** state changes to all connected observers
-- **Persists** state across restarts (no data loss)
-
-```typescript
-// Each pair = one Durable Object instance
-export class PairRoom {
-  private state: PairState;
-  private observers: Set<WebSocket>;
-  private tickInterval: number | null;
-
-  constructor(state: DurableObjectState, env: Env) {
-    // Restore persisted state
-    this.state = state.storage.get("pairState") || createInitialState();
-    this.observers = new Set();
-  }
-
-  // Called every 1 second via alarm
-  async tick() {
-    // Advance simulation
-    this.state = simulateTick(this.state);
-
-    // Broadcast to all observers
-    const message = JSON.stringify({
-      type: "tick",
-      tick: this.state.tickCount,
-      sims: this.state.sims,
-      events: this.state.recentEvents,
-    });
-    for (const ws of this.observers) {
-      ws.send(message);
-    }
-
-    // Schedule next tick
-    state.storage.setAlarm(Date.now() + 1000);
-  }
-
-  // Observer connects
-  async fetch(request: Request) {
-    if (request.headers.get("Upgrade") === "websocket") {
-      const pair = new WebSocketPair();
-      const client = pair[1];
-      this.observers.add(client);
-
-      client.addEventListener("close", () => {
-        this.observers.delete(client);
-      });
-
-      // Send current state immediately
-      client.send(JSON.stringify({
-        type: "init",
-        state: this.state,
-      }));
-
-      return new Response(null, { status: 101, webSocket: pair[0] });
-    }
-
-    // Serve viewer HTML (Babylon.js bundle)
-    return new Response(getViewerHTML(), {
-      headers: { "Content-Type": "text/html" },
-    });
-  }
-}
-```
-
----
-
-## Pair Lifecycle
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        Pair Lifecycle                                │
-│                                                                     │
-│  [CREATED] → [ONBOARDING] → [TRAINING] → [SETBACK] → [BREAKTHROUGH]│
-│      │            │             │           │            │         │
-│      │            │             │           │            │         │
-│   Avatar      Avatar learns   Scenarios   Failure    Key insight   │
-│   spawned     the world       + coaching  → burnout  → skill gain  │
-│      │            │             │           │            │         │
-│      ▼            ▼             ▼           ▼            ▼         │
-│  [FUSION READY] → [FUSION CEREMONY] → [ADVOCATE MODE]             │
-│      │                  │                    │                      │
-│      │                  │                    │                      │
-│   Bond+Skills        Merge into           Helps other              │
-│   reach 80%          Advocate             pairs as mentor          │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-Each stage is observable via the WebSocket connection:
-- **Onboarding**: Avatar explores, Aide introduces itself
-- **Training**: Scenarios play out, needs fluctuate, coaching fires
-- **Setback**: Stress spikes, burnout triggers, Avatar stalls
-- **Breakthrough**: Rapid skill growth, bond strengthens
-- **Fusion Ready**: Both meters near 80%
-- **Fusion Ceremony**: Particle explosion, glowing aura, new Advocate
-- **Advocate Mode**: Helps other pairs, demonstrates empathy
-
----
-
-## Observer Experience
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│  pair-sa01.world-engine.workers.dev                    [Login]     │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │                                                              │  │
-│  │              [Babylon.js 3D Scene]                           │  │
-│  │                                                              │  │
-│  │         ┌──────────┐                                         │  │
-│  │         │  Office  │  ← Avatar typing at desk               │  │
-│  │         │  ┌────┐  │                                         │  │
-│  │         │  │SA-1│  │  ← Click to inspect                     │  │
-│  │         │  └────┘  │                                         │  │
-│  │         └──────────┘                                         │  │
-│  │              │                                               │  │
-│  │         ┌────▼─────┐                                         │  │
-│  │         │  Hallway │                                         │  │
-│  │         └──────────┘                                         │  │
-│  │              │                                               │  │
-│  │         ┌────▼─────┐                                         │  │
-│  │         │ Meeting  │  ← Aide gesturing (coaching)           │  │
-│  │         │  ┌────┐  │                                         │  │
-│  │         │  │A-1 │  │                                         │  │
-│  │         │  └────┘  │                                         │  │
-│  │         └──────────┘                                         │  │
-│  │                                                              │  │
-│  └──────────────────────────────────────────────────────────────┘  │
-│                                                                     │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐│
-│  │ Avatar: SA-01│  │ Aide: Aide-A │  │ Bond: 67% │ Fusion: 54%  ││
-│  │ State: Working│  │ Status: Active│  │                          ││
-│  ├──────────────┤  ├──────────────┤  │ Focus:    ████████░░ 80%  ││
-│  │ Focus:  80%  │  │ Strategy:    │  │ Stress:   ███░░░░░░░ 30%  ││
-│  │ Stress: 30%  │  │ Pomodoro     │  │ CogLoad:  █████░░░░░ 50%  ││
-│  │ Energy: 60%  │  │ Effect: 0.72 │  │ Burnout:  ██░░░░░░░░ 20%  ││
-│  │ Hunger: 40%  │  └──────────────┘  │ Independ: ██████░░░░ 60%  ││
-│  └──────────────┘                     └──────────────────────────┘│
-│                                                                     │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │ [Event Feed]                                                  │  │
-│  │ [t+120] 💬 Aide applied "Pomodoro" for SA-01                 │  │
-│  │ [t+115] ✦ SA-01 started task "Email Processing"              │  │
-│  │ [t+110] 😰 SA-01 struggling — stress rising                  │  │
-│  │ [t+105] 🚶 SA-01 walked from Office → Meeting Room           │  │
-│  └──────────────────────────────────────────────────────────────┘  │
-│                                                                     │
-│  [Follow Cam] [Free Cam] [Cinematic] [Pause] [1x] [2x] [4x]     │
-└─────────────────────────────────────────────────────────────────────┘
-```
+| Subsystem | Role |
+|-----------|------|
+| `UNLTSimulationSubsystem` | Main tick, mode control (Realtime/Paused/FastForward/Headless/Replay) |
+| `UNLTSimulationClockSubsystem` | Authoritative simulation clock |
+| `UNLTEventBus` | 256-entry ring buffer, multicast delegates |
+| `UNLTDeterministicSeedSubsystem` | Seeded RNG for reproducibility |
+| `UNLTPersistenceSubsystem` | Snapshot save/load |
+| `UNLTSmartObjectWorldSubsystem` | Smart object availability + world locations |
+| `UNLTRoomStateSubsystem` | Room occupancy + cell state |
+| `UNLTAgentSpawnerSubsystem` | Mass Entity agent spawning |
+| `UNLTPopulationScaler` | LOD 0-3 population management |
+| `UNLTAideInteractor` | Coaching interventions |
+| `UNLTAvatarInteractor` | Avatar-world interaction |
+| `UMLInferenceBridgeSubsystem` | In-engine LLM bridge (spawns Fusion agent, drives ExecuteLLMCommand) |
+| `UNLTTrainingManager` | RL training via Learning Agents plugin |
+| `UNLTWebServerSubsystem` | WebSocket + HTTP control API (observer feed) |
+| `UNLTAtmosphereSubsystem` | Weather, lighting, time of day |
+| `ANLTScenarioManagerSubsystem` | Scenario runtime + DataAsset management |
 
 ---
 
 ## Scaling to 19+ Pairs
 
-| Resource | Count | Cost/Month |
-|----------|-------|------------|
-| Durable Objects (pairs) | 19 active | ~$18 |
-| Workers requests | 50M | $0.15 |
-| WebSocket messages | 500M | ~$15 |
-| R2 (assets) | 5GB | $0.08 |
-| D1 (metadata) | 10K pairs | $0.50 |
-| **Total** | | **~$34/month** |
+| Resource | Old (Cloudflare) | UE 5.8 Equivalent |
+|----------|------------------|-------------------|
+| Pair instance | Durable Object | UE Editor/rendered game instance; Dedicated Server optional later |
+| Tick loop | JS alarm (1Hz) | UE Game Thread (1Hz deterministic) |
+| WebSocket | Workers API | UE WebSocketNetworking |
+| State | DO storage | UE Mass ECS + save/load snapshots |
+| Frontend | Vercel (Next.js) | UE web viewer or external static hosting |
 
 ---
 
-## Key Design Decisions
+## Web Viewer
 
-### 1. **One DO per pair** (not shared world)
-- Each pair is independent
-- No cross-pair interference
-- Observer connects to exactly one pair
-- Pair can tick at its own rate
+The Babylon.js viewer (`world-engine-v2/`) connects to the UE simulation via the WebSocket control API:
 
-### 2. **WebSocket for real-time**
-- Observers get instant updates
-- No polling
-- DO fans out to all connected observers
-
-### 3. **Babylon.js served from DO**
-- Each pair URL serves its own viewer
-- No CDN caching issues
-- Observer is "inside" the pair's world
-
-### 4. **Vercel for pairlist + dashboard**
-- Browse all pairs
-- Search/filter by trait, status, level
-- Global stats, leaderboards
-- Pair creation interface
-
-### 5. **No auth required for observation**
-- URL is the key (like a Twitch stream)
-- Anyone with the link can watch
-- Optional: add auth later for private pairs
+```
+world-engine-v2/ (Babylon.js + Vite + TypeScript)
+    │
+    │ WebSocket connection
+    ▼
+UE UNLTWebServerSubsystem (broadcasts state)
+```
 
 ---
 
-## URL Structure
+## Design Principles
 
-| URL | Purpose |
-|-----|---------|
-| `world-engine.vercel.app` | Pairlist (browse all pairs) |
-| `world-engine.vercel.app/pair/:id` | Pair dashboard (stats, timeline) |
-| `pair-XXX.world-engine.workers.dev` | Pair world (Babylon.js viewer + WebSocket) |
-| `api.world-engine.workers.dev/api/pairs` | REST API (create, list, manage) |
+1. **UE is authoritative** — All simulation state lives in UE. No external database for runtime state.
+2. **One instance per pair** — Isolation prevents cross-pair interference.
+3. **Deterministic replay** — Seeded RNG + fixed tick rate enables reproducibility.
+4. **Headless-first** — Dedicated server runs without rendering; observers connect via WebSocket.
+5. **Training-ready** — Learning Agents plugin integrates PPO training loop natively.
 
 ---
 
-## Implementation Plan
-
-1. **Phase 1**: Cloudflare Workers + Durable Objects for pair instances
-2. **Phase 2**: Babylon.js viewer served from DO with WebSocket connection
-3. **Phase 3**: Vercel Next.js frontend for pairlist + dashboard
-4. **Phase 4**: Simulation engine (tick loop, needs, coaching, fusion)
-5. **Phase 5**: Observer features (camera modes, event feed, stats)
-6. **Phase 6**: Polish (particles, lighting, post-processing)
+*Supersedes: Cloudflare Workers + Vercel + Durable Objects architecture (2026-03)*

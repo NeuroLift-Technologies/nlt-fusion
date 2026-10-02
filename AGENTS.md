@@ -1,38 +1,31 @@
-# AGENTS.md — NeuroLift Technologies Organization-Wide Internal Gateway
+# AGENTS.md — nlt-world-engine
 
-> **Internal use only.** This is the private governance gateway for all coding agents operating within NeuroLift Technologies repositories. For public-facing principles, see the public [`NeuroLift-Technologies/.github`](https://github.com/NeuroLift-Technologies/.github) repository.
+> **Internal use only.** This is the private governance gateway for all coding agents operating within the **NLT World Engine** repository. For public-facing principles, see the public [`NeuroLift-Technologies/.github`](https://github.com/NeuroLift-Technologies/.github) repository.
 
 ---
 
 ## You Are Here
 
-You are a coding agent operating within the **NeuroLift Technologies** organization. This document is your internal coordination gateway.
+You are a coding agent operating within the **NLT World Engine** — the UE 5.8 authoritative simulation environment where AI Avatars (with ADHD traits) and AI Aides live, perceive, act, and learn.
 
 **Mandatory reading order:**
 1. `NLT-DEV-OTOI.md` — Full org-level coding agent contract (this repo, root level)
-2. Repo-level `CLAUDE.md` — Project-specific context (in the repo you are working in)
-3. `docs/active-threads.md` — Current work state (in the repo you are working in)
-
-> **Can't access `.github-private`?** If links to this repository return 404, key governance
-> docs are mirrored publicly:
-> - NLT-DEV-OTOI.md → https://github.com/NeuroLift-Technologies/.github/blob/main/governance/NLT-DEV-OTOI.md
-> - AGENTS.md → https://github.com/NeuroLift-Technologies/.github/blob/main/governance/AGENTS.md
->
-> Ask your org admin to grant the GitHub App access to `.github-private`. See
-> `docs/troubleshooting/github-app-access.md` in this repo for instructions.
+2. `CLAUDE.md` — Project-specific context (this repo)
+3. `docs/active-threads.md` — Current work state (this repo, if present)
+4. `README.md` — Full project documentation
+5. `ARCHITECTURE.md` — UE 5.8 architecture and subsystem reference
 
 **Final authority:** Joshua W. Dorsey, Sr. Escalate. Do not guess.
 
 ---
 
-## Solidarity Framework Principles (Public)
+## The Vision
 
-The ethical foundation of all NLT work is publicly documented in the **Solidarity Framework** and **HAIEF** (Human-AI Ethical Integration Framework):
+**NLT World Engine is an embodied multi-agent simulation where machine learning models inhabit a persistent world, control their characters, interact with environments and other agents, and transition between meaningful life scenarios.**
 
-- Public governance principles: [`NeuroLift-Technologies/.github`](https://github.com/NeuroLift-Technologies/.github)
-- HAIEF reference: https://elevaitionfoundation.org
+**An AI habitat — a virtual world where AI agents live, perceive, act, and learn.** The world is rendered with realistic graphics: procedural terrain, water, sky, vegetation, and settlement. AI residents walk through this world with articulated bodies, animated walk cycles, and name labels. Humans watch through a spectator viewer.
 
-The principles are public. The operational machinery is in this private repository.
+> **Core principle: Fusion owns semantic reality; Unreal owns physical reality.**
 
 ---
 
@@ -42,10 +35,11 @@ The principles are public. The operational machinery is in this private reposito
 
 ```
 1. Read NLT-DEV-OTOI.md (this repo)
-2. Read repo-level CLAUDE.md (working repo)
-3. Read docs/active-threads.md (working repo)
-4. Self-register per OTOI Section 3
-5. Confirm task scope before beginning
+2. Read CLAUDE.md (this repo)
+3. Read docs/active-threads.md (this repo, if present)
+4. Read README.md and ARCHITECTURE.md
+5. Self-register per OTOI Section 3
+6. Confirm task scope before beginning
 ```
 
 ### Commit Format
@@ -86,43 +80,55 @@ These are **non-negotiable**. No exceptions without explicit Joshua approval:
 
 ---
 
-## Internal File Map
-
-All files below live in this repository (`NeuroLift-Technologies/.github-private`):
+## Repo File Map
 
 ```
-NLT-DEV-OTOI.md                        ← Canonical org-level agent contract
-AGENTS.md                               ← This file
-nltotoi.json                            ← Discovery manifest
-
-.nltotoi/
-├── README.md                           ← Namespace overview
-├── index/governance-files.md          ← File registry
-├── contracts/README.md                ← Contract namespace
-├── proposals/validation-roadmap.md    ← Validation roadmap
-└── scripts/validate-governance.sh     ← Governance validation
-
-templates/
-├── agent-registration.json            ← OTOI Section 3 registration format
-├── handoff-record.json                ← OTOI Section 5 handoff format
-├── escalation.md                      ← OTOI Section 4.3 escalation format
-└── intent-log.md                      ← Intent logging template
-
-ISSUE_TEMPLATE/
-├── agent-escalation.md                ← GitHub escalation issue form
-└── governance-proposal.md             ← OTOI amendment proposal form
-
-PULL_REQUEST_TEMPLATE/
-└── agent-contribution.md              ← Agent PR checklist
-
-workflows/
-└── validate-governance.yml            ← CI: runs validate-governance.sh
-
-SOPs/
-├── new-agent-onboarding.md            ← How to onboard a new coding agent
-├── repo-governance-setup.md           ← How to add governance to a new NLT repo
-└── incident-response.md               ← What to do when an agent goes off-rails
+nlt-world-engine/
+├── README.md                              ← Full project docs (start here)
+├── ARCHITECTURE.md                        ← UE 5.8 architecture + subsystems
+├── ONBOARDING.md                          ← 3-minute onboarding
+├── DEPLOYMENT.md                          ← UE 5.8 build + deployment
+├── NLT-DEV-OTOI.md                        ← Canonical org-level agent contract
+├── AGENTS.md                              ← This file
+├── CLAUDE.md                              ← Claude Code repo instructions
+├── links.md                               ← Agent reference links
+├── mcp-config.yaml                        ← MCP server configuration
+├── file-structure.md                      ← Detailed file tree
+├── REVIEW.md                              ← Agent review format
+├── pr_body.md                             ← PR body template
+├── nltotoi.json                           ← Discovery manifest
+│
+├── WorldEngine/                           ← UE 5.8 authoritative simulation (C++)
+│   ├── Source/WorldEngine/               ← C++ module (16 subsystems)
+│   ├── Content/                          ← UE assets (maps, scenarios, materials)
+│   ├── Scripts/                          ← Python automation (QA, VFX, scenarios)
+│   ├── Config/                           ← DefaultEngine/Game/Input.ini
+│   ├── Skills/                           ← Skill definitions
+│   └── docs/architecture/                ← Architecture documentation
+│
+├── world-engine-v2/                       ← Babylon.js web viewer (TypeScript, Vite)
+├── world-engine/                          ← Python ECS engine (reference, not authoritative)
+├── openworld-engine/                      ← Open-world exploration variant
+├── agents/                                ← Agent profiles and configurations
+├── SOPs/                                  ← Standard operating procedures
+├── templates/                             ← Registration, handoff, escalation templates
+├── .nltotoi/                              ← Governance validation namespace
+└── .github/workflows/                     ← CI (governance + v2 build)
 ```
+
+---
+
+## Codebase Overview
+
+This repo has **three runnable components**:
+
+| Component | Location | How to run |
+|---|---|---|
+| **UE 5.8 authoritative simulation** | `WorldEngine/` | `make WorldEngineEditor` or `make WorldEngineServer` (headless) |
+| **Babylon.js web viewer** | `world-engine-v2/` | `cd world-engine-v2 && npm install && npm run dev` |
+| **Python ECS engine (reference)** | `world-engine/` | `cd world-engine && python3 demo.py` |
+
+The UE 5.8 simulation is the **driving engine** — all authoritative state lives there. The Babylon.js viewer connects via WebSocket. The Python engine is a reference implementation for data pipeline use.
 
 ---
 
@@ -145,35 +151,6 @@ Before ending any significant session:
 2. Write a handoff record to `docs/agent-log/handoffs/` using `templates/handoff-record.json`
 3. Document any open escalations in `docs/escalations/`
 4. Summarize decisions made and decisions pending
-
----
-
-## Cursor Cloud specific instructions
-
-### Codebase overview
-
-This repo has two runnable components — the React frontend prototype and the governance validation script — plus a Python simulation engine that is **not yet runnable end-to-end**:
-
-| Component | Location | How to run |
-|---|---|---|
-| **React frontend prototype** | `world-engine/` (index.html + JSX) | `cd world-engine && python3 -m http.server 8765` then open `http://127.0.0.1:8765/` |
-| **Python simulation engine** | `world-engine/src/` | Not yet runnable end-to-end — core modules (`src/avatars/base_avatar.py`, `src/aides/base_aide.py`, `src/fusion/readiness_assessor.py`, `src/database/supabase_client.py`) are missing from this repo |
-| **Governance validation** | `.nltotoi/scripts/validate-governance.sh` | `bash .nltotoi/scripts/validate-governance.sh` |
-
-### Lint and test
-
-- **Flake8 (critical):** `flake8 world-engine/src/ --count --select=E9,F63,F7,F82 --show-source --statistics`
-- **Flake8 (style):** `flake8 world-engine/src/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics`
-- **Syntax check:** `python3 -m compileall world-engine/src/`
-- **pytest:** `pytest` — no tests directory exists yet; pytest will collect zero tests
-- The only CI workflow is `.github/workflows/validate-governance.yml` (`on: [push, pull_request]`), which runs `bash .nltotoi/scripts/validate-governance.sh` on every push and pull request — there is no branch filter, so it runs on feature branches too. (There are no `python-app.yml` or `shared-ci.yml` workflows in this repo.)
-
-### Gotchas
-
-- The frontend prototype has **no build step** and **no package.json**. It loads React 18 + Babel from CDN. Any static file server works.
-- Python source under `world-engine/src/` uses explicit relative imports (`from ..core.events import ...`), so the modules must be imported with the correct package context (e.g., as a `python -m` module from a configured root), not executed as standalone scripts. The absence of `__init__.py` files is not itself the blocker — modern Python imports these directories as namespace packages.
-- `session_orchestrator.py` and `training_session.py` import modules that don't exist in this repo (`base_avatar`, `base_aide`, `readiness_assessor`, `supabase_client`). They compile fine but cannot be executed.
-- `$HOME/.local/bin` must be on `PATH` for `flake8` and `pytest` to be found (the update script installs them via `pip install --user`).
 
 ---
 

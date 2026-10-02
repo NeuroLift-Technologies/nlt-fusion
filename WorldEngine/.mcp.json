@@ -1,0 +1,43 @@
+{
+  "mcpServers": {
+    "unreal-mcp": {
+      "type": "http",
+      "url": "http://127.0.0.1:8001/mcp"
+    },
+    "asfdk-governance": {
+      "type": "local",
+      "command": [
+        "C:\\Users\\joshd\\AppData\\Local\\hermes\\node\\node.exe",
+        "D:\\nlt-repos\\asfdk-harness\\dist\\mcp-server.js"
+      ],
+      "enabled": true,
+      "timeout": 180000,
+      "environment": {
+        "ASFDK_GOVERNANCE_TOOLS": "approved",
+        "ASFDK_TOI_PATH": "D:\\nlt-repos\\asfdk-harness\\.toi.default",
+        "ASFDK_OTOI_PATH": "D:\\nlt-repos\\asfdk-harness\\.otoi"
+      },
+      "cwd": "C:\\Users\\joshd\\.asfdk"
+    },
+    "unreal-engine": {
+      "type": "local",
+      "command": [
+        "npx",
+        "unreal-engine-mcp-server@beta"
+      ],
+      "enabled": true,
+      "timeout": 180000,
+      "environment": {
+        "UE_PROJECT_PATH": "D:/nlt-repos/nlt-world-engine/WorldEngine"
+      }
+    },
+    "blender-mcp": {
+      "type": "local",
+      "command": [
+        "C:\\blender_mcp\\mcp\\.venv\\Scripts\\blender-mcp.exe"
+      ],
+      "enabled": true,
+      "timeout": 180000
+    }
+  }
+}

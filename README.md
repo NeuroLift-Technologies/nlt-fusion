@@ -1,5 +1,11 @@
 # NLT World Engine — UE 5.8 Authoritative Simulation
 
+## The Vision
+
+**NLT World Engine is an embodied multi-agent simulation where machine learning models inhabit a persistent world, control their characters, interact with environments and other agents, and transition between meaningful life scenarios.**
+
+**An AI habitat — a virtual world where AI agents live, perceive, act, and learn.** The world is rendered with realistic graphics: procedural terrain, water, sky, vegetation, and settlement. AI residents walk through this world with articulated bodies, animated walk cycles, and name labels. Humans watch through a spectator viewer.
+
 NeuroLift Technologies Simulation Environment — the deterministic runtime where AI Avatars (with ADHD traits) and AI Aides live inside. This repo owns the **physical simulation layer** and is the **authoritative simulation training environment** for the Avatar-Aide-Advocate system: world state, space, time, objects, needs, NPCs, scenario instantiation, and the Unreal Engine 5.8 authoritative simulation. Avatar/Aide/Advocate *intelligence* — ADHD trait modeling, coaching expertise, training loop, fusion — lives in [`neurolift-ai-fusion`](https://github.com/NeuroLift-Technologies/neurolift-ai-fusion) and connects through the agent interface.
 
 > **Architecture docs:** [`WorldEngine/docs/architecture/`](WorldEngine/docs/architecture/) is the authoritative UE-side documentation — [`TECHNICAL_DIAGRAM.md`](WorldEngine/docs/architecture/TECHNICAL_DIAGRAM.md), [`unreal-simulation-architecture.md`](WorldEngine/docs/architecture/unreal-simulation-architecture.md), [`fusion-unreal-domain-mapping.md`](WorldEngine/docs/architecture/fusion-unreal-domain-mapping.md). Core principle: **Fusion owns semantic reality; Unreal owns physical reality.**
@@ -34,13 +40,18 @@ NLT World Engine (this repo)
 
 **Prerequisites:** UE 5.8 at `~/Documents/NLT/Engine/`, Linux (Clang 20.1.8)
 
+**Primary path — rendered Unreal Editor or standalone game:**
+
 ```bash
 cd WorldEngine
 make configure          # Generate project files
 make WorldEngineEditor  # Build editor (~85s)
 ```
 
-**Run headless simulation:**
+Open `WorldEngine.uproject` in the UE Editor, select the training scenario, and run the configured training flow in Play In Editor or a rendered standalone game. The human watches the same UE world in which agents simulate and learn.
+
+**Optional headless automation:**
+
 ```bash
 ~/Documents/NLT/Engine/Binaries/Linux/UnrealEditor-Cmd \
   -project=WorldEngine.uproject \
@@ -48,11 +59,7 @@ make WorldEngineEditor  # Build editor (~85s)
   -MAP=/Game/Scenarios/Levels/Workplace_Level.Workplace_Level
 ```
 
-**Run editor:**
-```bash
-make WorldEngineEditor
-# Open WorldEngine.uproject in UE Editor
-```
+The headless command is for automation, CI, or later infrastructure. It is not required for the primary training path. A future `WorldEngineServer` target is likewise optional.
 
 ## Project Structure
 
@@ -90,10 +97,14 @@ nlt-world-engine/
 │       ├── fusion-unreal-domain-mapping.md
 │       ├── build-documentation.md
 │       └── TECHNICAL_DIAGRAM.md
-├── world-engine-v2/              # Babylon.js + Vite + TypeScript viewer
-├── world-engine/                 # Python ECS engine (reference, not authoritative)
-├── ARCHITECTURE.md               # MMO architecture overview
-├── DEPLOYMENT.md                 # Cloudflare + Vercel deployment
+├── _archive/                     # Prototype directories (reference only)
+│   ├── world-engine/             # Original Python ECS engine + React prototype
+│   ├── world-engine-v2/          # Babylon.js viewer (superseded)
+│   ├── world-engine-3d/          # Early Three.js experiment
+│   ├── openworld-engine/         # Open-world exploration variant
+│   └── studio/                   # Claude Design shell (superseded)
+├── ARCHITECTURE.md               # UE 5.8 architecture
+├── DEPLOYMENT.md                 # UE 5.8 build + deployment
 └── .github/workflows/            # CI (governance + v2 build)
 ```
 
@@ -202,11 +213,25 @@ License TBD — Open Source. See `LICENSE` for details when available.
 
 ## Remaining Work
 
-- StateTree behavior trees on Mass entities
-- Cross-level navigation (rooms → world cells)
-- Full Fusion ↔ Unreal WebSocket protocol
-- Replay deterministic verification
-- LOD transition logic for avatar actors
-- Headless server build configuration
-- UE5 unit tests (AutomationDriver /AutomationTest framework)
-- Build validation in CI
+The following work remains after the deterministic verification, replay-integrity, visual-LOD, and StateTree/Fusion reference foundations merged through PRs #55–#57.
+
+### Product and runtime implementation
+
+- **Native Mass StateTree runtime integration:** The current behavior path is a deterministic custom C++ Mass processor plus StateTree task/condition references. Native `UMassStateTreeProcessor` execution and authored `.sttree` behavior assets remain follow-up work.
+- **Fusion ↔ Unreal WebSocket protocol:** The UE WebSocket listener now validates versioned envelopes, requires action type/target, rejects malformed JSON, and dispatches authoritative work on the game thread. End-to-end Python↔UE conformance, session/agent correlation, authorization, acknowledgements, and duplicate/timeout handling remain unverified.
+- **Replay action execution:** Define approved action semantics and execute recorded actions against the authoritative simulation. Compare intermediate state/event hashes and the final state/RNG state across a multi-tick replay. The current replay implementation verifies record integrity and observed final state but does not execute action payloads.
+- **Rendered LOD transition validation:** Validate Mass and actor-resident transitions in a representative rendered UE scene, including hysteresis, viewer fallback, mesh/HISM/fallback representation changes, and hidden transitions. The shared visual-only policy and integration are implemented; live-scene evidence is still pending.
+- **Broader UE Automation coverage:** Add integration tests for native StateTree behavior, WebSocket protocol handling, replay action execution, rendered LOD transitions, and headless guards. The existing `AutomationTest` suite passes 7/7 `NLT.Simulation` and 4/4 `NLT.VisualLOD.Policy` tests; the Python Fusion reference suite passes 9 tests but does not prove UE interoperability.
+
+### Validation and CI
+
+- **UE build validation in CI:** Select a UE-capable runner, add `WorldEngineEditor` build validation, run the NLT Automation suites, and publish logs/test reports. Current CI validates governance and the Babylon.js viewer only.
+- **Optional headless infrastructure:** Validate `WorldEngineServer` and headless runtime behavior on a UE distribution that supports Server targets. This is optional later infrastructure, not a prerequisite for the primary rendered UE Editor/standalone-game training path.
+
+### Completed foundations
+
+- Versioned deterministic state hashing and RNG reset/serialization metadata.
+- Versioned JSON replay records with integrity, tamper, serialization, and observed-final-state checks.
+- Shared visual-only LOD policy for Mass HISM and actor residents, with 4/4 policy tests passing.
+- Deterministic C++ Mass behavior processor, StateTree schema/task/condition references, and an expanded Python Fusion protocol/replay reference.
+- Dedicated Server target/configuration and headless runtime guards are present, but the optional Server target has not been compiled on a server-capable UE distribution.

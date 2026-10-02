@@ -1,0 +1,3 @@
+[submodule "WorldEngine/Plugins/NLTGovernanceSubsystem/ThirdParty/ASFDK"]
+	path = WorldEngine/Plugins/NLTGovernanceSubsystem/ThirdParty/ASFDK
+	url = https://github.com/NeuroLift-Technologies/asfdk-cplus.git
