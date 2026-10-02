@@ -9,7 +9,7 @@
 ## Active Threads
 
 ### 🔀 MIGRATE-001 — UE 5.8 → Godot 4.7.2 engine migration
-- **Status:** open (Phase 0 in progress; Phase 1 capture infrastructure merged)
+- **Status:** open (Phase 1 capture **live**; SIM-001 fixed; awaiting decision on event-stream scope)
 - **Owner:** Kilo · **Joined by:** Hermes (Phase 1)
 - **Started:** 2026-10-02
 - **Last updated:** 2026-10-02
@@ -21,6 +21,22 @@
   - Phase 1.1–1.2 merged in [#61](https://github.com/NeuroLift-Technologies/nlt-world-engine/pull/61) (`ca98e54f`…`248874ea`): `NLTFixtureEmitterSubsystem`, `BuildCanonicalStateTextV2` / `ComputeStateHashV2` (bit-exact IEEE-754 hex, signed-zero and NaN canonicalisation), console command + editor/PIE capture tests, `WITH_DEV_AUTOMATION_TESTS` on both targets. 8/8 `NLT.Simulation` + 4/4 `NLT.VisualLOD.Policy` green.
   - `asfdk-csharp` cloned to a sibling repo and retargeted `net10.0` → `net8.0` (PR [#2](https://github.com/NeuroLift-Technologies/asfdk-csharp/pull/2)); library builds clean, 14/14 xUnit tests pass on net8.0.
   - Four interior level FBX exports obtained from UE (`Workplace`, `Personal`, `Social`, `Academic`) and relocated to `world-engine-godot/assets/levels/`. `OpenWorld_Level` cannot be FBX-exported (World Partition + Landscape + runtime generation) and is rebuilt procedurally instead.
+  - **Plan 1.7a complete** (`a0a41d2`): `UNLTFixtureEmitterSubsystem::ValidateNonDegeneracy` — a pure, headlessly-testable assertion over the three per-tick series, with a per-tick agent position trace so "did anything move" is answerable without re-parsing canonical text. Six `NLT.FixtureCapture.NonDegeneracy.*` cases, 6/6 passing. `PROVENANCE.md` now carries a PASS/FAIL verdict.
+  - **Three pre-existing crash defects fixed**, each of which independently prevented any capture from completing: a fragment view read before `ForEachEntityChunk` binds it (`b2c487a`, from `d590bcb` 2026-09-25); `EndCapture` silently no-op'ing once the tick cap flips `bCapturing`, so 600 ticks were collected and discarded (`b7cb482`); and the PIE capture test requiring a human to press Play (`7abedc7`). Capture now runs end-to-end headlessly and writes all six files.
+- **⛔ Blocker (2026-10-02):** with those fixed, the capture still produces a **degenerate** fixture — 600 tick blocks containing **1 unique**, 0 events, no agent movement. Mass never ticks: `LogNLTAgentSpawner: Warning: DespawnAllAgents: MassEntity not initialized`. This is **SIM-001**, deferred by the plan to Phase 6.6.
+  - The 1.7 assertion detects this automatically and reports `Verdict: FAIL`, so the failure is now mechanical rather than a matter of inspection.
+  - Plan items **1.5** and **1.7b** cannot complete. Fixing Mass requires changing UE simulation behaviour, which plan §10 forbids after 1.6 ("UE is a frozen oracle") — the same circularity the freeze exists to prevent.
+  - Escalation: [`docs/escalations/2026-10-02-ue-cannot-produce-golden-fixture.md`](escalations/2026-10-02-ue-cannot-produce-golden-fixture.md) — **awaiting Joshua's decision**. Tracking issue: [#67](https://github.com/NeuroLift-Technologies/nlt-world-engine/issues/67) (`escalation`, `agent-action-required`, assigned JDUB1216). Recommendation: hold the freeze, land the crash fixes, amend decision 7 to state that Tier 2 is unavailable and what replaces it.
+  - **Scope note:** Tier 2 is the gate that retires UE, and decision 7 defines validation in terms of it. That assumption does not hold, so this affects Phase 6 and Phase 10 planning, not only 1.5/1.7b.
+  - **Do not commit** the existing `WorldEngine/Saved/Fixtures/seed42/` capture — it is gitignored and degenerate.
+- **✅ Resolved 2026-10-02 — SIM-001 fixed, capture now live.** Two defects, both "documented behaviour was not true", both inside the narrowed 1.6 carve-out. PR [#69](https://github.com/NeuroLift-Technologies/nlt-world-engine/pull/69) (`f1c3efd`, `b28a027`).
+  - (a) **Clock disconnected** — nothing subscribed to `OnSimulationTick`, so `CurrentState.SimulationTick` stayed 0 for whole runs. `StepTick` now publishes tick and time.
+  - (b) **Agents frozen** — `NLTAgentSpawnerSubsystem` hardcoded `FNLTStateTreeBehaviorFragment::bEnabled = true`, and both legacy processors skip StateTree-enabled entities. With **0 `.sttree` assets**, ownership passed to a layer that owns nobody. Now defaults to `false`.
+  - **My earlier diagnosis was wrong** — "Mass never ticks" came from a `DespawnAllAgents: MassEntity not initialized` line emitted on **teardown**, not spawn. Instrumenting the decision processor showed it running once per tick for all 600 ticks with valid subsystem pointers, yet never reaching `DecideTarget`. Mass was fine; the entity-level flag was the blocker.
+  - **Verified:** 600 tick blocks containing **600 unique** (was 1), clock 1 → 600, `WorldTime` 0.0166 → 10.0 min, `Agents move: yes`. Suite 18/19.
+- **✅ Three pre-existing crash bugs fixed** — PR [#70](https://github.com/NeuroLift-Technologies/nlt-world-engine/pull/70) (`b2c487a`, `b7cb482`, `7abedc7`), plan item 1.11. Each independently prevented any capture from completing: a fragment view read before the query bound it (asserted on every scenario start), `EndCapture` silently discarding 600 collected ticks, and the PIE test requiring a human to press Play.
+- **✅ 1.12 done** — §6's fixture risk re-framed and **re-rated High → Medium**. Residual risk is no longer correctness: it is that `UNLTEventBus` has zero writers, so the event stream is empty and 1.3's stressor / needs-saturation / Aide case has no producers to exercise.
+- **⏭ Remaining on the UE machine:** 1.3 (needs scenario selection — `FNLTScenarioParams` has no scenario field, so "≥3 scenarios" is unreachable today), 1.4 (VisualLOD vectors need emitter support), 1.5 (commit fixtures once 1.3/1.4 exist). **Open decision:** event-stream scope — gate golden vectors on the three green signals and record the gap, or scope producer wiring as new behaviour outside the carve-out.
   - Fixed `double`→`float` narrowing of `Agent.Position` in `BuildCanonicalStateTextV2` — `FVector` is `FVector3d` under UE5 LWC, so v2 was truncating a 53-bit mantissa to 24 bits inside the bit-exact encoding.
   - Untracked 119 committed Godot build-cache files and relocated the level FBX assets.
 - **Blockers / human-owned:**
