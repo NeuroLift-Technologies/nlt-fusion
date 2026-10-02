@@ -1,0 +1,163 @@
+{
+  "schemaVersion": "nlt.state-feed.v1",
+  "tick": 1187,
+  "simTimeIso": "2026-10-02T07:45:00Z",
+  "scene": { "id": "personal_1", "kind": "interior" },
+
+  "agents": [
+    {
+      "id": "avatar_01",
+      "name": "Jamie",
+      "role": "avatar",
+      "scene": "personal_1",
+      "position": { "x": 4.2, "y": 0.0, "z": -1.8 },
+      "velocity": { "x": 0.0, "y": 0.0, "z": 0.0 },
+      "appearance": { "body": "avatar_female_01", "walkPhase": 0.0 },
+
+      "levels": {
+        "attentionEnergy": 0.44,
+        "stressLevel": 0.38,
+        "confidence": 0.61,
+        "cognitiveLoad": 0.52,
+        "independenceScore": 0.63,
+        "supportNeedLevel": 0.22
+      },
+
+      "needs": {
+        "quiet": 0.71,
+        "rest": 0.58,
+        "social": 0.66,
+        "stimulation": 0.52
+      },
+
+      "state": "recovering",
+      "stateSince": 1186,
+      "currentGoal": "Get ready for the work meeting",
+      "currentTask": "Pack work items",
+      "struggleSignals": ["sustained_attention_dip", "time_pressure"],
+      "learnedStrategies": ["body_doubling", "time_box_25", "reset_prompt"],
+
+      "burnout": false,
+      "supportIndex": 1
+    },
+    {
+      "id": "aide_01",
+      "name": "Focus Aide",
+      "role": "aide",
+      "scene": "personal_1",
+      "position": { "x": 5.1, "y": 0.0, "z": -1.1 },
+      "velocity": { "x": 0.0, "y": 0.0, "z": 0.0 },
+      "appearance": { "body": "aide_01", "walkPhase": 0.0 },
+
+      "levels": {
+        "attentionEnergy": 0.91,
+        "stressLevel": 0.08,
+        "confidence": 0.88,
+        "cognitiveLoad": 0.12,
+        "independenceScore": 0.63,
+        "supportNeedLevel": 0.22
+      },
+
+      "needs": {
+        "quiet": 0.82,
+        "rest": 0.79,
+        "social": 0.70,
+        "stimulation": 0.64
+      },
+
+      "state": "coached",
+      "stateSince": 1183,
+      "currentGoal": null,
+      "currentTask": "Support Jamie's recovery without taking over",
+      "struggleSignals": [],
+      "learnedStrategies": ["task_chunking", "environmental_simplification"],
+
+      "burnout": false,
+      "supportIndex": 1
+    }
+  ],
+
+  "pairs": [
+    {
+      "avatarId": "avatar_01",
+      "aideId": "aide_01",
+      "ready": false,
+      "overallScore": 0.638,
+      "blockingDimensions": ["EXPERIENTIAL_DEPTH", "BURNOUT_MANAGEMENT"],
+      "dimensions": {
+        "EXPERIENTIAL_DEPTH":       { "score": 0.52, "passes": false },
+        "COACHING_EFFECTIVENESS":   { "score": 0.71, "passes": true },
+        "INDEPENDENCE_LEVEL":       { "score": 0.67, "passes": true },
+        "EMOTIONAL_RESILIENCE":     { "score": 0.64, "passes": true },
+        "STRATEGY_INTERNALISATION": { "score": 0.66, "passes": true },
+        "BURNOUT_MANAGEMENT":       { "score": 0.58, "passes": false }
+      },
+      "recommendations": [
+        "Need more experiences (current: 52%, target: 60%)",
+        "Reduce burnout risk before fusion"
+      ]
+    }
+  ],
+
+  "burnoutEpisodes": [
+    {
+      "startTick": 1102,
+      "severity": 0.35,
+      "peakBelow": 0.34,
+      "recoveredTick": 1187,
+      "recoveryMode": "solo"
+    },
+    {
+      "startTick": 861,
+      "severity": 0.22,
+      "peakBelow": 0.21,
+      "recoveredTick": 934,
+      "recoveryMode": "rt"
+    }
+  ],
+
+  "selfRecognitions": [
+    { "tick": 1098, "riskAtRecognition": 0.44, "actedOn": true,  "ledTo": "prevented" },
+    { "tick": 855,  "riskAtRecognition": 0.38, "actedOn": true,  "ledTo": "prevented" },
+    { "tick": 640,  "riskAtRecognition": 0.29, "actedOn": false, "ledTo": "ignored"   }
+  ],
+
+  "events": [
+    {
+      "tick": 1102,
+      "agentId": "avatar_01",
+      "kind": "burnout_entered",
+      "text": "Several needs dropped at once and Jamie's energy fell too far to continue.",
+      "severity": "high"
+    },
+    {
+      "tick": 1098,
+      "agentId": "avatar_01",
+      "kind": "self_recognition",
+      "text": "Jamie noticed they were running low before it got bad, and asked for a reset prompt.",
+      "severity": "medium"
+    },
+    {
+      "tick": 1103,
+      "agentId": "aide_01",
+      "kind": "aide_intervention",
+      "text": "Focus Aide suggested a five-minute recovery break rather than taking over the task.",
+      "strategy": "reset_prompt",
+      "helped": true
+    },
+    {
+      "tick": 1186,
+      "agentId": "avatar_01",
+      "kind": "burnout_recovered",
+      "text": "Jamie recovered on their own and picked the routine back up.",
+      "severity": "low"
+    },
+    {
+      "tick": 1187,
+      "agentId": "avatar_01",
+      "kind": "task_start",
+      "text": "Jamie started packing work items.",
+      "severity": "low"
+    }
+  ]
+}
