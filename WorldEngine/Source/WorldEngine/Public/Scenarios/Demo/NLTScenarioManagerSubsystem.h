@@ -8,6 +8,7 @@
 class UNLTAgentSpawnerSubsystem;
 class UNLTSimulationSubsystem;
 class UNLTSoundscapeSubsystem;
+class UNLTFixtureEmitterSubsystem;
 class UScenarioDataAsset;
 struct FMassEntityQuery;
 
@@ -45,6 +46,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogNLTScenarioManager, Log, All);
  *  - periodic deterministic checkpoints (state hash over identity-sorted agents)
  *  - headless self-test mode for the QA determinism gate:
  *      run N ticks, log checkpoints + final hash, then exit cleanly.
+ *  - optional fixture capture for golden-vector migration (Phase 1)
  */
 UCLASS()
 class UNLTScenarioManagerSubsystem : public UWorldSubsystem
@@ -101,6 +103,13 @@ public:
     void BeginHeadlessSelfTest(int32 InMaxTicks);
     bool IsHeadlessSelfTestActive() const { return bHeadlessSelfTest; }
 
+    // ----- Fixture capture (Phase 1: golden-vector migration) -----
+    /** Begin fixture capture for golden-vector migration. */
+    void BeginFixtureCapture(int32 InSeed, int32 InMaxTicks);
+    /** End fixture capture and write to disk. */
+    void EndFixtureCapture();
+    bool IsFixtureCaptureActive() const;
+
 private:
     bool StartScenarioInternal(const FNLTScenarioParams& Params, UScenarioDataAsset* Scenario, float NeedGrowthMultiplier);
     void LogCheckpoint(const TCHAR* Label) const;
@@ -116,4 +125,5 @@ private:
     int32 NextCheckpointTick = 0;
 
     TObjectPtr<UNLTSoundscapeSubsystem> SoundscapeSubsystem = nullptr;
+    TObjectPtr<UNLTFixtureEmitterSubsystem> FixtureEmitter = nullptr;
 };

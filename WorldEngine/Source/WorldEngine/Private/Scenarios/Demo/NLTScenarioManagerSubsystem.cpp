@@ -6,11 +6,13 @@
 #include "Simulation/NLTSimulationSubsystem.h"
 #include "Audio/NLTSoundscapeSubsystem.h"
 #include "World/NLTEnvironmentVariation.h"
+#include "Core/NLTFixtureEmitterSubsystem.h"
 #include "MassEntityManager.h"
 #include "MassEntityQuery.h"
 #include "MassEntitySubsystem.h"
 #include "MassExecutionContext.h"
 #include "GenericPlatform/GenericPlatformMisc.h"
+#include "HAL/ConsoleManager.h"
 
 DEFINE_LOG_CATEGORY(LogNLTScenarioManager);
 
@@ -39,7 +41,7 @@ bool UNLTScenarioManagerSubsystem::ShouldCreateSubsystem(UObject* Outer) const
         return false;
     }
     const UWorld* World = Cast<UWorld>(Outer);
-    return World && (World->WorldType == EWorldType::Game || World->WorldType == EWorldType::PIE);
+    return World && (World->WorldType == EWorldType::Game || World->WorldType == EWorldType::PIE || World->WorldType == EWorldType::Editor);
 }
 
 void UNLTScenarioManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -49,6 +51,10 @@ void UNLTScenarioManagerSubsystem::Initialize(FSubsystemCollectionBase& Collecti
 
     // Cache the soundscape subsystem for audio control
     SoundscapeSubsystem = GetWorld()->GetSubsystem<UNLTSoundscapeSubsystem>();
+
+    // Cache the fixture emitter subsystem via dependency initialization
+    Collection.InitializeDependency(UNLTFixtureEmitterSubsystem::StaticClass());
+    FixtureEmitter = GetWorld()->GetSubsystem<UNLTFixtureEmitterSubsystem>();
 }
 
 void UNLTScenarioManagerSubsystem::Deinitialize()
@@ -173,6 +179,12 @@ void UNLTScenarioManagerSubsystem::TickScenarioManager(float DeltaTime)
         SoundscapeSubsystem->TickSoundscape(DeltaTime);
     }
 
+    // Fixture capture (Phase 1: golden-vector migration)
+    if (FixtureEmitter && FixtureEmitter->IsCapturing())
+    {
+        FixtureEmitter->CaptureTick();
+    }
+
     if (bHeadlessSelfTest)
     {
         if (ScenarioTick >= NextCheckpointTick)
@@ -186,10 +198,11 @@ void UNLTScenarioManagerSubsystem::TickScenarioManager(float DeltaTime)
         }
     }
 }
+
 uint32 UNLTScenarioManagerSubsystem::ComputeAgentStateHash() const
 {
     UWorld* World = GetWorld();
-            UMassEntitySubsystem* EntitySub = World ? World->GetSubsystem<UMassEntitySubsystem>() : nullptr;
+    UMassEntitySubsystem* EntitySub = World ? World->GetSubsystem<UMassEntitySubsystem>() : nullptr;
     if (!EntitySub || !EntitySub->GetInitializationState().bPostInitializeCalled)
     {
         return 0;
@@ -198,7 +211,7 @@ uint32 UNLTScenarioManagerSubsystem::ComputeAgentStateHash() const
 
     FMassEntityManager& EntityManager = EntitySub->GetMutableEntityManager();
 
-        FMassEntityQuery Query(EntityManager.AsShared());
+    FMassEntityQuery Query(EntityManager.AsShared());
     Query.AddRequirement<FNLTAgentIdentityFragment>(EMassFragmentAccess::ReadOnly);
     Query.AddRequirement<FNLTAgentLocationFragment>(EMassFragmentAccess::ReadOnly);
     Query.CacheArchetypes();
@@ -272,6 +285,100 @@ void UNLTScenarioManagerSubsystem::FinishHeadlessSelfTest()
     UE_LOG(LogNLTScenarioManager, Display, TEXT("NLT_HEADLESS_TEST_COMPLETE tick=%d stateHash=%08x"),
         ScenarioTick, ComputeAgentStateHash());
 
+    // Write fixture capture data before exiting
+    if (FixtureEmitter && FixtureEmitter->IsCapturing())
+    {
+        FixtureEmitter->EndCapture();
+    }
+
     // Clean process exit for headless automation runs (-game -nullrhi).
     FGenericPlatformMisc::RequestExit(false);
 }
+
+// ----- Fixture capture (Phase 1: golden-vector migration) -----
+
+void UNLTScenarioManagerSubsystem::BeginFixtureCapture(int32 InSeed, int32 InMaxTicks)
+{
+    if (FixtureEmitter)
+    {
+        FixtureEmitter->BeginCapture(InSeed, InMaxTicks);
+        UE_LOG(LogNLTScenarioManager, Log, TEXT("Fixture capture started: seed=%d, maxTicks=%d"), InSeed, InMaxTicks);
+    }
+    else
+    {
+        UE_LOG(LogNLTScenarioManager, Warning, TEXT("Fixture capture requested but fixture emitter subsystem not available"));
+    }
+}
+
+void UNLTScenarioManagerSubsystem::EndFixtureCapture()
+{
+    if (FixtureEmitter)
+    {
+        FixtureEmitter->EndCapture();
+        UE_LOG(LogNLTScenarioManager, Log, TEXT("Fixture capture ended"));
+    }
+}
+
+bool UNLTScenarioManagerSubsystem::IsFixtureCaptureActive() const
+{
+    return FixtureEmitter && FixtureEmitter->IsCapturing();
+}
+
+// ----- Console commands for fixture capture -----
+
+static FAutoConsoleCommandWithWorldAndArgs GCmdStartFixtureCapture(
+    TEXT("NLT.FixtureCapture.Start"),
+    TEXT("Start fixture capture. Usage: NLT.FixtureCapture.Start <seed> <maxTicks> [numAgents]"),
+    FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>& Args, UWorld* World)
+    {
+        if (!World)
+        {
+            UE_LOG(LogNLTScenarioManager, Warning, TEXT("NLT.FixtureCapture.Start: no world available"));
+            return;
+        }
+        if (Args.Num() < 2)
+        {
+            UE_LOG(LogNLTScenarioManager, Warning, TEXT("Usage: NLT.FixtureCapture.Start <seed> <maxTicks> [numAgents]"));
+            return;
+        }
+
+        const int32 Seed = FCString::Atoi(*Args[0]);
+        const int32 MaxTicks = FCString::Atoi(*Args[1]);
+        const int32 NumAgents = Args.Num() >= 3 ? FCString::Atoi(*Args[2]) : 10;
+
+        if (UNLTScenarioManagerSubsystem* ScenarioManager = World->GetSubsystem<UNLTScenarioManagerSubsystem>())
+        {
+            FNLTScenarioParams Params;
+            Params.NumAgents = NumAgents;
+            Params.Seed = Seed;
+            Params.SpawnOrigin = FVector(0.0f, 0.0f, 100.0f);
+            Params.SpawnRadius = 2000.0f;
+            Params.bAutoStartSimulation = true;
+
+            if (ScenarioManager->StartScenario(Params))
+            {
+                ScenarioManager->BeginHeadlessSelfTest(MaxTicks);
+                ScenarioManager->BeginFixtureCapture(Seed, MaxTicks);
+                UE_LOG(LogNLTScenarioManager, Log, TEXT("Fixture capture started via console command"));
+            }
+        }
+    })
+);
+
+static FAutoConsoleCommandWithWorld GCmdEndFixtureCapture(
+    TEXT("NLT.FixtureCapture.End"),
+    TEXT("End fixture capture and write to disk"),
+    FConsoleCommandWithWorldDelegate::CreateLambda([](UWorld* World)
+    {
+        if (!World)
+        {
+            UE_LOG(LogNLTScenarioManager, Warning, TEXT("NLT.FixtureCapture.End: no world available"));
+            return;
+        }
+        if (UNLTScenarioManagerSubsystem* ScenarioManager = World->GetSubsystem<UNLTScenarioManagerSubsystem>())
+        {
+            ScenarioManager->EndFixtureCapture();
+            UE_LOG(LogNLTScenarioManager, Log, TEXT("Fixture capture ended via console command"));
+        }
+    })
+);
