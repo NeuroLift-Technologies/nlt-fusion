@@ -89,9 +89,20 @@ void UNLTAgentSpawnerSubsystem::AppendScenarioFragments(TArray<FInstancedStruct>
     // to drive decision + movement for this entity.  The config fragment points at
     // the default behavior definition; the StateTree behavior fragment tracks
     // runtime state.
+    //
+    // SIM-001: this used to be hardcoded true, which stranded every agent. Both
+    // legacy processors skip StateTree-enabled entities ("when enabled, the
+    // UNLTStateTreeBehaviorProcessor owns movement; this legacy processor
+    // yields"), so ownership passed to a layer that owns nobody -- there are no
+    // .sttree assets in Content/ -- and the scenario froze: no decisions, no
+    // targets, no movement, 600 identical ticks.
+    //
+    // Default to false so the legacy C++ decision + movement processors, which
+    // are the documented live behaviour path, own the agent. Set true per-entity
+    // once real StateTree assets land.
     FNLTStateTreeBehaviorFragment STBehavior;
     STBehavior.State = ENLTStateTreeBehaviorState::Idle;
-    STBehavior.bEnabled = true;
+    STBehavior.bEnabled = false;
     STBehavior.bUsingFallback = false;
     Fragments.Add(FInstancedStruct::Make(STBehavior));
 

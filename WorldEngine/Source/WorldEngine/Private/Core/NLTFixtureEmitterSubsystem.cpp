@@ -43,6 +43,7 @@ void UNLTFixtureEmitterSubsystem::BeginCapture(int32 InSeed, int32 InMaxTicks)
 	PerTickRngState.Reset();
 	PerTickEventStream.Reset();
 	PerTickStateHash.Reset();
+	PerTickAgentPositions.Reset();
 	FinalCanonicalState.Reset();
 	FinalRngState.Reset();
 	FinalStateHash.Reset();
@@ -61,7 +62,11 @@ void UNLTFixtureEmitterSubsystem::BeginCapture(int32 InSeed, int32 InMaxTicks)
 
 void UNLTFixtureEmitterSubsystem::EndCapture()
 {
-	if (!bCapturing)
+	// Guard on captured data, NOT on bCapturing. CaptureTick flips bCapturing off
+	// once the tick cap is reached, so when max ticks equals the requested tick
+	// count -- the normal case -- bCapturing is already false here and a guard on
+	// it silently discards everything collected in memory.
+	if (PerTickCanonicalState.Num() == 0)
 	{
 		return;
 	}
@@ -164,6 +169,10 @@ void UNLTFixtureEmitterSubsystem::CaptureTick()
 	const FString CanonicalV2 = FNLTDeterministicStateHash::BuildCanonicalStateTextV2(MassState, &RNG);
 	PerTickCanonicalState.Add(CanonicalV2);
 
+	// Position trace for the item 1.7 non-degeneracy check. Captured from the same
+	// MassState that produced the canonical text, so it cannot drift from it.
+	PerTickAgentPositions.Add(BuildAgentPositionTrace(MassState.Agents));
+
 	// 2. RNG state: "initialSeed;seed;calls"
 	const FString RngStateStr = FString::Printf(TEXT("%d;%d;%d"),
 		RNG.InitialSeed, RNG.Seed, RNG.Calls);
@@ -217,6 +226,105 @@ void UNLTFixtureEmitterSubsystem::CaptureTick()
 	{
 		bCapturing = false;
 	}
+}
+
+FString UNLTFixtureEmitterSubsystem::BuildAgentPositionTrace(const TArray<FNLTAgentState>& Agents)
+{
+	FString Trace;
+	for (const FNLTAgentState& Agent : Agents)
+	{
+		// Same %.17g double formatting the v1 canonical text uses for WorldTime, so
+		// the trace is a faithful, lossless projection of agent position.
+		Trace += FString::Printf(TEXT("%.17g;%.17g;%.17g;"),
+			Agent.Position.X, Agent.Position.Y, Agent.Position.Z);
+	}
+	return Trace;
+}
+
+FNLTFixtureNonDegeneracyResult UNLTFixtureEmitterSubsystem::ValidateCaptureNonDegeneracy() const
+{
+	return ValidateNonDegeneracy(PerTickCanonicalState, PerTickEventStream, PerTickAgentPositions);
+}
+
+FNLTFixtureNonDegeneracyResult UNLTFixtureEmitterSubsystem::ValidateNonDegeneracy(
+	const TArray<FString>& InCanonicalState,
+	const TArray<FString>& InEventStream,
+	const TArray<FString>& InAgentPositions)
+{
+	FNLTFixtureNonDegeneracyResult Result;
+	Result.TickCount = InCanonicalState.Num();
+
+	// --- Signal 1: enough distinct samples to compare ---
+	// Three is the minimum that lets us assert first != middle != last; with one or
+	// two ticks the assertion is vacuous and would pass a static capture.
+	Result.bHasEnoughTicks = Result.TickCount >= 3;
+	if (!Result.bHasEnoughTicks)
+	{
+		Result.FailureReason = FString::Printf(
+			TEXT("only %d tick(s) captured; need >= 3 to compare first/middle/last"),
+			Result.TickCount);
+		return Result;
+	}
+
+	const int32 FirstIdx = 0;
+	const int32 MidIdx = Result.TickCount / 2;
+	const int32 LastIdx = Result.TickCount - 1;
+
+	// --- Signal 2: canonical text varies ---
+	// NOTE: this is a *weak* signal on its own. SimulationTick and WorldTime are
+	// part of the canonical text and advance every tick, so this passes even when
+	// no agent moves. That is exactly why signal 4 exists.
+	Result.bCanonicalVaries =
+		InCanonicalState[FirstIdx] != InCanonicalState[MidIdx] &&
+		InCanonicalState[MidIdx] != InCanonicalState[LastIdx] &&
+		InCanonicalState[FirstIdx] != InCanonicalState[LastIdx];
+
+	// --- Signal 3: event stream carries at least one event ---
+	for (const FString& Events : InEventStream)
+	{
+		if (!Events.TrimStartAndEnd().IsEmpty())
+		{
+			++Result.TicksWithEvents;
+		}
+	}
+	Result.bEventStreamNonEmpty = Result.TicksWithEvents > 0;
+
+	// --- Signal 4: at least one agent actually moved ---
+	// The strong signal. If the position trace is unchanged the capture is static
+	// regardless of what the tick counter did.
+	Result.bAgentsMove = false;
+	if (InAgentPositions.Num() >= 3)
+	{
+		Result.bAgentsMove =
+			InAgentPositions[FirstIdx] != InAgentPositions[LastIdx] ||
+			InAgentPositions[FirstIdx] != InAgentPositions[MidIdx] ||
+			InAgentPositions[MidIdx] != InAgentPositions[LastIdx];
+	}
+
+	// Report the first failed check so the failure names the collapsed property.
+	if (!Result.bCanonicalVaries)
+	{
+		Result.FailureReason = FString::Printf(
+			TEXT("canonical state text is identical at ticks %d, %d and %d"),
+			FirstIdx, MidIdx, LastIdx);
+	}
+	else if (!Result.bEventStreamNonEmpty)
+	{
+		Result.FailureReason = FString::Printf(
+			TEXT("event stream is empty across all %d captured ticks"), Result.TickCount);
+	}
+	else if (!Result.bAgentsMove)
+	{
+		Result.FailureReason = InAgentPositions.Num() < 3
+			? FString::Printf(
+				TEXT("no agent position trace recorded (%d entries); capture has no agent data"),
+				InAgentPositions.Num())
+			: FString::Printf(
+				TEXT("no agent position changed between ticks %d and %d — capture is static"),
+				FirstIdx, LastIdx);
+	}
+
+	return Result;
 }
 
 void UNLTFixtureEmitterSubsystem::WriteFixturesToDisk()
@@ -282,6 +390,8 @@ void UNLTFixtureEmitterSubsystem::WriteFixturesToDisk()
 
 	// Write PROVENANCE.md
 	{
+		const FNLTFixtureNonDegeneracyResult NonDegeneracy = ValidateCaptureNonDegeneracy();
+
 		FString FilePath = OutputDirectory / TEXT("PROVENANCE.md");
 		FString Content;
 		Content += TEXT("# Fixture Provenance\n\n");
@@ -291,6 +401,21 @@ void UNLTFixtureEmitterSubsystem::WriteFixturesToDisk()
 		Content += FString::Printf(TEXT("- **Commit:** (see git log)\n"));
 		Content += FString::Printf(TEXT("- **Date:** %s\n"), *FDateTime::Now().ToString());
 		Content += FString::Printf(TEXT("- **Command:** WorldEngine.exe -game -nullrhi -seed=%d -ticks=%d\n"), CaptureSeed, CaptureMaxTicks);
+
+		// Item 1.7: record the verdict inline. A fixture whose verdict is FAIL must
+		// not be committed as a golden vector — Tier 2 would pass against nothing.
+		Content += TEXT("\n## Non-degeneracy (plan item 1.7)\n\n");
+		Content += FString::Printf(TEXT("- **Verdict:** %s\n"), NonDegeneracy.Passed() ? TEXT("PASS") : TEXT("FAIL"));
+		Content += FString::Printf(TEXT("- **Ticks captured:** %d\n"), NonDegeneracy.TickCount);
+		Content += FString::Printf(TEXT("- **Canonical text varies:** %s\n"), NonDegeneracy.bCanonicalVaries ? TEXT("yes") : TEXT("no"));
+		Content += FString::Printf(TEXT("- **Event stream non-empty:** %s (%d tick(s) with events)\n"),
+			NonDegeneracy.bEventStreamNonEmpty ? TEXT("yes") : TEXT("no"), NonDegeneracy.TicksWithEvents);
+		Content += FString::Printf(TEXT("- **Agents move:** %s\n"), NonDegeneracy.bAgentsMove ? TEXT("yes") : TEXT("no"));
+		if (!NonDegeneracy.FailureReason.IsEmpty())
+		{
+			Content += FString::Printf(TEXT("- **Failure:** %s\n"), *NonDegeneracy.FailureReason);
+		}
+
 		Content += TEXT("\n## Files\n\n");
 		Content += TEXT("- `canonical_state_v2.txt` — Per-tick canonical state text (v2, bit-exact IEEE-754 hex)\n");
 		Content += TEXT("- `rng_state.txt` — Per-tick RNG state (initialSeed;seed;calls)\n");
@@ -298,6 +423,13 @@ void UNLTFixtureEmitterSubsystem::WriteFixturesToDisk()
 		Content += TEXT("- `state_hash.txt` — Per-tick BLAKE3 state hash\n");
 		Content += TEXT("- `final_state.txt` — Final state summary\n");
 		FFileHelper::SaveStringToFile(Content, *FilePath);
+
+		if (!NonDegeneracy.Passed())
+		{
+			UE_LOG(LogNLTFixtureEmitter, Error,
+				TEXT("Fixture capture is DEGENERATE (item 1.7): %s — do not commit as a golden vector"),
+				*NonDegeneracy.FailureReason);
+		}
 	}
 
 	UE_LOG(LogNLTFixtureEmitter, Log, TEXT("Fixtures written to %s"), *OutputDirectory);
