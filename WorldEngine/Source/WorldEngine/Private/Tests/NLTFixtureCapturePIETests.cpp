@@ -16,8 +16,8 @@
 class FWaitForTicksAndEndCaptureCommand : public IAutomationLatentCommand
 {
 public:
-	FWaitForTicksAndEndCaptureCommand(int32 InTargetTicks, TWeakObjectPtr<UNLTScenarioManagerSubsystem> InScenarioManager, TWeakObjectPtr<UNLTFixtureEmitterSubsystem> InFixtureEmitter)
-		: TargetTicks(InTargetTicks), ScenarioManagerWeak(InScenarioManager), FixtureEmitterWeak(InFixtureEmitter), ElapsedTime(0.0f), TimeoutSeconds(300.0f) {}
+	FWaitForTicksAndEndCaptureCommand(int32 InTargetTicks, TWeakObjectPtr<UNLTScenarioManagerSubsystem> InScenarioManager, TWeakObjectPtr<UNLTFixtureEmitterSubsystem> InFixtureEmitter, FAutomationTestBase* InTest)
+		: TargetTicks(InTargetTicks), ScenarioManagerWeak(InScenarioManager), FixtureEmitterWeak(InFixtureEmitter), Test(InTest), ElapsedTime(0.0f), TimeoutSeconds(300.0f) {}
 
 	virtual bool Update() override
 	{
@@ -40,6 +40,27 @@ public:
 
 		if (ScenarioManager->GetScenarioTick() >= TargetTicks)
 		{
+			// Item 1.7: assert the capture is non-degenerate BEFORE writing it to
+			// disk, so a static capture is reported as a test failure rather than
+			// quietly landing on disk to be mistaken for a golden vector.
+			UNLTFixtureEmitterSubsystem* Emitter = FixtureEmitterWeak.Get();
+			if (Emitter && Test)
+			{
+				const FNLTFixtureNonDegeneracyResult Result = Emitter->ValidateCaptureNonDegeneracy();
+				if (Result.Passed())
+				{
+					Test->AddInfo(FString::Printf(
+						TEXT("Non-degeneracy PASS: %d ticks, %d tick(s) with events, agents moving"),
+						Result.TickCount, Result.TicksWithEvents));
+				}
+				else
+				{
+					Test->AddError(FString::Printf(
+						TEXT("Fixture capture is DEGENERATE (plan item 1.7) — do not commit: %s"),
+						*Result.FailureReason));
+				}
+			}
+
 			FixtureEmitter->EndCapture();
 			return true;
 		}
@@ -50,6 +71,7 @@ private:
 	int32 TargetTicks;
 	TWeakObjectPtr<UNLTScenarioManagerSubsystem> ScenarioManagerWeak;
 	TWeakObjectPtr<UNLTFixtureEmitterSubsystem> FixtureEmitterWeak;
+	FAutomationTestBase* Test;
 	float ElapsedTime;
 	float TimeoutSeconds;
 };
@@ -140,8 +162,9 @@ bool FNLTFixtureCapturePIETest::RunTest(const FString& Parameters)
 	// Begin fixture capture
 	FixtureEmitter->BeginCapture(Seed, NumTicks);
 
-	// Use latent command to wait for N ticks, then end capture
-	ADD_LATENT_AUTOMATION_COMMAND(FWaitForTicksAndEndCaptureCommand(NumTicks, TWeakObjectPtr<UNLTScenarioManagerSubsystem>(ScenarioManager), TWeakObjectPtr<UNLTFixtureEmitterSubsystem>(FixtureEmitter)));
+	// Use latent command to wait for N ticks, then end capture. It also runs the
+	// item 1.7 non-degeneracy assertion before anything is written to disk.
+	ADD_LATENT_AUTOMATION_COMMAND(FWaitForTicksAndEndCaptureCommand(NumTicks, TWeakObjectPtr<UNLTScenarioManagerSubsystem>(ScenarioManager), TWeakObjectPtr<UNLTFixtureEmitterSubsystem>(FixtureEmitter), this));
 
 	return true;
 }
