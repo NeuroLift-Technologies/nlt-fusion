@@ -121,7 +121,15 @@ UE builds today; it may not tomorrow. Capturing golden fixtures is only possible
 - [x] 0.5 **Already satisfied.** The prototype is tracked — `world-engine-godot/` and this plan file were committed to `main` before 2026-10-02. No `feat/godot-migration` branch was needed for the initial commit; work now lands on scoped fix branches
 - [x] 0.6 **DONE 2026-10-02.** `world-engine-v2-build.yml` deleted. It filtered on `world-engine-v2/**` and set `working-directory: world-engine-v2`, but that path no longer exists at root (it is `_archive/world-engine-v2/`), so the job could never fire. **Governance validation was always healthy** — `validate-governance.sh:131` correctly requires `.github/workflows/validate-governance.yml` and `validate` passes on every PR; an earlier claim that it was broken was wrong. Consequence: the repo has **no** product-code CI until 7.2
 - [x] 0.7 **DONE 2026-10-02.** `docs/engine-reference/godot/VERSION.md` created — pins Godot 4.7.2 .NET (mono), .NET 8, the FBX/ufbx import matrix, known asset sources, and the 3D asset inventory. This file was **missing**, which is why all five `.claude/agents/godot-*.md` specialists were failing their mandatory version check
-- [ ] 0.8 Review the third-party `world-engine-godot/addons/godot_ai/` MCP bridge (`hi-godot/godot-ai`, MIT) that was added outside the thread record: record Joshua's approval per OTOI §4.4 (external integration), confirm the `uv`-bootstrapped Python server is an acceptable new toolchain dependency, confirm C#-variant compatibility for 4.7.2 mono, and add an `mcp-config.yaml` entry
+- [ ] 0.8 **Ratify, not approve — `world-engine-godot/addons/godot_ai/` is already tracked on `main`.** `hi-godot/godot-ai`, plugin version **4.2.3**, MIT, `LICENSE` present. So this item is retroactive approval of committed code, not a pending gate.
+  - **STANDING RULE (Joshua, 2026-10-02): third-party plugin installation is reserved to Joshua personally. No agent installs one** — not into the repository, not onto a machine, not via an MCP tool, not as a "helpful" addition mid-task. This is a hard rule, not a preference, and it is not delegable.
+  - **What is undecided and needs Joshua's word:**
+    - **~100 files of vendored third-party code on `main` with no approval record, no provenance note** (where it came from, when, at whose approval), and no entry in `mcp-config.yaml` — which still carries only `unreal-mcp` at `127.0.0.1:8001`
+    - **It bootstraps a Python server via `uv`** — a new external toolchain dependency, pinned nowhere in this repo
+    - **It mutates MCP client configuration** for cursor, claude, codex, cline, antigravity, codebuddy, deepseek and claude_desktop. It rewrites developer tooling config, which is a machine-level change with reach well beyond this repo
+    - **It exposes action handlers over MCP** — scene mutation, script execution, test running. Any agent with editor access can therefore drive the Godot editor. This is a dev-plane surface and **must not become a path for runtime agent actions**; the capability ≠ authority boundary still applies to it (see `mcp-config.yaml`, whose existing wording draws exactly this line for `unreal-mcp`)
+    - **C#-variant compatibility for 4.7.2 mono is unverified** — its README states 4.5+/4.7+ recommended and says nothing about the C# build
+  - **Ratify or remove.** If ratified, record the approval and provenance, add the `mcp-config.yaml` entry with the dev-plane wording preserved, and pin 4.2.3. If not, remove it from `main` — which is the more honest default given it arrived with no record.
 
 ### Phase 1 — Capture golden fixtures from UE
 
@@ -374,6 +382,7 @@ Retarget decision: port `Asfdk` down to `net8.0` rather than bumping the Godot p
 - Do not change any UE simulation behavior after Phase 1.6 — UE is a frozen oracle
 - Do not change the wire contract (`nlt.fusion-unreal` 1.0 / `nlt.world-engine.v1`) — Fusion is an external consumer
 - Do not hardcode an LLM provider
+- **Do not install a third-party plugin.** Reserved to Joshua personally (2026-10-02). Not into the repository, not onto a machine, not via an MCP tool. Not delegable. If a task appears to need one, escalate and stop — do not add it as a convenience. `world-engine-godot/addons/godot_ai/` is the live case: already on `main` with no approval record, pending ratification under 0.8
 - Do not exceed **100 changed files** in a single PR. CodeRabbit skips review entirely above that limit, so an over-sized PR ships with no automated review at all — which is how a correctness fix can end up unverified. Put mechanical churn (untracking build caches, relocating binary assets, regenerating lockfiles) in its own PR. Enforced as a checklist item in `.github/PULL_REQUEST_TEMPLATE.md`. PR #65 hit 123 files and was skipped; accepted as a one-off with human review in its place
 
 ---

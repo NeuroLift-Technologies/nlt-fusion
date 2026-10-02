@@ -31,16 +31,19 @@ It is also **entirely untracked in git** (`?? world-engine-godot/`), unregistere
 | `Daylight.cs` | 52 | Time-of-day sample struct + function | Keep — drive from sim clock (4.4) |
 | `WorldGeometry.cs` | 54 | Mesh helpers | Keep |
 | `.godot/` | — | Build cache (dlls, pdbs, shader cache) | **Gitignore** before first commit (0.1) |
-| `addons/godot_ai/` | — | Third-party Godot↔MCP bridge (`hi-godot/godot-ai`, MIT) | Keep — **see 0.8** |
+| `addons/godot_ai/` | — | Third-party Godot↔MCP bridge v4.2.3 (`hi-godot/godot-ai`, MIT) — **already on `main`, unratified** | **See 0.8** — ratify or remove |
 
 ### `addons/godot_ai/` — newly added, needs governance decisions
 
 This is the Godot counterpart to the `unreal-mcp` entry in `../mcp-config.yaml`, so it closes the open item in 8.4/10.4. It was added outside the thread record and has not been reviewed here. Three things need decisions:
 
-- [ ] **0.8a** OTOI §4.4 guardrail — *no external integrations without Joshua's approval.* This addon is third-party and auto-starts an MCP server. Confirm approval and record it in `../docs/escalations/2026-10-02-godot-migration.md`.
-- [ ] **0.8b** It bootstraps a **Python server via `uv`** (`uv` is a new external toolchain dependency). Confirm it is acceptable for this repo, and that the dependency is pinned and reproducible.
-- [ ] **0.8c** Add an `mcp-config.yaml` entry and rewrite the UE-specific governance note. The existing note draws a deliberate boundary — *"development-plane interface… does NOT grant simulated agents runtime authority"* — and that boundary must survive the swap: editor automation is a dev plane; runtime agent actions must still pass through the sidecar and the ASFDK-C# gate. Keep that wording; change only the UE nouns.
-- [ ] **0.8d** Confirm it is compatible with Godot **4.7.2 mono + C#** before relying on it. Its README states 4.5+ / 4.7+ recommended but says nothing about the C# variant.
+> **⚠️ STANDING RULE (Joshua, 2026-10-02): third-party plugin installation is reserved to Joshua personally. No agent installs one** — not into the repository, not onto a machine, not via an MCP tool, not as a "helpful" addition mid-task. Hard rule, not a preference, and **not delegable**. If a task appears to need one, escalate and stop.
+>
+> This addon is therefore already a governance question, not a pending gate: **`addons/godot_ai/` is tracked on `main`.** Plugin version **4.2.3**, `hi-godot/godot-ai`, MIT, `LICENSE` present. What needs Joshua's word:
+- [ ] **0.8a** **Ratify or remove** the ~100 files of vendored third-party code now on `main`, with **no approval record, no provenance note** (where it came from, when, at whose approval), and **no `../mcp-config.yaml` entry** — which still carries only `unreal-mcp` at `127.0.0.1:8001`. Removal is the more honest default given it arrived with no record
+- [ ] **0.8b** It bootstraps a **Python server via `uv`** — a new external toolchain dependency, pinned nowhere in this repo. Confirm acceptable, and pin it
+- [ ] **0.8c** It **mutates MCP client configuration** for cursor, claude, codex, cline, antigravity, codebuddy, deepseek and claude_desktop — a machine-level change to developer tooling, with reach well beyond this repo. It also **exposes action handlers over MCP** (scene mutation, script execution, test running), so any agent with editor access can drive the Godot editor. If ratified, add the `../mcp-config.yaml` entry and rewrite the UE-specific governance note, **keeping the existing boundary verbatim**: *"development-plane interface… does NOT grant simulated agents runtime authority."* Editor automation is a dev plane; runtime agent actions must still pass through the sidecar and the ASFDK-C# gate. Change only the UE nouns, never the wording
+- [ ] **0.8d** Confirm it is compatible with Godot **4.7.2 mono + C#** before relying on it. Its README states 4.5+ / 4.7+ recommended but says nothing about the C# variant
 
 ---
 
@@ -419,6 +422,7 @@ API surface and the UE seam mapping are in 8.1. `CreateFoundation.Create` is asy
 - Do not change any UE simulation behavior after Phase 1.6 — UE is a frozen oracle
 - Do not change the wire contract (`nlt.fusion-unreal` 1.0 / `nlt.world-engine.v1`) — Fusion is an external consumer
 - Do not hardcode an LLM provider
+- **Do not install a third-party plugin.** Reserved to Joshua personally (2026-10-02). Not into the repository, not onto a machine, not via an MCP tool. Not delegable. If a task appears to need one, escalate and stop — do not add it as a convenience. `addons/godot_ai/` is the live case: already on `main` with no approval record, pending ratification under 0.8
 - Do not exceed **100 changed files** in a single PR. CodeRabbit skips review entirely above that limit, so an over-sized PR ships with no automated review at all — which is how a correctness fix can end up unverified. Put mechanical churn (untracking build caches, relocating binary assets, regenerating lockfiles) in its own PR. Enforced as a checklist item in `.github/PULL_REQUEST_TEMPLATE.md`. PR #65 hit 123 files and was skipped; accepted as a one-off with human review in its place
 
 ---
