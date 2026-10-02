@@ -9,7 +9,7 @@
 ## Active Threads
 
 ### 🔀 MIGRATE-001 — UE 5.8 → Godot 4.7.2 engine migration
-- **Status:** open (Phase 0 in progress; Phase 1 capture infrastructure merged)
+- **Status:** open (Phase 1 **blocked** — awaiting escalation decision on golden-fixture capture; see below)
 - **Owner:** Kilo · **Joined by:** Hermes (Phase 1)
 - **Started:** 2026-10-02
 - **Last updated:** 2026-10-02
@@ -21,6 +21,14 @@
   - Phase 1.1–1.2 merged in [#61](https://github.com/NeuroLift-Technologies/nlt-world-engine/pull/61) (`ca98e54f`…`248874ea`): `NLTFixtureEmitterSubsystem`, `BuildCanonicalStateTextV2` / `ComputeStateHashV2` (bit-exact IEEE-754 hex, signed-zero and NaN canonicalisation), console command + editor/PIE capture tests, `WITH_DEV_AUTOMATION_TESTS` on both targets. 8/8 `NLT.Simulation` + 4/4 `NLT.VisualLOD.Policy` green.
   - `asfdk-csharp` cloned to a sibling repo and retargeted `net10.0` → `net8.0` (PR [#2](https://github.com/NeuroLift-Technologies/asfdk-csharp/pull/2)); library builds clean, 14/14 xUnit tests pass on net8.0.
   - Four interior level FBX exports obtained from UE (`Workplace`, `Personal`, `Social`, `Academic`) and relocated to `world-engine-godot/assets/levels/`. `OpenWorld_Level` cannot be FBX-exported (World Partition + Landscape + runtime generation) and is rebuilt procedurally instead.
+  - **Plan 1.7a complete** (`a0a41d2`): `UNLTFixtureEmitterSubsystem::ValidateNonDegeneracy` — a pure, headlessly-testable assertion over the three per-tick series, with a per-tick agent position trace so "did anything move" is answerable without re-parsing canonical text. Six `NLT.FixtureCapture.NonDegeneracy.*` cases, 6/6 passing. `PROVENANCE.md` now carries a PASS/FAIL verdict.
+  - **Three pre-existing crash defects fixed**, each of which independently prevented any capture from completing: a fragment view read before `ForEachEntityChunk` binds it (`b2c487a`, from `d590bcb` 2026-09-25); `EndCapture` silently no-op'ing once the tick cap flips `bCapturing`, so 600 ticks were collected and discarded (`b7cb482`); and the PIE capture test requiring a human to press Play (`7abedc7`). Capture now runs end-to-end headlessly and writes all six files.
+- **⛔ Blocker (2026-10-02):** with those fixed, the capture still produces a **degenerate** fixture — 600 tick blocks containing **1 unique**, 0 events, no agent movement. Mass never ticks: `LogNLTAgentSpawner: Warning: DespawnAllAgents: MassEntity not initialized`. This is **SIM-001**, deferred by the plan to Phase 6.6.
+  - The 1.7 assertion detects this automatically and reports `Verdict: FAIL`, so the failure is now mechanical rather than a matter of inspection.
+  - Plan items **1.5** and **1.7b** cannot complete. Fixing Mass requires changing UE simulation behaviour, which plan §10 forbids after 1.6 ("UE is a frozen oracle") — the same circularity the freeze exists to prevent.
+  - Escalation: [`docs/escalations/2026-10-02-ue-cannot-produce-golden-fixture.md`](escalations/2026-10-02-ue-cannot-produce-golden-fixture.md) — **awaiting Joshua's decision**. Recommendation: hold the freeze, land the crash fixes, amend decision 7 to state that Tier 2 is unavailable and what replaces it.
+  - **Scope note:** Tier 2 is the gate that retires UE, and decision 7 defines validation in terms of it. That assumption does not hold, so this affects Phase 6 and Phase 10 planning, not only 1.5/1.7b.
+  - **Do not commit** the existing `WorldEngine/Saved/Fixtures/seed42/` capture — it is gitignored and degenerate.
   - Fixed `double`→`float` narrowing of `Agent.Position` in `BuildCanonicalStateTextV2` — `FVector` is `FVector3d` under UE5 LWC, so v2 was truncating a 53-bit mantissa to 24 bits inside the bit-exact encoding.
   - Untracked 119 committed Godot build-cache files and relocated the level FBX assets.
 - **Blockers / human-owned:**
