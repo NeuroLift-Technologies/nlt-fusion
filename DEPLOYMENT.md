@@ -1,5 +1,9 @@
 # UE 5.8 Deployment — NeuroLift World Engine
 
+> **This document covers the UE 5.8 reference implementation, which is frozen.** The authoritative simulation is moving to **Godot 4.7.2 (C#)** under thread `MIGRATE-001`. See [`world-engine-godot/MIGRATION-PLAN.md`](world-engine-godot/MIGRATION-PLAN.md) for the target, and [`docs/engine-reference/godot/VERSION.md`](docs/engine-reference/godot/VERSION.md) for the pinned toolchain (Godot 4.7.2 .NET mono + .NET 8).
+>
+> **Do not change UE simulation behaviour** (plan item 1.6). Keep these UE build instructions working — UE is the oracle the Godot port is validated against.
+
 ## The Vision
 
 **NLT World Engine is an embodied multi-agent simulation where machine learning models inhabit a persistent world, control their characters, interact with environments and other agents, and transition between meaningful life scenarios.**
@@ -10,7 +14,17 @@
 
 ## TL;DR
 
-UE 5.8 Editor or a rendered standalone game is the primary build, training, and spectator path. The Babylon.js web viewer can observe the same UE runtime through its WebSocket/HTTP APIs. A headless `WorldEngineServer` is optional later infrastructure for running the same UE physical world without a rendered viewport; it is not the primary training architecture.
+A rendered simulation on the developer's machine is the primary build, training, and spectator path — currently UE 5.8, targeting the Godot 4.7.2 desktop app. A headless server target is optional later infrastructure for running the same physical world without a rendered viewport; it is not the primary training architecture.
+
+**No spectator viewer currently exists.** The Babylon.js web viewer (`_archive/world-engine-v2/`) was archived and contained no network code at all; `Content/Web/` holds a 2D canvas viewer that was never wired up. In the target architecture the Godot desktop app is the spectator, with a Python sidecar owning HTTP 8765 and WebSocket 8766 — Godot ships no server of its own.
+
+**Note on Godot web export:** Godot 4 does **not** support C# web export. A browser spectator would therefore be a separate project talking to the sidecar, not a Godot export.
+
+---
+
+## Archived: Babylon.js viewer deployment
+
+The Vercel/static-site instructions later in this document targeted `world-engine-v2/`, which now lives under `_archive/`. **They are retained for historical reference only and will not work from the current path.**
 
 ---
 
@@ -224,12 +238,14 @@ for the externally visible form.
 
 ---
 
-## Web Viewer Deployment
+## Web Viewer Deployment — ARCHIVED, retained for history
 
-The Babylon.js viewer (`world-engine-v2/`) is a static site:
+> ⚠️ **Superseded.** The Babylon.js viewer now lives at `_archive/world-engine-v2/` and is not part of the build. Its logic layer contains **no `fetch`, no `WebSocket`, no `XMLHttpRequest`** — it never connected to the simulation. This section is preserved for historical reference only; the commands below will not work as written. There is no spectator viewer today.
+
+The Babylon.js viewer was a static site:
 
 ```bash
-cd world-engine-v2
+cd _archive/world-engine-v2
 npm install
 npm run build    # Outputs to dist/
 ```

@@ -1,11 +1,13 @@
 # Training README — PPO for Avatar/Aide Pairs
 
-> **Status:** ✅ Complete. Training infrastructure is live in both UE5 and Python.
+> **Status:** ✅ Infrastructure exists in both UE5 and Python. **The PPO trainer has never been verified end-to-end** (`TRAIN-002`), and RL is deferred out of the migration gate.
 > `train_nlt.py` exists in `neurolift-ai-fusion/src/simulation/training/`.
+>
+> **Godot note:** the Godot port keeps the *training-environment surfaces* in scope (`ITrainingEnvironment`: reward, completion, episode reset) because a simulation you cannot learn in is not a training environment — but the trainer itself lands in Phase D1, out-of-process in Python.
 
 **NLT World Engine is an embodied multi-agent simulation where machine learning models inhabit a persistent world, control their characters, interact with environments and other agents, and transition between meaningful life scenarios.**
 
-> **Core principle: Fusion owns semantic reality; Unreal owns physical reality.**
+> **Core principle: Fusion owns semantic reality; the world engine owns physical reality.**
 
 ## How Training Works
 
