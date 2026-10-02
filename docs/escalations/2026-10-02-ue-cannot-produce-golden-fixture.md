@@ -6,6 +6,7 @@
 **OTOI Version:** ORG-DEV-OTOI-1.0.3
 **Escalation Target:** Joshua W. Dorsey, Sr.
 **Priority:** high
+**Tracking issue:** [#67](https://github.com/NeuroLift-Technologies/nlt-world-engine/issues/67)
 
 ---
 
