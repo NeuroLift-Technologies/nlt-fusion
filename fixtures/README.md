@@ -91,8 +91,26 @@ item 1.7 signals:
 
 The captures are **live** — the simulation ran, the clock advanced, and agents
 moved and re-decided — and the position trace confirms it. But the event stream
-is empty because `UNLTEventBus` is a 256-slot ring buffer with **zero writers**
-anywhere in the module. Nothing publishes simulation events to it.
+is empty because **the producer chain is never driven.**
+
+`UNLTEventBus` does have writers: `UNLTWorkplaceEnvironmentSubsystem` raises
+`EnvLightingChanged`, `EnvRoomStateChanged` (`RefreshRooms`) and
+`EnvTimeOfDayChanged`, `EnvLightingChanged` (`PublishTimeOfDay`). None of it
+runs. The chain is:
+
+- `UNLTSimulationClockSubsystem::AdvanceTick()` is the only broadcaster of
+  `OnAuthoritativeTick`.
+- Its **only** caller is `UNLTWorkplaceEnvironmentSubsystem::StepEnvironmentSimulation`.
+- `StepEnvironmentSimulation` has **zero** call sites. Its own header documents
+  *"Each frame while running, call `StepEnvironmentSimulation(1)`"* — no game
+  mode does.
+
+So the workplace subsystem never ticks, and the stream stays empty. This is the
+**same defect class as SIM-001** — documented behaviour that is not wired up —
+so it belongs inside the 1.6 carve-out rather than being scoped as new
+behaviour. Corrected 2026-10-02; this file previously claimed the ring buffer
+had "zero writers", which was wrong and came from a grep that missed
+`RaiseEnvironmentEvent`.
 
 Two consequences:
 
