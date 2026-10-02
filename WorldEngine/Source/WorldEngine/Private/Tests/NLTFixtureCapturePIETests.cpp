@@ -16,11 +16,28 @@
 class FWaitForTicksAndEndCaptureCommand : public IAutomationLatentCommand
 {
 public:
-	FWaitForTicksAndEndCaptureCommand(int32 InTargetTicks, UNLTScenarioManagerSubsystem* InScenarioManager, UNLTFixtureEmitterSubsystem* InFixtureEmitter)
-		: TargetTicks(InTargetTicks), ScenarioManager(InScenarioManager), FixtureEmitter(InFixtureEmitter) {}
+	FWaitForTicksAndEndCaptureCommand(int32 InTargetTicks, TWeakObjectPtr<UNLTScenarioManagerSubsystem> InScenarioManager, TWeakObjectPtr<UNLTFixtureEmitterSubsystem> InFixtureEmitter)
+		: TargetTicks(InTargetTicks), ScenarioManagerWeak(InScenarioManager), FixtureEmitterWeak(InFixtureEmitter), ElapsedTime(0.0f), TimeoutSeconds(300.0f) {}
 
 	virtual bool Update() override
 	{
+		ElapsedTime += FApp::GetDeltaTime();
+
+		if (ElapsedTime >= TimeoutSeconds)
+		{
+			UE_LOG(LogNLTScenarioManager, Error, TEXT("FWaitForTicksAndEndCaptureCommand: timed out after %.0f seconds"), TimeoutSeconds);
+			return true;
+		}
+
+		UNLTScenarioManagerSubsystem* ScenarioManager = ScenarioManagerWeak.Get();
+		UNLTFixtureEmitterSubsystem* FixtureEmitter = FixtureEmitterWeak.Get();
+
+		if (!ScenarioManager || !FixtureEmitter)
+		{
+			UE_LOG(LogNLTScenarioManager, Error, TEXT("FWaitForTicksAndEndCaptureCommand: subsystem became invalid"));
+			return true;
+		}
+
 		if (ScenarioManager->GetScenarioTick() >= TargetTicks)
 		{
 			FixtureEmitter->EndCapture();
@@ -31,8 +48,10 @@ public:
 
 private:
 	int32 TargetTicks;
-	UNLTScenarioManagerSubsystem* ScenarioManager;
-	UNLTFixtureEmitterSubsystem* FixtureEmitter;
+	TWeakObjectPtr<UNLTScenarioManagerSubsystem> ScenarioManagerWeak;
+	TWeakObjectPtr<UNLTFixtureEmitterSubsystem> FixtureEmitterWeak;
+	float ElapsedTime;
+	float TimeoutSeconds;
 };
 
 /**
@@ -122,7 +141,7 @@ bool FNLTFixtureCapturePIETest::RunTest(const FString& Parameters)
 	FixtureEmitter->BeginCapture(Seed, NumTicks);
 
 	// Use latent command to wait for N ticks, then end capture
-	ADD_LATENT_AUTOMATION_COMMAND(FWaitForTicksAndEndCaptureCommand(NumTicks, ScenarioManager, FixtureEmitter));
+	ADD_LATENT_AUTOMATION_COMMAND(FWaitForTicksAndEndCaptureCommand(NumTicks, TWeakObjectPtr<UNLTScenarioManagerSubsystem>(ScenarioManager), TWeakObjectPtr<UNLTFixtureEmitterSubsystem>(FixtureEmitter)));
 
 	return true;
 }

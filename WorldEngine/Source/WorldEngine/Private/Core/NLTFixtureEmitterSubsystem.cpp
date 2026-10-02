@@ -43,6 +43,10 @@ void UNLTFixtureEmitterSubsystem::BeginCapture(int32 InSeed, int32 InMaxTicks)
 	PerTickRngState.Reset();
 	PerTickEventStream.Reset();
 	PerTickStateHash.Reset();
+	FinalCanonicalState.Reset();
+	FinalRngState.Reset();
+	FinalStateHash.Reset();
+	FinalTick = 0;
 
 	// Build output directory: Saved/Fixtures/seed{N}/
 	OutputDirectory = FPaths::ProjectSavedDir() / TEXT("Fixtures") / FString::Printf(TEXT("seed%d"), CaptureSeed);
@@ -165,7 +169,7 @@ void UNLTFixtureEmitterSubsystem::CaptureTick()
 		RNG.InitialSeed, RNG.Seed, RNG.Calls);
 	PerTickRngState.Add(RngStateStr);
 
-	// 3. Ordered event stream: get all events from the ring buffer
+	// 3. Ordered event stream: get events from the ring buffer matching current tick
 	UNLTEventBus* EventBus = World->GetSubsystem<UNLTEventBus>();
 	if (EventBus)
 	{
@@ -173,17 +177,21 @@ void UNLTFixtureEmitterSubsystem::CaptureTick()
 		EventBus->GetRecentEvents(256, RecentEvents);
 
 		// Events come newest-first from GetRecentEvents; reverse for chronological order
+		// Only include events matching the current simulation tick
 		FString EventStreamStr;
 		for (int32 i = RecentEvents.Num() - 1; i >= 0; --i)
 		{
 			const FNLTSimulationEvent& Ev = RecentEvents[i];
-			EventStreamStr += FString::Printf(TEXT("%d;%s;%s;%s;%s;%.9g\n"),
-				Ev.Tick,
-				Ev.EventType == ENLTSimulationEventType::None ? TEXT("None") : *UEnum::GetValueAsString(Ev.EventType),
-				*Ev.AgentId.ToString(),
-				*Ev.Description,
-				*Ev.TargetId.ToString(),
-				Ev.Value);
+			if (Ev.Tick == State.SimulationTick)
+			{
+				EventStreamStr += FString::Printf(TEXT("%d;%s;%s;%s;%s;%.9g\n"),
+					Ev.Tick,
+					Ev.EventType == ENLTSimulationEventType::None ? TEXT("None") : *UEnum::GetValueAsString(Ev.EventType),
+					*Ev.AgentId.ToString(),
+					*Ev.Description,
+					*Ev.TargetId.ToString(),
+					Ev.Value);
+			}
 		}
 		PerTickEventStream.Add(EventStreamStr);
 	}
@@ -196,16 +204,19 @@ void UNLTFixtureEmitterSubsystem::CaptureTick()
 	const FString StateHash = FNLTDeterministicStateHash::ComputeStateHashV2(MassState, &RNG);
 	PerTickStateHash.Add(StateHash);
 
-	// Store final state
-	if (CurrentCaptureTick == CaptureMaxTicks - 1)
-	{
-		FinalCanonicalState = CanonicalV2;
-		FinalRngState = RngStateStr;
-		FinalStateHash = StateHash;
-		FinalTick = CurrentCaptureTick;
-	}
+	// Store final state (updated on every tick, including early termination)
+	FinalCanonicalState = CanonicalV2;
+	FinalRngState = RngStateStr;
+	FinalStateHash = StateHash;
+	FinalTick = CurrentCaptureTick;
 
 	CurrentCaptureTick++;
+
+	// Stop collecting after CaptureMaxTicks is reached
+	if (CurrentCaptureTick >= CaptureMaxTicks)
+	{
+		bCapturing = false;
+	}
 }
 
 void UNLTFixtureEmitterSubsystem::WriteFixturesToDisk()

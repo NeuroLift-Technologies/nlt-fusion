@@ -9,6 +9,9 @@ public class WorldEngineTarget : TargetRules
         IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
         bOverrideBuildEnvironment = true;
         ExtraModuleNames.AddRange(new string[] { "WorldEngine", "UnrealGame", "Launch" });
-        GlobalDefinitions.Add("WITH_DEV_AUTOMATION_TESTS=1");
+        if (Target.Configuration != UnrealTargetConfiguration.Shipping)
+        {
+            GlobalDefinitions.Add("WITH_DEV_AUTOMATION_TESTS=1");
+        }
     }
 }

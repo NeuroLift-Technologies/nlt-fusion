@@ -52,7 +52,8 @@ void UNLTScenarioManagerSubsystem::Initialize(FSubsystemCollectionBase& Collecti
     // Cache the soundscape subsystem for audio control
     SoundscapeSubsystem = GetWorld()->GetSubsystem<UNLTSoundscapeSubsystem>();
 
-    // Cache the fixture emitter subsystem
+    // Cache the fixture emitter subsystem via dependency initialization
+    Collection.InitializeDependency(UNLTFixtureEmitterSubsystem::StaticClass());
     FixtureEmitter = GetWorld()->GetSubsystem<UNLTFixtureEmitterSubsystem>();
 }
 
@@ -330,6 +331,11 @@ static FAutoConsoleCommandWithWorldAndArgs GCmdStartFixtureCapture(
     TEXT("Start fixture capture. Usage: NLT.FixtureCapture.Start <seed> <maxTicks> [numAgents]"),
     FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>& Args, UWorld* World)
     {
+        if (!World)
+        {
+            UE_LOG(LogNLTScenarioManager, Warning, TEXT("NLT.FixtureCapture.Start: no world available"));
+            return;
+        }
         if (Args.Num() < 2)
         {
             UE_LOG(LogNLTScenarioManager, Warning, TEXT("Usage: NLT.FixtureCapture.Start <seed> <maxTicks> [numAgents]"));
@@ -359,12 +365,20 @@ static FAutoConsoleCommandWithWorldAndArgs GCmdStartFixtureCapture(
     })
 );
 
-static FAutoConsoleCommand GCmdEndFixtureCapture(
+static FAutoConsoleCommandWithWorld GCmdEndFixtureCapture(
     TEXT("NLT.FixtureCapture.End"),
     TEXT("End fixture capture and write to disk"),
-    FConsoleCommandDelegate::CreateLambda([]()
+    FConsoleCommandWithWorldDelegate::CreateLambda([](UWorld* World)
     {
-        // This is a no-op placeholder; fixture capture ends automatically when maxTicks is reached
-        UE_LOG(LogNLTScenarioManager, Log, TEXT("Fixture capture will end automatically when maxTicks is reached"));
+        if (!World)
+        {
+            UE_LOG(LogNLTScenarioManager, Warning, TEXT("NLT.FixtureCapture.End: no world available"));
+            return;
+        }
+        if (UNLTScenarioManagerSubsystem* ScenarioManager = World->GetSubsystem<UNLTScenarioManagerSubsystem>())
+        {
+            ScenarioManager->EndFixtureCapture();
+            UE_LOG(LogNLTScenarioManager, Log, TEXT("Fixture capture ended via console command"));
+        }
     })
 );

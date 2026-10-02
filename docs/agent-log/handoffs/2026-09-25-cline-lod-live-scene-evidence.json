@@ -40,14 +40,14 @@
     ],
     "next_agent_notes": "Build and test both require ASFDK_ROOT=D:\\nlt-repos\\asfdk-cplus and UnrealEditor-Cmd.exe -DisablePython. The authoritative workspace is D:\\nlt-repos\\nlt-world-engine; the C:\\Users\\joshd\\Documents\\Unreal Projects\\WorldEngine tree is a stale copy with no Visual/ directory and must not be edited. The build exceeds a 30s command window, so it was run via a detached scheduled task that writes a completion marker. Evidence: WorldEngine/Saved/TestReports/lod-live-scene/summary.txt (9 succeeded, 0 failed, 0 errors).",
     "files_modified": [
-      "WorldEngine/Source/WorldEngine/Private/Tests/NLTVisualLODLiveSceneTests.cpp",
+      "WorldEngine/Source/WorldEngine/Private/Tests/NLTVisualLODLiveSceneTests.cpp (renamed to .disabled in PR tree — tests not reproducible from final PR tree)",
       "docs/active-threads.md",
       "README.md",
       "docs/agent-log/handoffs/2026-09-25-cline-lod-live-scene-evidence.json"
     ],
     "tests_run": [
       "WorldEngineEditor Win64 Development UBT build: Result: Succeeded with ASFDK_ROOT=D:\\nlt-repos\\asfdk-cplus.",
-      "UnrealEditor-Cmd.exe -DisablePython -ExecCmds=\"Automation RunTests NLT.VisualLOD; Quit\" -unattended -nopause -nosplash -nullrhi: 9 succeeded, 0 failed, 0 errors (5 live-scene + 4 pre-existing policy)."
+      "UnrealEditor-Cmd.exe -DisablePython -ExecCmds=\"Automation RunTests NLT.VisualLOD; Quit\" -unattended -nopause -nosplash -nullrhi: 9 succeeded, 0 failed, 0 errors (5 live-scene + 4 pre-existing policy). NOTE: The 5 live-scene tests ran from an enabled workspace with NLTVisualLODLiveSceneTests.cpp present. The final PR tree contains only NLTVisualLODLiveSceneTests.cpp.disabled, so these tests are NOT reproducible from the PR branch as-is."
     ],
     "tests_passing": true,
     "pr_url": null

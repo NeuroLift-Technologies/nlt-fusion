@@ -113,6 +113,14 @@ bool FNLTFixtureCaptureTest::RunTest(const FString& Parameters)
 	const FString OutputDir = FixtureEmitter->GetOutputDirectory();
 	TestTrue(TEXT("Output directory is set"), !OutputDir.IsEmpty());
 
+	// Verify scenario tick count is greater than zero
+	TestTrue(TEXT("Scenario tick count is greater than zero"), ScenarioManager->GetScenarioTick() > 0);
+
+	// Verify state_hash.txt exists in the output directory
+	const FString StateHashPath = OutputDir / TEXT("state_hash.txt");
+	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+	TestTrue(TEXT("state_hash.txt exists"), PlatformFile.FileExists(*StateHashPath));
+
 	// Verify final state hash is non-zero
 	TestTrue(TEXT("Final state hash is non-zero"), ScenarioManager->ComputeAgentStateHash() != 0);
 

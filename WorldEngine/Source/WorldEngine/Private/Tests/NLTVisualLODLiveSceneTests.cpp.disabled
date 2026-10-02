@@ -607,20 +607,33 @@ bool FNLTVisualLODLiveMassResidentTransitionsTest::RunTest(const FString& Parame
 	}
 
 	// Visual-only contract: the visualization pass must not rewrite simulation
-	// fragments. Move the far resident's own location fragment back inside the
-	// visible bands, exactly as a simulation system would, and confirm all three
-	// are then instanced. The entity is never added or removed by the visual
-	// pass itself, which is what the constant instance-count math above shows.
+	// fragments. Retain the far resident's handle, verify its location fragment
+	// is unchanged after the first tick, then move that same fragment into the
+	// visible bands and confirm it is instanced. The entity is never added or
+	// removed by the visual pass itself.
 	const FMassEntityHandle FarHandle = SpawnMassResident(
-		EntityManager, FName(TEXT("LOD_Live_BroughtBack")), FVector(7000.0f, 0.0f, 0.0f));
+		EntityManager, FName(TEXT("LOD_Live_Far")), FVector(7000.0f, 0.0f, 0.0f));
 	if (FNLTAgentLocationFragment* FarLocation =
 		EntityManager.GetFragmentDataPtr<FNLTAgentLocationFragment>(FarHandle))
 	{
+		// After first tick: far resident's location must be unchanged
+		TestEqual(TEXT("Far resident location unchanged after first tick"),
+			FarLocation->Position, FVector(7000.0f, 0.0f, 0.0f));
+
+		// Move the same fragment into the visible bands
 		FarLocation->Position = FVector(1500.0f, 0.0f, 0.0f);
 	}
 	Visualizer->Tick(1.0f / 60.0f);
 	TestEqual(TEXT("A resident returning to the visible bands is instanced again"),
 		HISM->GetInstanceCount(), 3);
+
+	// Verify location fragments remain unchanged by the visual pass
+	if (FNLTAgentLocationFragment* FarLocation =
+		EntityManager.GetFragmentDataPtr<FNLTAgentLocationFragment>(FarHandle))
+	{
+		TestEqual(TEXT("Far resident location unchanged by visual pass"),
+			FarLocation->Position, FVector(1500.0f, 0.0f, 0.0f));
+	}
 	return true;
 }
 

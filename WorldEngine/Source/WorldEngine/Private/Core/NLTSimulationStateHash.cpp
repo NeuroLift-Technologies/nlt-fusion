@@ -1,6 +1,7 @@
 #include "Core/NLTSimulationStateHash.h"
 #include "Containers/StringConv.h"
 #include "Hash/Blake3.h"
+#include <limits>
 
 namespace
 {
@@ -41,6 +42,11 @@ namespace
 		{
 			Value = 0.0f;
 		}
+		// Canonicalize NaN: all NaN bit patterns map to a single quiet-NaN value
+		if (FMath::IsNaN(Value))
+		{
+			Value = std::numeric_limits<float>::quiet_NaN();
+		}
 		uint32 Bits = 0;
 		FMemory::Memcpy(&Bits, &Value, sizeof(uint32));
 		Output += FString::Printf(TEXT("%08x;"), Bits);
@@ -51,6 +57,11 @@ namespace
 		if (Value == 0.0)
 		{
 			Value = 0.0;
+		}
+		// Canonicalize NaN: all NaN bit patterns map to a single quiet-NaN value
+		if (FMath::IsNaN(Value))
+		{
+			Value = std::numeric_limits<double>::quiet_NaN();
 		}
 		uint64 Bits = 0;
 		FMemory::Memcpy(&Bits, &Value, sizeof(uint64));
