@@ -6,14 +6,16 @@
 
 ## You Are Here
 
-You are a coding agent operating within the **NLT World Engine** — the UE 5.8 authoritative simulation environment where AI Avatars (with ADHD traits) and AI Aides live, perceive, act, and learn.
+You are a coding agent operating within the **NLT World Engine** — the authoritative simulation environment where AI Avatars (with ADHD traits) and AI Aides live, perceive, act, and learn.
+
+> **Engine migration in progress (thread `MIGRATE-001`).** The authoritative simulation is moving from UE 5.8 to Godot 4.7.2 (C#). UE is a **frozen behavioural oracle** until the Godot port passes conformance; do not change UE simulation behaviour. See `world-engine-godot/MIGRATION-PLAN.md` before making changes that span the two.
 
 **Mandatory reading order:**
 1. `NLT-DEV-OTOI.md` — Full org-level coding agent contract (this repo, root level)
 2. `CLAUDE.md` — Project-specific context (this repo)
 3. `docs/active-threads.md` — Current work state (this repo, if present)
 4. `README.md` — Full project documentation
-5. `ARCHITECTURE.md` — UE 5.8 architecture and subsystem reference
+5. `ARCHITECTURE.md` — UE 5.8 subsystem reference (see migration banner)
 
 **Final authority:** Joshua W. Dorsey, Sr. Escalate. Do not guess.
 
@@ -25,7 +27,9 @@ You are a coding agent operating within the **NLT World Engine** — the UE 5.8 
 
 **An AI habitat — a virtual world where AI agents live, perceive, act, and learn.** The world is rendered with realistic graphics: procedural terrain, water, sky, vegetation, and settlement. AI residents walk through this world with articulated bodies, animated walk cycles, and name labels. Humans watch through a spectator viewer.
 
-> **Core principle: Fusion owns semantic reality; Unreal owns physical reality.**
+> **Core principle: Fusion owns semantic reality; the world engine owns physical reality.**
+>
+> The physical substrate is Godot 4.7.2 (C#). The engine is an implementation detail of the physical layer and may change by Joshua's decision under OTOI §4.4; the boundary between Fusion and the world engine does not.
 
 ---
 
@@ -85,9 +89,9 @@ These are **non-negotiable**. No exceptions without explicit Joshua approval:
 ```
 nlt-world-engine/
 ├── README.md                              ← Full project docs (start here)
-├── ARCHITECTURE.md                        ← UE 5.8 architecture + subsystems
+├── ARCHITECTURE.md                        ← UE 5.8 subsystem reference (see migration banner)
 ├── ONBOARDING.md                          ← 3-minute onboarding
-├── DEPLOYMENT.md                          ← UE 5.8 build + deployment
+├── DEPLOYMENT.md                          ← UE 5.8 build + deployment (see migration banner)
 ├── NLT-DEV-OTOI.md                        ← Canonical org-level agent contract
 ├── AGENTS.md                              ← This file
 ├── CLAUDE.md                              ← Claude Code repo instructions
@@ -98,37 +102,47 @@ nlt-world-engine/
 ├── pr_body.md                             ← PR body template
 ├── nltotoi.json                           ← Discovery manifest
 │
-├── WorldEngine/                           ← UE 5.8 authoritative simulation (C++)
-│   ├── Source/WorldEngine/               ← C++ module (16 subsystems)
+├── WorldEngine/                           ← UE 5.8 reference implementation — FROZEN behavioural
+│   │                                         oracle for MIGRATE-001; do not change simulation
+│   │                                         behaviour (plan item 1.6)
+│   ├── Source/WorldEngine/               ← C++ module (129 files, ~20,700 LOC)
 │   ├── Content/                          ← UE assets (maps, scenarios, materials)
 │   ├── Scripts/                          ← Python automation (QA, VFX, scenarios)
 │   ├── Config/                           ← DefaultEngine/Game/Input.ini
 │   ├── Skills/                           ← Skill definitions
 │   └── docs/architecture/                ← Architecture documentation
 │
-├── world-engine-v2/                       ← Babylon.js web viewer (TypeScript, Vite)
-├── world-engine/                          ← Python ECS engine (reference, not authoritative)
-├── openworld-engine/                      ← Open-world exploration variant
+├── world-engine-godot/                    ← Godot 4.7.2 (C#) — TARGET authoritative sim
+│   ├── *.cs                              ← Procedural world prototype (rendering only)
+│   ├── assets/levels/                    ← Interior level geometry imported via ufbx FBX
+│   ├── addons/godot_ai/                  ← Third-party Godot↔MCP bridge (external, unapproved)
+│   └── MIGRATION-PLAN.md                 ← Migration plan, mirrored from .kilo/plans/
+│
+├── _archive/                              ← Retired components (see file-structure.md)
+│   ├── world-engine-v2/                  ← Babylon.js viewer (superseded, archived)
+│   └── world-engine/                     ← Python ECS engine (reference, not authoritative)
+│
 ├── agents/                                ← Agent profiles and configurations
 ├── SOPs/                                  ← Standard operating procedures
 ├── templates/                             ← Registration, handoff, escalation templates
 ├── .nltotoi/                              ← Governance validation namespace
-└── .github/workflows/                     ← CI (governance + v2 build)
+└── .github/workflows/                     ← CI (governance validation only)
 ```
 
 ---
 
 ## Codebase Overview
 
-This repo has **three runnable components**:
+This repo has **two runnable components**, in a migration state:
 
-| Component | Location | How to run |
-|---|---|---|
-| **UE 5.8 authoritative simulation** | `WorldEngine/` | `make WorldEngineEditor` or `make WorldEngineServer` (headless) |
-| **Babylon.js web viewer** | `world-engine-v2/` | `cd world-engine-v2 && npm install && npm run dev` |
-| **Python ECS engine (reference)** | `world-engine/` | `cd world-engine && python3 demo.py` |
+| Component | Location | How to run | Status |
+|---|---|---|---|
+| **UE 5.8 reference simulation** | `WorldEngine/` | `make WorldEngineEditor` | **FROZEN** — behavioural oracle for MIGRATE-001. Still the only runnable authoritative sim until the Godot port passes conformance. Do not change simulation behaviour (plan item 1.6) |
+| **Godot 4.7.2 target simulation** | `world-engine-godot/` | Open `project.godot` in Godot 4.7.2 **.NET (mono)** | **In progress** — rendering only. No agents, determinism, protocol, or governance yet (plan Phase 0-7) |
 
-The UE 5.8 simulation is the **driving engine** — all authoritative state lives there. The Babylon.js viewer connects via WebSocket. The Python engine is a reference implementation for data pipeline use.
+The Babylon.js viewer (`world-engine-v2/`) and Python ECS engine (`world-engine/`) are **archived** under `_archive/`. Neither connected to the live simulation anyway — the viewer's logic layer contains no `fetch`, `WebSocket`, or `XMLHttpRequest` at all.
+
+All authoritative state lives in the authoritative simulation engine. That engine is moving from UE 5.8 to Godot 4.7.2 under thread `MIGRATE-001`; see `world-engine-godot/MIGRATION-PLAN.md`.
 
 ---
 

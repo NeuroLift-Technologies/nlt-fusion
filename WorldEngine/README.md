@@ -1,13 +1,15 @@
-# NLT World Engine — UE 5.8 Project
+# NLT World Engine — UE 5.8 Project (frozen reference)
+
+> **⚠️ FROZEN.** This UE 5.8 project is the **behavioural oracle** for thread `MIGRATE-001`. The authoritative simulation is moving to **Godot 4.7.2 (C#)** — see [`../world-engine-godot/MIGRATION-PLAN.md`](../world-engine-godot/MIGRATION-PLAN.md). **Do not change UE simulation behaviour** (plan item 1.6). Keep it building and runnable: it is what the port is validated against.
 
 **NLT World Engine is an embodied multi-agent simulation where machine learning models inhabit a persistent world, control their characters, interact with environments and other agents, and transition between meaningful life scenarios.**
 
 **An AI habitat — a virtual world where AI agents live, perceive, act, and learn.** The world is rendered with realistic graphics: procedural terrain, water, sky, vegetation, and settlement. AI residents walk through this world with articulated bodies, animated walk cycles, and name labels. Humans watch through a spectator viewer.
 
-> **Core principle: Fusion owns semantic reality; Unreal owns physical reality.**
+> **Core principle: Fusion owns semantic reality; the world engine owns physical reality.**
 
 The Unreal Engine 5.8 project for the NLT simulation runtime. This is the
-authoritative physical layer: levels, doors, avatars, the SimBody pawn, and the
+current physical layer: levels, doors, avatars, the SimBody pawn, and the
 local HTTP/MCP control surface that agent runtimes (LLMs, Learning Agents train)
 talk to. See the [root README](../README.md) for the full repo architecture;
 this file covers day-to-day work inside the UE project.

@@ -13,9 +13,9 @@
 ```
 nlt-world-engine/
 ├── README.md                              ← Full project docs (start here)
-├── ARCHITECTURE.md                        ← UE 5.8 architecture + subsystems
+├── ARCHITECTURE.md                        ← UE 5.8 subsystem reference (frozen)
 ├── ONBOARDING.md                          ← 3-minute onboarding
-├── DEPLOYMENT.md                          ← UE 5.8 build + deployment
+├── DEPLOYMENT.md                          ← UE 5.8 build + deployment (frozen)
 ├── NLT-DEV-OTOI.md                        ← Canonical org-level agent contract
 ├── AGENTS.md                              ← Internal coordination gateway
 ├── CLAUDE.md                              ← Claude Code repo instructions
@@ -26,9 +26,10 @@ nlt-world-engine/
 ├── pr_body.md                             ← PR body template
 ├── nltotoi.json                           ← Discovery manifest
 │
-├── WorldEngine/                           ← UE 5.8 authoritative simulation (C++)
+├── WorldEngine/                           ← UE 5.8 reference implementation (C++) —
+│   │                                         FROZEN behavioural oracle for MIGRATE-001
 │   ├── WorldEngine.uproject               ← UE project file
-│   ├── Source/WorldEngine/               ← C++ module (16 subsystems)
+│   ├── Source/WorldEngine/               ← C++ module (129 files, ~20,700 LOC)
 │   │   ├── Public/                       ← Headers
 │   │   │   ├── Agents/                   ← Fragments, spawner, AI controller
 │   │   │   ├── Core/                     ← EventBus, FusionCore, SimulationState
@@ -60,13 +61,22 @@ nlt-world-engine/
 │       ├── build-documentation.md
 │       └── TECHNICAL_DIAGRAM.md
 │
-├── _archive/                              ← Prototype directories (reference only, not part of build)
+├── world-engine-godot/                    ← Godot 4.7.2 (C#) — TARGET authoritative sim
+│   ├── project.godot                      ← Godot project file
+│   ├── *.cs                               ← Procedural world prototype (rendering only)
+│   ├── assets/levels/                     ← Interior level geometry (.fbx, imported via ufbx)
+│   ├── addons/godot_ai/                   ← Third-party Godot↔MCP bridge (external, unapproved)
+│   ├── MIGRATION-PLAN.md                  ← Migration plan (mirrored from .kilo/plans/)
+│   └── .godot/                            ← Build cache + editor state (gitignored)
+│
+├── _archive/                              ← Retired components (not part of build)
 │   ├── world-engine/                     ← Original Python ECS engine + React prototype
 │   ├── world-engine-v2/                  ← Babylon.js viewer (superseded)
 │   ├── world-engine-3d/                  ← Early Three.js experiment
 │   ├── openworld-engine/                 ← Open-world exploration variant
 │   └── studio/                           ← Claude Design shell (superseded)
 │
+├── .kilo/plans/                           ← Session plan files
 ├── agents/                                ← Agent profiles and configurations
 ├── SOPs/                                  ← Standard operating procedures
 ├── templates/                             ← Registration, handoff, escalation templates
@@ -77,10 +87,10 @@ nlt-world-engine/
 │   ├── WEB_VIEWER.md
 │   └── DEMO_SETUP.md
 ├── .nltotoi/                              ← Governance validation namespace
-├── .hermes.md                             ← Hermes agent configuration
-├── .github/workflows/                     ← CI (governance + v2 build)
+├── .hermes.md                             ← Hermes agent configuration (UE toolchain — frozen)
+├── .github/workflows/                     ← CI (governance validation only)
 ├── .github/ISSUE_TEMPLATE/               ← Issue templates
-└── .github/PULL_REQUEST_TEMPLATE/        ← PR templates
+└── .github/PULL_REQUEST_TEMPLATE.md       ← PR template (100-file review cap)
 ```
 
 ---
@@ -93,11 +103,15 @@ WorldEngine/
 ├── Saved/                                ← UE saves, logs, screenshots
 └── Binaries/                             ← Compiled executables
 
-world-engine-v2/
+world-engine-godot/
+└── .godot/                                ← Build cache, editor state, shader cache,
+                                            and .NET build output under mono/temp
+
+_archive/world-engine-v2/
 ├── dist/                                 ← Vite build output
 └── node_modules/
 
-world-engine/
+_archive/world-engine/
 ├── __pycache__/
 └── *.pyc
 ```
