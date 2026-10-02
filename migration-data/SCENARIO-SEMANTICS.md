@@ -228,17 +228,57 @@ schema, not UE's. Worth resolving before C.3 is implemented.
 
 ## 5. Provenance notes
 
-- **Descriptions are not from the committed generator.** `create_scenario_assets.py`
-  supplies e.g. `"Study for exam (2 hours focused study)"`, but every asset on disk
-  reads `"Auto-generated scenario: <DisplayName>"`. All 13 differ this way, while
-  **every other field matches the generator exactly**. So the numeric data is faithful
-  and the descriptions came from a different (later) writer.
-  `tools/verify_scenario_extraction.py` asserts the former and reports the latter.
-- **`ScenarioId` values are short codes** (`wp_1`, `pers_1`, …), **not** the
+- **Lineage: these scenarios are ports from `neurolift-ai-fusion`.** Fusion is the
+  original source. `WorldEngine/docs/SCENARIO_PLAN.md:5` states the task verbatim:
+  *"Port the 13 scenarios from `neurolift-ai-fusion-org` to UE 5.8 scenario levels."*
+  `UScenarioDataAsset.h:29` names the origin
+  (`neurolift-ai-fusion-org/src/simulation/environment/scenarios.py`), and
+  `create_scenario_assets.py:1` says it *"mirrors scenarios.py"*.
+
+  ```
+  Fusion scenarios.py          <- AUTHORITATIVE (per RENDERER-PLAN.md section 2)
+        |  create_scenario_assets.py  (manual transcription, see below)
+        v
+  UE .uasset x 13
+        |  extract_scenario_data.py  (this work)
+        v
+  migration-data/ue-scenarios.v1.json   <- THIRD-generation copy
+  ```
+
+  So `ue-scenarios.v1.json` is **not authoritative**. It records what UE holds, and
+  UE is now historical reference. It is useful for reconciling against Fusion, not
+  as a definition of anything.
+
+- **The transcription is manual, so drift is unguarded.** `create_scenario_assets.py`
+  hardcodes 13 literal rows rather than importing them from Fusion. Nothing syncs the
+  two sides, and now that UE is historical nothing ever will. If Fusion's
+  `scenarios.py` has changed since the port, the UE copies are silently stale.
+
+- **The lineage is already broken: two writers, and the committed one did not produce
+  what is on disk.** Every asset reads `"Auto-generated scenario: <DisplayName>"`, but
+  `create_scenario_assets.py` supplies specific text (e.g.
+  `"Study for exam (2 hours focused study)"`). All 13 differ, while every other field
+  matches the committed generator exactly. A second, later writer produced the current
+  assets. **Which of the two was faithful to Fusion cannot be determined from this
+  repo** — `neurolift-ai-fusion` is not available locally.
+  `tools/verify_scenario_extraction.py` asserts the numeric agreement and reports the
+  description divergence; it cannot resolve which writer is correct.
+
+- **Cross-repo naming, and a known gap.** `verify_bindings.py:155` maps UE's
+  camelCase `baseSuccessRate` onto Fusion's snake_case `base_success_rate`.
+  `RENDERER-PLAN.md` section 9 adds that `base_success_rate` *"is consumed by Fusion's
+  orchestrator but has zero C++ readers in UE, and `task_type` exists in neither
+  schema."*
+
+- **`ScenarioId` values are short codes** (`wp_1`, `pers_1`, ...), **not** the
   `"workplace_deadline"` / `"social_networking"` examples in the class doc comment
   (`UScenarioDataAsset.h:38`). The comment is wrong; do not derive the schema from it.
+  These short codes are UE-local identifiers and are unlikely to match Fusion's own
+  scenario ids, so do not treat `scenarioId` as a cross-repo join key without
+  confirming it.
+
 - **`verify_bindings.py` is stale** — it hardcodes `Wor_EmailProcessing`-style names,
-  but the assets are `Wor_wp_1` … `Wor_wp_5`. The extractor discovers assets by
+  but the assets are `Wor_wp_1` ... `Wor_wp_5`. The extractor discovers assets by
   walking `/Game/Scenarios` specifically to avoid inheriting that.
 
 ---

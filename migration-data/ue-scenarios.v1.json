@@ -3,6 +3,18 @@
   "source": "extracted from UScenarioDataAsset .uasset via UE reflection",
   "extractedBy": "WorldEngine/Scripts/extract_scenario_data.py",
   "class": "/Script/WorldEngine.ScenarioDataAsset",
+  "lineage": {
+    "origin": "neurolift-ai-fusion",
+    "originFile": "src/simulation/environment/scenarios.py",
+    "authority": "Fusion is authoritative; this file is NOT",
+    "chain": [
+      "Fusion scenarios.py (authoritative)",
+      "create_scenario_assets.py (manual transcription)",
+      "UE .uasset x 13",
+      "migration-data/ue-scenarios.v1.json (this file)"
+    ],
+    "caveat": "Ported by hand, not imported; nothing syncs Fusion and these copies. Treat as a record of what UE held, not as current scenario definitions."
+  },
   "count": 13,
   "byCategory": {
     "ACADEMIC": 2,
