@@ -1,0 +1,268 @@
+{
+  "schema": "nlt.world-engine.scenarios.v1",
+  "source": "extracted from UScenarioDataAsset .uasset via UE reflection",
+  "extractedBy": "WorldEngine/Scripts/extract_scenario_data.py",
+  "class": "/Script/WorldEngine.ScenarioDataAsset",
+  "count": 13,
+  "byCategory": {
+    "ACADEMIC": 2,
+    "PERSONAL": 4,
+    "SOCIAL": 2,
+    "WORKPLACE": 5
+  },
+  "scenarios": [
+    {
+      "scenarioId": "acad_1",
+      "displayName": "Study Session",
+      "description": "Auto-generated scenario: Study Session",
+      "category": "ACADEMIC",
+      "durationMinutes": 120.0,
+      "complexity": "HIGH",
+      "aversiveness": 0.5,
+      "cognitiveDemand": 0.800000011920929,
+      "baseSuccessRate": 0.5,
+      "requiresSustainedFocus": true,
+      "contextParams": {
+        "deadline": "5",
+        "difficulty": "high",
+        "material_volume": "large"
+      },
+      "levelReference": "/Game/Scenarios/Levels/Academic_Level.Academic_Level",
+      "_sourceAsset": "/Game/Scenarios/Academic/Aca_acad_1.Aca_acad_1"
+    },
+    {
+      "scenarioId": "acad_2",
+      "displayName": "Project Work",
+      "description": "Auto-generated scenario: Project Work",
+      "category": "ACADEMIC",
+      "durationMinutes": 180.0,
+      "complexity": "HIGH",
+      "aversiveness": 0.6000000238418579,
+      "cognitiveDemand": 0.8999999761581421,
+      "baseSuccessRate": 0.4000000059604645,
+      "requiresSustainedFocus": true,
+      "contextParams": {
+        "deadline_days": "7",
+        "dependencies": "True",
+        "project_phase": "mid"
+      },
+      "levelReference": "/Game/Scenarios/Levels/Academic_Level.Academic_Level",
+      "_sourceAsset": "/Game/Scenarios/Academic/Aca_acad_2.Aca_acad_2"
+    },
+    {
+      "scenarioId": "pers_1",
+      "displayName": "Household Cleaning",
+      "description": "Auto-generated scenario: Household Cleaning",
+      "category": "PERSONAL",
+      "durationMinutes": 120.0,
+      "complexity": "MEDIUM",
+      "aversiveness": 0.699999988079071,
+      "cognitiveDemand": 0.30000001192092896,
+      "baseSuccessRate": 0.5,
+      "requiresSustainedFocus": false,
+      "contextParams": {
+        "motivation_challenge": "True",
+        "organization_needed": "True",
+        "room_size": "medium"
+      },
+      "levelReference": "/Game/Scenarios/Levels/Personal_Level.Personal_Level",
+      "_sourceAsset": "/Game/Scenarios/Personal/Per_pers_1.Per_pers_1"
+    },
+    {
+      "scenarioId": "pers_2",
+      "displayName": "Grocery Shopping",
+      "description": "Auto-generated scenario: Grocery Shopping",
+      "category": "PERSONAL",
+      "durationMinutes": 90.0,
+      "complexity": "MEDIUM",
+      "aversiveness": 0.5,
+      "cognitiveDemand": 0.6000000238418579,
+      "baseSuccessRate": 0.6000000238418579,
+      "requiresSustainedFocus": false,
+      "contextParams": {
+        "ingredients": "8",
+        "meal_complexity": "medium",
+        "shopping_needed": "True"
+      },
+      "levelReference": "/Game/Scenarios/Levels/Personal_Level.Personal_Level",
+      "_sourceAsset": "/Game/Scenarios/Personal/Per_pers_2.Per_pers_2"
+    },
+    {
+      "scenarioId": "pers_3",
+      "displayName": "Bill Paying",
+      "description": "Auto-generated scenario: Bill Paying",
+      "category": "PERSONAL",
+      "durationMinutes": 45.0,
+      "complexity": "LOW",
+      "aversiveness": 0.800000011920929,
+      "cognitiveDemand": 0.699999988079071,
+      "baseSuccessRate": 0.5,
+      "requiresSustainedFocus": true,
+      "contextParams": {
+        "avoidance_tendency": "True",
+        "bills_count": "8",
+        "complexity": "routine"
+      },
+      "levelReference": "/Game/Scenarios/Levels/Personal_Level.Personal_Level",
+      "_sourceAsset": "/Game/Scenarios/Personal/Per_pers_3.Per_pers_3"
+    },
+    {
+      "scenarioId": "pers_4",
+      "displayName": "Morning Routine",
+      "description": "Auto-generated scenario: Morning Routine",
+      "category": "PERSONAL",
+      "durationMinutes": 60.0,
+      "complexity": "MEDIUM",
+      "aversiveness": 0.4000000059604645,
+      "cognitiveDemand": 0.4000000059604645,
+      "baseSuccessRate": 0.5,
+      "requiresSustainedFocus": false,
+      "contextParams": {
+        "components": "['shower', 'breakfast', 'getting_ready']",
+        "motivation": "moderate",
+        "time_limit": "True"
+      },
+      "levelReference": "/Game/Scenarios/Levels/Personal_Level.Personal_Level",
+      "_sourceAsset": "/Game/Scenarios/Personal/Per_pers_4.Per_pers_4"
+    },
+    {
+      "scenarioId": "soc_1",
+      "displayName": "Phone Conversation",
+      "description": "Auto-generated scenario: Phone Conversation",
+      "category": "SOCIAL",
+      "durationMinutes": 15.0,
+      "complexity": "MEDIUM",
+      "aversiveness": 0.6000000238418579,
+      "cognitiveDemand": 0.5,
+      "baseSuccessRate": 0.6000000238418579,
+      "requiresSustainedFocus": true,
+      "contextParams": {
+        "anxiety_level": "0.6",
+        "caller": "unknown",
+        "duration": "15",
+        "urgency": "normal"
+      },
+      "levelReference": "/Game/Scenarios/Levels/Social_Level.Social_Level",
+      "_sourceAsset": "/Game/Scenarios/Social/Soc_soc_1.Soc_soc_1"
+    },
+    {
+      "scenarioId": "soc_2",
+      "displayName": "Social Event",
+      "description": "Auto-generated scenario: Social Event",
+      "category": "SOCIAL",
+      "durationMinutes": 120.0,
+      "complexity": "HIGH",
+      "aversiveness": 0.699999988079071,
+      "cognitiveDemand": 0.800000011920929,
+      "baseSuccessRate": 0.5,
+      "requiresSustainedFocus": false,
+      "contextParams": {
+        "anxiety_level": "0.7",
+        "group_size": "large",
+        "structured": "False"
+      },
+      "levelReference": "/Game/Scenarios/Levels/Social_Level.Social_Level",
+      "_sourceAsset": "/Game/Scenarios/Social/Soc_soc_2.Soc_soc_2"
+    },
+    {
+      "scenarioId": "wp_1",
+      "displayName": "Email Processing",
+      "description": "Auto-generated scenario: Email Processing",
+      "category": "WORKPLACE",
+      "durationMinutes": 30.0,
+      "complexity": "MEDIUM",
+      "aversiveness": 0.4000000059604645,
+      "cognitiveDemand": 0.5,
+      "baseSuccessRate": 0.699999988079071,
+      "requiresSustainedFocus": true,
+      "contextParams": {
+        "deadline_pressure": "False",
+        "email_count": "20",
+        "interruptions": "True",
+        "priority_emails": "5"
+      },
+      "levelReference": "/Game/Scenarios/Levels/Workplace_Level.Workplace_Level",
+      "_sourceAsset": "/Game/Scenarios/Workplace/Wor_wp_1.Wor_wp_1"
+    },
+    {
+      "scenarioId": "wp_2",
+      "displayName": "Report Writing",
+      "description": "Auto-generated scenario: Report Writing",
+      "category": "WORKPLACE",
+      "durationMinutes": 90.0,
+      "complexity": "HIGH",
+      "aversiveness": 0.6000000238418579,
+      "cognitiveDemand": 0.800000011920929,
+      "baseSuccessRate": 0.5,
+      "requiresSustainedFocus": true,
+      "contextParams": {
+        "deadline_pressure": "True",
+        "interruptions": "False",
+        "research_required": "True",
+        "word_count": "2000"
+      },
+      "levelReference": "/Game/Scenarios/Levels/Workplace_Level.Workplace_Level",
+      "_sourceAsset": "/Game/Scenarios/Workplace/Wor_wp_2.Wor_wp_2"
+    },
+    {
+      "scenarioId": "wp_3",
+      "displayName": "Meeting Participation",
+      "description": "Auto-generated scenario: Meeting Participation",
+      "category": "WORKPLACE",
+      "durationMinutes": 60.0,
+      "complexity": "MEDIUM",
+      "aversiveness": 0.30000001192092896,
+      "cognitiveDemand": 0.6000000238418579,
+      "baseSuccessRate": 0.6000000238418579,
+      "requiresSustainedFocus": true,
+      "contextParams": {
+        "note_taking": "True",
+        "participants": "8",
+        "social_elements": "True",
+        "structured_agenda": "True"
+      },
+      "levelReference": "/Game/Scenarios/Levels/Workplace_Level.Workplace_Level",
+      "_sourceAsset": "/Game/Scenarios/Workplace/Wor_wp_3.Wor_wp_3"
+    },
+    {
+      "scenarioId": "wp_4",
+      "displayName": "Code Review",
+      "description": "Auto-generated scenario: Code Review",
+      "category": "WORKPLACE",
+      "durationMinutes": 45.0,
+      "complexity": "HIGH",
+      "aversiveness": 0.4000000059604645,
+      "cognitiveDemand": 0.8500000238418579,
+      "baseSuccessRate": 0.6000000238418579,
+      "requiresSustainedFocus": true,
+      "contextParams": {
+        "complexity": "medium",
+        "interactive": "False",
+        "lines_of_code": "500",
+        "time_limit": "True"
+      },
+      "levelReference": "/Game/Scenarios/Levels/Workplace_Level.Workplace_Level",
+      "_sourceAsset": "/Game/Scenarios/Workplace/Wor_wp_4.Wor_wp_4"
+    },
+    {
+      "scenarioId": "wp_5",
+      "displayName": "Deadline Crunch",
+      "description": "Auto-generated scenario: Deadline Crunch",
+      "category": "WORKPLACE",
+      "durationMinutes": 120.0,
+      "complexity": "HIGH",
+      "aversiveness": 0.800000011920929,
+      "cognitiveDemand": 0.8999999761581421,
+      "baseSuccessRate": 0.4000000059604645,
+      "requiresSustainedFocus": true,
+      "contextParams": {
+        "interruptions": "True",
+        "multiple_dependencies": "True",
+        "pressure": "high",
+        "urgency": "critical"
+      },
+      "levelReference": "/Game/Scenarios/Levels/Workplace_Level.Workplace_Level",
+      "_sourceAsset": "/Game/Scenarios/Workplace/Wor_wp_5.Wor_wp_5"
+    }
+  ]
+}
