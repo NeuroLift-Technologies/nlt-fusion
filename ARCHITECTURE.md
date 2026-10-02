@@ -1,4 +1,10 @@
-# NeuroLift World Engine — UE 5.8 Authoritative Simulation
+# NeuroLift World Engine — UE 5.8 Subsystem Reference
+
+> **This document describes the UE 5.8 implementation, which is migrating to Godot 4.7.2 under thread `MIGRATE-001`.**
+>
+> It is retained as the **frozen behavioural oracle**: a description of the semantics the Godot port must reproduce. Read it for that purpose, not as the target architecture. The target is in `world-engine-godot/MIGRATION-PLAN.md`.
+>
+> **Do not change UE simulation behaviour** (plan item 1.6). Where this document says "UE", read "the physical layer, currently UE".
 
 ## The Vision
 
@@ -6,24 +12,26 @@
 
 **An AI habitat — a virtual world where AI agents live, perceive, act, and learn.** The world is rendered with realistic graphics: procedural terrain, water, sky, vegetation, and settlement. AI residents walk through this world with articulated bodies, animated walk cycles, and name labels. Humans watch through a spectator viewer.
 
-> **Core principle: Fusion owns semantic reality; Unreal owns physical reality.**
+> **Core principle: Fusion owns semantic reality; the world engine owns physical reality.**
+>
+> The physical substrate is Godot 4.7.2 (C#). The engine is an implementation detail of the physical layer and may change by Joshua's decision under OTOI §4.4; the boundary between Fusion and the world engine does not.
 
-UE 5.8 is the **driving engine** for the Avatar-Aide-Advocate system.
+The physical layer is the **driving engine** for the Avatar-Aide-Advocate system — currently UE 5.8, moving to Godot 4.7.2.
 This document supersedes the earlier Cloudflare/Vercel MMO architecture.
 
 ---
 
 ## Core Concept
 
-> Each Avatar+Aide pair is an **isolated UE simulation instance** — a living habitat.
+> Each Avatar+Aide pair is an **isolated simulation instance** — a living habitat.
 > Observers connect to watch **one specific pair's journey** — from onboarding to fusion.
-> UE owns the world, the tick loop, the state, and the physics.
+> The world engine owns the world, the tick loop, the state, and the physics.
 
 ---
 
 ## Architecture Overview
 
-**Primary runtime:** UE 5.8 Editor or a rendered standalone game running on the developer's machine. The human watches the same Unreal world in which the agents simulate and train. A headless `WorldEngineServer` is optional later infrastructure for running the same physical world without a rendered viewport; it is not the primary training architecture.
+**Primary runtime:** the rendered simulation on the developer's machine — currently a UE 5.8 Editor or standalone game, moving to the Godot 4.7.2 desktop app. The human watches the same world in which the agents simulate and train. A headless server target is optional later infrastructure for running the same physical world without a rendered viewport; it is not the primary training architecture.
 
 The optional `WorldEngineServer` target remains available for a future headless deployment path, but server compilation and deployment are not prerequisites for the Editor-based training loop.
 

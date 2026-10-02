@@ -8,13 +8,24 @@
 
 ## 1. The decision (and why)
 
+> **⚠️ SUPERSEDED — 2026-10-02. Engine decision reversed. Read this before acting on §1.**
+>
+> The reasoning below was **correct when written** and is no longer the basis for the engine choice. It has been superseded twice: first by **UE 5.8**, and now by **Godot 4.7.2 (C#)** under thread `MIGRATE-001`.
+>
+> - **What still holds.** The defining constraint is unchanged and remains binding: no human *plays* this world. Humans only *watch*. That constraint applies just as strictly to Godot — see below.
+> - **What changed.** The conclusion drawn from it — that a render-and-input game engine is therefore ruled out — no longer follows. The correct statement is narrower: **a game engine may host the physical layer provided the human is a spectator rather than a player.** Agents are the inhabitants and the actors; the engine's player-input affordances simply go unused.
+> - **How that is enforced in the Godot port:** the deterministic simulation core is a plain .NET library with **no Godot reference**, so the authoritative tick cannot depend on the renderer. Models drive characters through a semantic-action interface (`IAgentController`), never by writing positions or velocities — the locomotion authority stays in the simulation. The native desktop app is the spectator view. Godot 4 cannot export C# to web, so no browser client is implied.
+> - **Also outdated below:** `world-engine/src/` is the Python kernel and now lives under `_archive/`. The `AgentController` and `AgentInterface.perceive() → PerceptionMap` seams cited as reasons to prefer it **did survive into the current design** and are the direct ancestors of `IAgentController` — that reasoning was sound.
+>
+> Current plan: `world-engine-godot/MIGRATION-PLAN.md`. Approval: `docs/escalations/2026-10-02-godot-migration.md`.
+
 We are building the **actual world simulation engine**, not the tick loop. The defining constraint:
 
 > **No human plays this world. AI agents _live_ in it as the people; humans only _watch_.**
 
-That rules out a render-and-input game engine (Unity/Godot/Unreal) — those serve a human player we don't have. It calls for a **headless, deterministic, agent-inhabited simulation**. We already have one.
+That ruled out a render-and-input game engine (Unity/Godot/Unreal) **at the time**, because those serve a human player we don't have. It calls for a **headless, deterministic, agent-inhabited simulation**. We already had one — the Python ECS kernel at `world-engine/src/`, since archived under `_archive/`.
 
-**Authoritative engine = the existing Python ECS kernel at `world-engine/src/`.** The browser `sim.jsx` `setInterval` loop (the "ticks") is retired _as a simulation_; the studio becomes a **read-only live viewer** that humans watch.
+**Authoritative engine was therefore the Python ECS kernel.** *(Superseded: now UE 5.8 as a frozen oracle, targeting Godot 4.7.2.)* The browser `sim.jsx` `setInterval` loop (the "ticks") was retired _as a simulation_; the studio became a **read-only live viewer** that humans watch.
 
 ### Why the Python kernel is the right base (already built, tests pass)
 - **Headless + deterministic** — `WorldEngine.run_simulation_step()` runs a fixed `dt` step over insertion-ordered systems; seeded RNG; ~20 unit tests incl. a determinism test. Enables reproducible training + faster-than-real-time runs.
@@ -25,11 +36,18 @@ The hard parts exist. This is **promote + wire + stream**, not greenfield.
 
 ---
 
-## 2. Settled implementation decisions
+## 2. Settled implementation decisions (historical)
+
+> **Historical Python-kernel guidance:** the decisions and implementation steps in
+> §§2–7 describe the archived `_archive/world-engine/` prototype. They are not
+> current implementation requirements. Follow the
+> [Godot migration plan](../../world-engine-godot/MIGRATION-PLAN.md) referenced by
+> the §1 notice. Only the Python sidecar integration requirements in §6 below
+> remain current.
 
 | # | Decision | Choice |
 |---|---|---|
-| 1 | Authoritative runtime | **Python kernel** (`world-engine/src/`). TS Cloudflare DO is a *future* deployment target, not the v1 authority. |
+| 1 | Authoritative runtime | **Python kernel** (`world-engine/src/`, since archived). *SUPERSEDED 2026-10-02 — see §1. Now: Godot 4.7.2 (C#), with the deterministic core as an engine-independent .NET library.* |
 | 2 | Transport (kernel → humans) | **SSE** live stream of snapshots+events for watching, **+ a small REST control endpoint** (pause/resume/step/assign-scenario/reset). WebSocket-ready later for networked controllers. |
 | 3 | Determinism | **Deterministic kernel + recorded controller decisions.** No unseeded `random` on any Python kernel path — use the seeded rng. Controller (incl. future LLM) actions are logged into the replay stream, not re-derived. |
 | 4 | Source of truth | **Python scene JSON is canonical.** `data.js` is demoted to seed/design data; the studio renders from the contract, not its own world. |
@@ -37,7 +55,7 @@ The hard parts exist. This is **promote + wire + stream**, not greenfield.
 
 ---
 
-## 3. Target architecture
+## 3. Target architecture (historical Python kernel)
 
 Each component **builds on existing code** — file references are the starting point, not a rewrite.
 
@@ -59,7 +77,7 @@ Each component **builds on existing code** — file references are the starting 
 
 ---
 
-## 5. v1 scope — the Core Loop slice (acceptance criteria)
+## 5. v1 scope — the Core Loop slice (historical acceptance criteria)
 
 Smallest thing that is demonstrably a world, not ticks:
 
@@ -73,7 +91,11 @@ Smallest thing that is demonstrably a world, not ticks:
 
 ---
 
-## 6. Suggested file layout (nlt-fusion/world-engine/)
+## 6. Suggested file layout (historical nlt-fusion/world-engine/)
+
+> The Python kernel, `runner.py`, SSE/REST service, and studio layout below are
+> historical. Use the [migration plan](../../world-engine-godot/MIGRATION-PLAN.md)
+> for the current .NET core, Godot host, and Python sidecar layout.
 
 - `src/` — the kernel (existing). New: `scene/` (scene JSON + loader), `systems/scenario_system.py`, `runner.py` (headless scheduler), snapshot emit/load on the engine.
 - `contracts/v1/` — the snapshot + event schemas (exist as draft; make them the live wire format).
@@ -81,7 +103,16 @@ Smallest thing that is demonstrably a world, not ticks:
 - studio (`sim.jsx`, `world-view.jsx`, `hud.jsx`, `studio/`) — refactor to consume the contract; keep the renderer.
 - `data.js` — demoted to seed/design data only.
 
-**Sub-agent fleet (imported in PR #12, `.claude/agents/`):** a broad game-studio agent set is now available. The **generic** roles are usable here — e.g. `systems-designer`, `world-builder`, `ai-programmer`, `tools-programmer`, `ui-programmer`, `ux-designer`, `writer`. The **Unity/Unreal/UE-specific specialists do NOT apply** — this engine is a headless **Python ECS** simulation, not a Unity/Unreal/Godot game engine (see §1). Don't route engine work to the engine-specific specialists.
+### Current Python sidecar integration requirements
+
+- The Python sidecar owns HTTP port **8765** and WebSocket port **8766**, proxying
+  to the Godot simulation over internal IPC; it does not run the simulation kernel.
+- Preserve the existing Fusion route table, protocol envelope, field names, and
+  loopback-only enforcement on mutating routes. Follow Phase 3 of the
+  [migration plan](../../world-engine-godot/MIGRATION-PLAN.md) for parity requirements
+  and explicitly documented divergences.
+
+**Sub-agent fleet (imported in PR #12, `.claude/agents/`):** a broad game-studio agent set is now available. The **generic** roles are usable here — e.g. `systems-designer`, `world-builder`, `ai-programmer`, `tools-programmer`, `ui-programmer`, `ux-designer`, `writer`. *(Superseded 2026-10-02: engine-specific specialists now **do** apply — the physical layer is Godot 4.7.2. The five `godot-*.md` specialists perform a mandatory version check against `docs/engine-reference/godot/VERSION.md`, which was missing until Phase 0 of `MIGRATE-001` and caused all five to fail. Verify that file exists and matches the pinned version before routing engine work to them.)*
 
 ---
 
