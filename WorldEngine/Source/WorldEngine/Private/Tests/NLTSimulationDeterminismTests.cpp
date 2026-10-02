@@ -166,9 +166,29 @@ bool FNLTDeterministicStateHashV2Test::RunTest(const FString& Parameters)
 	const FString CanonicalV2 = FNLTDeterministicStateHash::BuildCanonicalStateTextV2(State, &Rng);
 	TestTrue(TEXT("V2 canonical text starts with v2 version string"), CanonicalV2.StartsWith(TEXT("NLT.WorldEngine.State.v2")));
 
-	// Verify v1 and v2 produce different hashes for the same state
+// Verify v1 and v2 produce different hashes for the same state
 	const FString HashV1 = FNLTDeterministicStateHash::ComputeStateHash(State);
 	TestNotEqual(TEXT("V1 and V2 hashes differ for the same state"), Hash, HashV1);
+
+	// Regression: agent position must be encoded at double width. Float ulp at
+	// magnitude 1000 is 2^-14 (~6.1e-5), so a 1e-5 offset collapses to the same float
+	// and produced identical hashes before Position was encoded with AppendDoubleHex.
+	// Under the bit-exact contract that collision must not be possible.
+	{
+		FNLTAgentState Moved = First;
+		Moved.Position = FVector(1000.0, 0.0, 0.0);
+
+		FNLTSimulationState Coarse = State;
+		Coarse.Agents = { Moved, Second };
+
+		FNLTSimulationState Fine = Coarse;
+		Fine.Agents[0].Position = FVector(1000.00001, 0.0, 0.0);
+
+		TestNotEqual(
+			TEXT("V2: position differences below float precision still change the hash"),
+			FNLTDeterministicStateHash::ComputeStateHashV2(Coarse),
+			FNLTDeterministicStateHash::ComputeStateHashV2(Fine));
+	}
 
 	return true;
 }
