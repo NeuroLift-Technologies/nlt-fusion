@@ -90,3 +90,10 @@ files.zip
 # SecurityToken in WorldEngine/Config/DefaultEngine.ini is a UE session ID, not a secret - removed from repo per CEO 2026-09-03
 # Local overrides use WorldEngine/Config/DefaultEngine.ini.local or Saved/Config/ (both ignored)
 Plugins/**/ThirdParty/ASFDK/
+
+# Godot
+.godot/
+.import/
+export.cfg
+export_presets.cfg
+
