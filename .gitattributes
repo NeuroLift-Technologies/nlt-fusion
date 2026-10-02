@@ -6,8 +6,8 @@ WorldEngine/Content/Fab/Modern_City_Environment/grid_system.uasset filter=lfs di
 # worse -- silently change what "identical" means depending on who checked out.
 fixtures/** -text
 
-# UE-extracted scenario records are also machine-generated reference data, written by
+# UE-extracted scenario records are machine-generated reference data, written by
 # WorldEngine/Scripts/extract_scenario_data.py with explicit LF newlines. CRLF
 # conversion would make every re-extraction show as a whole-file diff and would change
-# the bytes Scenarios.cs compares against.
+# the bytes Scenarios.cs must reproduce.
 migration-data/*.json -text
