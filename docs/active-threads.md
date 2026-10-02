@@ -9,7 +9,7 @@
 ## Active Threads
 
 ### 🔀 MIGRATE-001 — UE 5.8 → Godot 4.7.2 engine migration
-- **Status:** open (Phase 1 **blocked** — awaiting escalation decision on golden-fixture capture; see below)
+- **Status:** open (Phase 1 capture **live**; SIM-001 fixed; awaiting decision on event-stream scope)
 - **Owner:** Kilo · **Joined by:** Hermes (Phase 1)
 - **Started:** 2026-10-02
 - **Last updated:** 2026-10-02
@@ -29,6 +29,14 @@
   - Escalation: [`docs/escalations/2026-10-02-ue-cannot-produce-golden-fixture.md`](escalations/2026-10-02-ue-cannot-produce-golden-fixture.md) — **awaiting Joshua's decision**. Tracking issue: [#67](https://github.com/NeuroLift-Technologies/nlt-world-engine/issues/67) (`escalation`, `agent-action-required`, assigned JDUB1216). Recommendation: hold the freeze, land the crash fixes, amend decision 7 to state that Tier 2 is unavailable and what replaces it.
   - **Scope note:** Tier 2 is the gate that retires UE, and decision 7 defines validation in terms of it. That assumption does not hold, so this affects Phase 6 and Phase 10 planning, not only 1.5/1.7b.
   - **Do not commit** the existing `WorldEngine/Saved/Fixtures/seed42/` capture — it is gitignored and degenerate.
+- **✅ Resolved 2026-10-02 — SIM-001 fixed, capture now live.** Two defects, both "documented behaviour was not true", both inside the narrowed 1.6 carve-out. PR [#69](https://github.com/NeuroLift-Technologies/nlt-world-engine/pull/69) (`f1c3efd`, `b28a027`).
+  - (a) **Clock disconnected** — nothing subscribed to `OnSimulationTick`, so `CurrentState.SimulationTick` stayed 0 for whole runs. `StepTick` now publishes tick and time.
+  - (b) **Agents frozen** — `NLTAgentSpawnerSubsystem` hardcoded `FNLTStateTreeBehaviorFragment::bEnabled = true`, and both legacy processors skip StateTree-enabled entities. With **0 `.sttree` assets**, ownership passed to a layer that owns nobody. Now defaults to `false`.
+  - **My earlier diagnosis was wrong** — "Mass never ticks" came from a `DespawnAllAgents: MassEntity not initialized` line emitted on **teardown**, not spawn. Instrumenting the decision processor showed it running once per tick for all 600 ticks with valid subsystem pointers, yet never reaching `DecideTarget`. Mass was fine; the entity-level flag was the blocker.
+  - **Verified:** 600 tick blocks containing **600 unique** (was 1), clock 1 → 600, `WorldTime` 0.0166 → 10.0 min, `Agents move: yes`. Suite 18/19.
+- **✅ Three pre-existing crash bugs fixed** — PR [#70](https://github.com/NeuroLift-Technologies/nlt-world-engine/pull/70) (`b2c487a`, `b7cb482`, `7abedc7`), plan item 1.11. Each independently prevented any capture from completing: a fragment view read before the query bound it (asserted on every scenario start), `EndCapture` silently discarding 600 collected ticks, and the PIE test requiring a human to press Play.
+- **✅ 1.12 done** — §6's fixture risk re-framed and **re-rated High → Medium**. Residual risk is no longer correctness: it is that `UNLTEventBus` has zero writers, so the event stream is empty and 1.3's stressor / needs-saturation / Aide case has no producers to exercise.
+- **⏭ Remaining on the UE machine:** 1.3 (needs scenario selection — `FNLTScenarioParams` has no scenario field, so "≥3 scenarios" is unreachable today), 1.4 (VisualLOD vectors need emitter support), 1.5 (commit fixtures once 1.3/1.4 exist). **Open decision:** event-stream scope — gate golden vectors on the three green signals and record the gap, or scope producer wiring as new behaviour outside the carve-out.
   - Fixed `double`→`float` narrowing of `Agent.Position` in `BuildCanonicalStateTextV2` — `FVector` is `FVector3d` under UE5 LWC, so v2 was truncating a 53-bit mantissa to 24 bits inside the bit-exact encoding.
   - Untracked 119 committed Godot build-cache files and relocated the level FBX assets.
 - **Blockers / human-owned:**
