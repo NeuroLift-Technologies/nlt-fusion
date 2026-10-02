@@ -176,10 +176,20 @@ def build_record(asset):
     }
 
 
+EXPECTED_SCENARIO_COUNT = 13
+
+
 def main():
     scenario_class = load_scenario_class()
+
+    # project_dir() is RELATIVE ("../../../../Users/.../"), so it must be made absolute
+    # once, up front, and reused for BOTH path joins. Normalising only the output path
+    # leaves the header lookup resolving against whatever the commandlet's CWD happens
+    # to be, which is fragile and fails silently as "property coverage not checked".
+    project_dir = unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_dir())
+
     header_path = os.path.join(
-        unreal.Paths.project_dir(), "Source", "WorldEngine", "Public",
+        project_dir, "Source", "WorldEngine", "Public",
         "Scenarios", "UScenarioDataAsset.h",
     )
     if not os.path.isfile(header_path):
@@ -188,10 +198,18 @@ def main():
 
     obj_paths = collect_asset_paths(scenario_class)
     unreal.log("Found {} UScenarioDataAsset objects under {}".format(len(obj_paths), SCENARIO_ROOT))
-    if len(obj_paths) != 13:
-        # Not fatal - a partial dump is still useful - but it must not pass silently.
-        unreal.log_warning(
-            "Expected 13 scenario assets, found {}. Verify before porting.".format(len(obj_paths))
+
+    # Refuse to publish a partial catalog. Overwriting the versioned JSON with fewer
+    # than the expected records would look like a legitimate extraction and would
+    # silently shrink the data the Godot port loads. To inspect a partial dump without
+    # touching the versioned file, write elsewhere deliberately.
+    if len(obj_paths) != EXPECTED_SCENARIO_COUNT:
+        raise RuntimeError(
+            "Expected {} scenario assets, found {}. Refusing to overwrite {} with a "
+            "partial catalog - investigate the missing assets first, or write to a "
+            "scratch path on purpose.".format(
+                EXPECTED_SCENARIO_COUNT, len(obj_paths), OUTPUT_PATH
+            )
         )
 
     records = []
@@ -216,9 +234,7 @@ def main():
         "scenarios": records,
     }
 
-    # project_dir() is RELATIVE (../../../../Users/...), so it must be made absolute
-    # before joining, or the output lands somewhere unreachable.
-    project_dir = unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_dir())
+    # project_dir was already made absolute above; reuse it rather than re-deriving.
     out_path = os.path.normpath(os.path.join(project_dir, "..", OUTPUT_PATH))
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w", encoding="utf-8", newline="\n") as handle:
