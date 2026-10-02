@@ -55,8 +55,9 @@ NLT World Engine (this repo)
 # Open the project in Godot 4.7.2 .NET (mono)
 godot --path world-engine-godot
 
-# The deterministic core and its Tier 1 test gate need no engine at all:
-dotnet test world-engine-godot/NltWorldEngine.Core.Tests
+# Planned Tier 1 gate — no deterministic core test project exists yet.
+# Once implemented, it will need no engine:
+# dotnet test world-engine-godot/NltWorldEngine.Core.Tests
 ```
 
 **Status:** rendering only. Agents, determinism, protocol, and governance land in phases 2–7 of the migration plan.

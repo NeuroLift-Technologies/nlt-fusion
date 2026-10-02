@@ -36,7 +36,14 @@ The hard parts exist. This is **promote + wire + stream**, not greenfield.
 
 ---
 
-## 2. Settled implementation decisions
+## 2. Settled implementation decisions (historical)
+
+> **Historical Python-kernel guidance:** the decisions and implementation steps in
+> §§2–7 describe the archived `_archive/world-engine/` prototype. They are not
+> current implementation requirements. Follow the
+> [Godot migration plan](../../world-engine-godot/MIGRATION-PLAN.md) referenced by
+> the §1 notice. Only the Python sidecar integration requirements in §6 below
+> remain current.
 
 | # | Decision | Choice |
 |---|---|---|
@@ -48,7 +55,7 @@ The hard parts exist. This is **promote + wire + stream**, not greenfield.
 
 ---
 
-## 3. Target architecture
+## 3. Target architecture (historical Python kernel)
 
 Each component **builds on existing code** — file references are the starting point, not a rewrite.
 
@@ -70,7 +77,7 @@ Each component **builds on existing code** — file references are the starting 
 
 ---
 
-## 5. v1 scope — the Core Loop slice (acceptance criteria)
+## 5. v1 scope — the Core Loop slice (historical acceptance criteria)
 
 Smallest thing that is demonstrably a world, not ticks:
 
@@ -84,13 +91,26 @@ Smallest thing that is demonstrably a world, not ticks:
 
 ---
 
-## 6. Suggested file layout (nlt-fusion/world-engine/)
+## 6. Suggested file layout (historical nlt-fusion/world-engine/)
+
+> The Python kernel, `runner.py`, SSE/REST service, and studio layout below are
+> historical. Use the [migration plan](../../world-engine-godot/MIGRATION-PLAN.md)
+> for the current .NET core, Godot host, and Python sidecar layout.
 
 - `src/` — the kernel (existing). New: `scene/` (scene JSON + loader), `systems/scenario_system.py`, `runner.py` (headless scheduler), snapshot emit/load on the engine.
 - `contracts/v1/` — the snapshot + event schemas (exist as draft; make them the live wire format).
 - `service/` (new) — thin SSE+REST host wrapping the runner (stdlib `http.server` is acceptable for v1; no new heavy deps without escalation).
 - studio (`sim.jsx`, `world-view.jsx`, `hud.jsx`, `studio/`) — refactor to consume the contract; keep the renderer.
 - `data.js` — demoted to seed/design data only.
+
+### Current Python sidecar integration requirements
+
+- The Python sidecar owns HTTP port **8765** and WebSocket port **8766**, proxying
+  to the Godot simulation over internal IPC; it does not run the simulation kernel.
+- Preserve the existing Fusion route table, protocol envelope, field names, and
+  loopback-only enforcement on mutating routes. Follow Phase 3 of the
+  [migration plan](../../world-engine-godot/MIGRATION-PLAN.md) for parity requirements
+  and explicitly documented divergences.
 
 **Sub-agent fleet (imported in PR #12, `.claude/agents/`):** a broad game-studio agent set is now available. The **generic** roles are usable here — e.g. `systems-designer`, `world-builder`, `ai-programmer`, `tools-programmer`, `ui-programmer`, `ux-designer`, `writer`. *(Superseded 2026-10-02: engine-specific specialists now **do** apply — the physical layer is Godot 4.7.2. The five `godot-*.md` specialists perform a mandatory version check against `docs/engine-reference/godot/VERSION.md`, which was missing until Phase 0 of `MIGRATE-001` and caused all five to fail. Verify that file exists and matches the pinned version before routing engine work to them.)*
 

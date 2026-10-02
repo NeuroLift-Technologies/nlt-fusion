@@ -40,7 +40,7 @@ Why:      The authoritative world, moving here. Avatars live here. Humans only w
 Status:   IN PROGRESS — rendering only (terrain, water, sky, vegetation, settlement).
           No agents, determinism, protocol, or governance yet. Phases 0-7 of the plan.
 Run:      Open world-engine-godot/project.godot in Godot 4.7.2 .NET (mono)
-Tests:    dotnet test  (core library needs no engine at all)
+Tests:    Planned Tier 1 gate — no deterministic core test project exists yet.
 ```
 
 **Architecture — the key structural decision:** the deterministic core is a plain
@@ -220,8 +220,9 @@ _archive/                              ← Retired components (not part of build
 ```bash
 # Path A (target): Godot 4.7.2 — needs Godot 4.7.2 .NET (mono) + .NET 8 SDK
 godot --path world-engine-godot
-# The deterministic core needs no engine:
-dotnet test world-engine-godot/NltWorldEngine.Core.Tests
+# Planned Tier 1 gate — no deterministic core test project exists yet.
+# Once implemented, it will need no engine:
+# dotnet test world-engine-godot/NltWorldEngine.Core.Tests
 
 # Path B (frozen oracle): UE 5.8 authoritative sim (requires UE 5.8 at ~/Documents/NLT/Engine/)
 cd WorldEngine
