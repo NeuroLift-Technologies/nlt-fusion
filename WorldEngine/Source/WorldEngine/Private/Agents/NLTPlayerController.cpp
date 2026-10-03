@@ -3,6 +3,7 @@
 #include "UI/NLTLevelPickerWidget.h"
 #include "World/NLTDoorActor.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "Engine/World.h"
 
 ANLTPlayerController::ANLTPlayerController()
@@ -59,6 +60,7 @@ void ANLTPlayerController::SetupInputComponent()
 	{
 		IC->BindAction("Interact", IE_Pressed, this, &ANLTPlayerController::OnInteract);
 		IC->BindAction("OpenMenu", IE_Pressed, this, &ANLTPlayerController::ShowLevelPicker);
+		IC->BindAction("Quit", IE_Pressed, this, &ANLTPlayerController::OnQuit);
 	}
 }
 
@@ -140,6 +142,20 @@ void ANLTPlayerController::OnInteract()
 		UE_LOG(LogTemp, Log, TEXT("Player pressed Interact but no door nearby"));
 		ShowLevelPicker();
 	}
+}
+
+void ANLTPlayerController::OnQuit()
+{
+	// Close the picker first so the widget teardown runs before shutdown.
+	HideLevelPicker();
+
+	UE_LOG(LogTemp, Log, TEXT("Quit requested by player input"));
+
+	// EQuitPreference::Quit -> full process exit. The bIgnorePlatformRestrictions
+	// argument is false so the engine still honours its normal shutdown path and
+	// flushes logs on Windows. Passing `this` makes the quit originate from this
+	// controller, which is the required signature in UE 5.8.
+	UKismetSystemLibrary::QuitGame(GetWorld(), this, EQuitPreference::Quit, false);
 }
 
 void ANLTPlayerController::OnLevelSelected(FName LevelId)

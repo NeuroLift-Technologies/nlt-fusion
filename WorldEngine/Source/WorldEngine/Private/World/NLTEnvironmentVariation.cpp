@@ -40,7 +40,7 @@ bool UNLTEnvironmentVariationSubsystem::ShouldCreateSubsystem(UObject* Outer) co
         return false;
     }
     const UWorld* World = Cast<UWorld>(Outer);
-    return World && (World->WorldType == EWorldType::Game || World->WorldType == EWorldType::PIE);
+    return World && (World->WorldType == EWorldType::Game || World->WorldType == EWorldType::PIE || World->WorldType == EWorldType::Editor);
 }
 
 void UNLTEnvironmentVariationSubsystem::Initialize(FSubsystemCollectionBase& Collection)
