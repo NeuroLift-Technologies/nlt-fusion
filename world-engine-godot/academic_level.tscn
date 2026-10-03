@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://baliw2d1ci28b"]
+
+[ext_resource type="PackedScene" uid="uid://i0t07k026fhy" path="res://assets/levels/Academic_Level.fbx" id="1_fqtkd"]
+
+[node name="Academic_Level" unique_id=326110528 instance=ExtResource("1_fqtkd")]
+
+[node name="DirectionalLight" parent="." index="1" unique_id=1016605998]
+sky_mode = 2

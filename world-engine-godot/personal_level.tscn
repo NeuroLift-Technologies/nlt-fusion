@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://cjx2vfea7fokq"]
+
+[ext_resource type="PackedScene" uid="uid://b70y7rxa3fv6c" path="res://assets/levels/Personal_Level.fbx" id="1_cm3d3"]
+
+[node name="Personal_Level" unique_id=2075249139 instance=ExtResource("1_cm3d3")]
+
+[node name="DirectionalLight" parent="." index="1" unique_id=1838904828]
+sky_mode = 2

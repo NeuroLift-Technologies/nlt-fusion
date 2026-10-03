@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://cisrvbtyn1jdi"]
+
+[ext_resource type="PackedScene" uid="uid://bwgorccg34rb6" path="res://assets/levels/Workplace_Level.fbx" id="1_tp8sa"]
+[ext_resource type="Script" uid="uid://b4tkplvh7fq40" path="res://addons/sky_3d/src/SkyDome.gd" id="2_e2oaf"]
+
+[node name="Workplace_Level" unique_id=1121421424 instance=ExtResource("1_tp8sa")]
+
+[node name="DirectionalLight" parent="." index="1" unique_id=1535598964]
+sky_mode = 2
+
+[node name="SkyAtmosphere" parent="." index="2" unique_id=1035476469]
+visible = false
+
+[node name="SkyLight" parent="." index="3" unique_id=817531809]
+visible = false
+
+[node name="SM_SkySphere" parent="." index="7" unique_id=1841464742]
+script = ExtResource("2_e2oaf")
+wind_direction = 2.35619451204804
