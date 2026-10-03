@@ -18,6 +18,7 @@ uniform vec3 u_shallow : source_color;
 uniform vec3 u_sky : source_color;
 uniform vec3 u_sun_color : source_color;
 uniform vec3 u_sun_dir;
+uniform vec3 u_fog_color : source_color;
 uniform float u_fog_density;
 
 float wave(vec2 p, vec2 dir, float freq, float speed) {
@@ -52,6 +53,9 @@ void fragment() {
     vec3 col = mix(u_deep, u_shallow, clamp(h * 0.35 + 0.5, 0.0, 1.0));
     col = mix(col, u_sky, clamp(fres * 0.85, 0.0, 1.0));
     col += u_sun_color * (spec * 1.3 + glitter);
+    float dist = length(CAMERA_POSITION_WORLD - v_world);
+    float f = 1.0 - exp(-dist * dist * u_fog_density * u_fog_density * 12.0);
+    col = mix(col, u_fog_color, clamp(f, 0.0, 1.0));
     ALBEDO = col;
     ALPHA = mix(0.86, 0.97, fres);
 }
@@ -63,10 +67,12 @@ void fragment() {
         mat.SetShaderParameter("u_sky", new Color(0xc3d4dd));
         mat.SetShaderParameter("u_sun_color", new Color(0xfff2d6));
         mat.SetShaderParameter("u_sun_dir", new Vector3(0.5f, 0.7f, 0.4f));
+        mat.SetShaderParameter("u_fog_color", new Color(0x9fb6c4));
+        mat.SetShaderParameter("u_fog_density", 0.0016f);
 
         var mesh = new MeshInstance3D
         {
-            Mesh = new PlaneMesh { Size = new Vector2(2600, 2600) },
+            Mesh = new PlaneMesh { Size = new Vector2(2600, 2600), SubdivideDepth = 6 },
             MaterialOverride = mat,
             Position = new Vector3(0, WorldConstants.Water, 0),
         };

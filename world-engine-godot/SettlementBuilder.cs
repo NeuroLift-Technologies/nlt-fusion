@@ -122,6 +122,36 @@ public static class SettlementBuilder
             root.AddChild(road);
         }
 
+        // well at plaza edge
+        float wy = WorldConstants.SettleY;
+        var wellPos = new Vector3(WorldConstants.SettleX + 8f, wy, WorldConstants.SettleZ + 3f);
+        root.AddChild(new MeshInstance3D { Mesh = new CylinderMesh { Height = 1.1f, TopRadius = 1.3f, BottomRadius = 1.45f, RadialSegments = 12 }, MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0x8a8078), Roughness = 0.95f }, Position = wellPos + new Vector3(0, 0.55f, 0) });
+        root.AddChild(new MeshInstance3D { Mesh = new CylinderMesh { Height = 0.1f, TopRadius = 1.05f, BottomRadius = 1.05f, RadialSegments = 12 }, MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0x2f6f74), Roughness = 0.3f }, Position = wellPos + new Vector3(0, 1.05f, 0) });
+        root.AddChild(new MeshInstance3D { Mesh = new CylinderMesh { Height = 2.0f, TopRadius = 0f, BottomRadius = 1.7f, RadialSegments = 4 }, MaterialOverride = roofMat, Position = wellPos + new Vector3(0, 2.4f, 0), Rotation = new Vector3(0, Mathf.Pi / 4f, 0) });
+
+        // benches around plaza
+        for (int b = 0; b < 6; b++)
+        {
+            float a = b / 6f * Mathf.Pi * 2f + 0.2f;
+            float rr = 10.5f;
+            var bp = new Vector3(WorldConstants.SettleX + MathF.Cos(a) * rr, wy, WorldConstants.SettleZ + MathF.Sin(a) * rr);
+            var bench = new MeshInstance3D { Mesh = new BoxMesh { Size = new Vector3(2.2f, 0.16f, 0.6f) }, MaterialOverride = doorMat, Position = bp + new Vector3(0, 0.55f, 0), Rotation = new Vector3(0, a + Mathf.Pi / 2f, 0) };
+            root.AddChild(bench);
+        }
+
+        // desks with emissive monitors
+        for (int d = 0; d < 4; d++)
+        {
+            float a = d / 4f * Mathf.Pi * 2f + 0.9f;
+            float rr = 15f;
+            float dx = WorldConstants.SettleX + MathF.Cos(a) * rr, dz = WorldConstants.SettleZ + MathF.Sin(a) * rr;
+            float dy = WorldGeometry.HeightAt(dx, dz);
+            var desk = new Node3D { Position = new Vector3(dx, dy, dz), Rotation = new Vector3(0, a, 0) };
+            desk.AddChild(new MeshInstance3D { Mesh = new BoxMesh { Size = new Vector3(2.0f, 0.12f, 0.9f) }, MaterialOverride = doorMat, Position = new Vector3(0, 0.95f, 0) });
+            desk.AddChild(new MeshInstance3D { Mesh = new BoxMesh { Size = new Vector3(0.8f, 0.5f, 0.08f) }, MaterialOverride = glassMat, Position = new Vector3(0, 1.35f, -0.25f) });
+            root.AddChild(desk);
+        }
+
         return root;
     }
 }

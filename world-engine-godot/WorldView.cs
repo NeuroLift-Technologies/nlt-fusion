@@ -34,6 +34,12 @@ public partial class WorldView : Node3D
         env.AmbientLightSource = Godot.Environment.AmbientSource.Color;
         env.AmbientLightColor = new Color(0xa8bcc8);
         env.AmbientLightEnergy = 0.34f;
+        env.TonemapMode = Godot.Environment.ToneMapper.Aces;
+        env.TonemapExposure = 1.0f;
+        env.GlowEnabled = true;
+        env.GlowIntensity = 0.55f;
+        env.GlowBloom = 0.25f;
+        env.VolumetricFogEnabled = false;
         _env = new WorldEnvironment { Environment = env };
         AddChild(_env);
 
@@ -43,6 +49,8 @@ public partial class WorldView : Node3D
             LightColor = new Color(0xfff0d8),
             LightEnergy = 2.3f,
             ShadowEnabled = true,
+            DirectionalShadowMaxDistance = 320f,
+            DirectionalShadowBlendSplits = true,
         };
         AddChild(_sun);
 
@@ -79,7 +87,7 @@ public partial class WorldView : Node3D
         var env = _env.Environment;
         env.BackgroundColor = s.Fog;
         env.FogDensity = s.Fd;
-        env.AmbientLightColor = s.Hor;
+        env.AmbientLightColor = s.Hor.Lerp(s.Gnd, 0.35f);
         env.AmbientLightEnergy = s.Amb * 0.6f;
 
         _skyMat.SetShaderParameter("u_top", s.Top);
@@ -92,6 +100,11 @@ public partial class WorldView : Node3D
         _waterMat.SetShaderParameter("u_sky", s.Hor);
         _waterMat.SetShaderParameter("u_sun_color", s.Sun);
         _waterMat.SetShaderParameter("u_sun_dir", s.SunDir);
+        _waterMat.SetShaderParameter("u_fog_color", s.Fog);
+        _waterMat.SetShaderParameter("u_fog_density", s.Fd);
+
+        foreach (var m in VegetationBuilder.WindMats)
+            m.SetShaderParameter("u_time", (float)_simT);
     }
 
     private void UpdateCamera()
