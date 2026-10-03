@@ -26,7 +26,7 @@ bool UNLTSoundscapeSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 		return false;
 	}
 	const UWorld* World = Cast<UWorld>(Outer);
-	return World && (World->WorldType == EWorldType::Game || World->WorldType == EWorldType::PIE);
+	return World && (World->WorldType == EWorldType::Game || World->WorldType == EWorldType::PIE || World->WorldType == EWorldType::Editor);
 }
 
 void UNLTSoundscapeSubsystem::SetSoundscapeAsset(USoundscapeDataAsset* InAsset)

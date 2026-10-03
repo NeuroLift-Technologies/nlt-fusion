@@ -20,7 +20,7 @@ bool UNLTAtmosphereSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 	if (!Super::ShouldCreateSubsystem(Outer))
 		return false;
 	const UWorld* World = Cast<UWorld>(Outer);
-	return World && (World->WorldType == EWorldType::Game || World->WorldType == EWorldType::PIE);
+	return World && (World->WorldType == EWorldType::Game || World->WorldType == EWorldType::PIE || World->WorldType == EWorldType::Editor);
 }
 
 void UNLTAtmosphereSubsystem::Initialize(FSubsystemCollectionBase& Collection)
