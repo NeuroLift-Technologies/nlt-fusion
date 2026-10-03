@@ -47,11 +47,10 @@ public partial class WorldView : Node3D
         set
         {
             _skyPaused = value;
-            if (_sky3d != null)
-                _sky3d.Set("game_time_enabled", !value);
         }
     }
 
+    /// <summary>Initializes the state feed, camera, Sky3D sky, terrain, water, settlement and vegetation builders.</summary>
     public override void _Ready()
     {
         // Phase A.5 — fixture provider (schema-validated on load)
@@ -69,18 +68,14 @@ public partial class WorldView : Node3D
 		_sky3d = (WorldEnvironment)sky3dScript.New().AsGodotObject();
 		_sky3d.Name = "Sky3D";
 
-		// Disable Sky3D's own time progression — we drive current_time from _simT
-        // so the cycle stays in sync with the simulation clock.
-        // (Must be set before AddChild so the Timer inside TimeOfDay never starts.)
-        _sky3d.Set("game_time_enabled", false);
-
-        // Start at dawn
-        _sky3d.Set("current_time", 6.0f);
-
-        // Match shadow settings the previous sun had
-        _sky3d.Set("sun_shadow_opacity", 1.0f);
-
+        // Simulation clock owns the sky: Sky3D's own time timer stays off.
         AddChild(_sky3d);
+
+        // Sky3D forwards these to TimeOfDay/SunLight, which only exist after
+        // AddChild has run _initialize(). Set them here so the values are not lost.
+        _sky3d.Set("game_time_enabled", false);
+        _sky3d.Set("current_time", 6.0f);
+        _sky3d.Set("sun_shadow_opacity", 1.0f);
 
         // After AddChild, Sky3D._initialize() has run and created SunLight/MoonLight/SkyDome/TimeOfDay.
         // Grab the SunLight so water/vegetation shaders can read direction & colour each frame.
@@ -122,6 +117,7 @@ public partial class WorldView : Node3D
 		AddChild(VegetationBuilder.Build(plans));
 	}
 
+	/// <summary>Advances the sim clock and writes Sky3D's current_time (unless paused); updates sun uniforms for water/vegetation.</summary>
 	public override void _Process(double delta)
 	{
 		_simT += delta;
@@ -158,6 +154,7 @@ public partial class WorldView : Node3D
             m.SetShaderParameter("u_time", (float)_simT);
     }
 
+    /// <summary>Positions the spectator camera on its orbit target.</summary>
     private void UpdateCamera()
     {
         _cam.Position = _target + new Vector3(
@@ -167,6 +164,7 @@ public partial class WorldView : Node3D
         _cam.LookAt(_target, Vector3.Up);
     }
 
+    /// <summary>Handles spectator input such as camera control.</summary>
     public override void _UnhandledInput(InputEvent @event)
     {
         if (@event is InputEventMouseButton mb)

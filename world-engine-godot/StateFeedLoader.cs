@@ -219,6 +219,7 @@ public static class StateFeedLoader
 
     // -- scene --
 
+    /// <summary>Parse the scene reference block (kind, name, time-of-day).</summary>
     private static SceneRef ParseScene(JsonElement el)
     {
         var id = RequireString(el, "id");
@@ -230,6 +231,7 @@ public static class StateFeedLoader
 
     // -- agents --
 
+    /// <summary>Parse the agents array into a validated list of AgentState records.</summary>
     private static List<AgentState> ParseAgents(JsonElement arr)
     {
         var list = new List<AgentState>();
@@ -238,6 +240,7 @@ public static class StateFeedLoader
         return list;
     }
 
+    /// <summary>Parse and validate a single agent entry.</summary>
     private static AgentState ParseAgent(JsonElement el)
     {
         return new AgentState
@@ -262,6 +265,7 @@ public static class StateFeedLoader
         };
     }
 
+    /// <summary>Parse a {x,y,z} object into a Vec3.</summary>
     private static Vec3 ParseVec3(JsonElement el) => new()
     {
         X = (float)RequireDouble(el, "x"),
@@ -269,12 +273,14 @@ public static class StateFeedLoader
         Z = (float)RequireDouble(el, "z"),
     };
 
+    /// <summary>Parse agent appearance fields; walkPhase defaults to 0 when absent.</summary>
     private static AgentAppearance ParseAppearance(JsonElement el) => new()
     {
         Body = RequireString(el, "body"),
         WalkPhase = el.TryGetProperty("walkPhase", out var wp) ? (float)wp.GetDouble() : 0f,
     };
 
+    /// <summary>Parse the stress/support level block.</summary>
     private static AgentLevels ParseLevels(JsonElement el) => new()
     {
         AttentionEnergy = (float)RequireDouble(el, "attentionEnergy"),
@@ -291,6 +297,7 @@ public static class StateFeedLoader
     /// 'privacy' (a location affordance axis) would repeat the mistake the contract §4.3
     /// explicitly records.
     /// </summary>
+    /// <summary>Parse and range-validate the four canonical need values.</summary>
     private static AgentNeeds ParseNeeds(JsonElement el)
     {
         // Warn on any extra key that is not in the canonical set
@@ -317,6 +324,7 @@ public static class StateFeedLoader
         };
     }
 
+    /// <summary>Throw when a 0..1 need value falls outside [0,1].</summary>
     private static void ValidateRange(float v, string field)
     {
         if (v < 0f || v > 1f)
@@ -326,6 +334,7 @@ public static class StateFeedLoader
 
     // -- pairs --
 
+    /// <summary>Parse optional agent pair states.</summary>
     private static List<PairState> ParsePairs(JsonElement el)
     {
         var list = new List<PairState>();
@@ -357,6 +366,7 @@ public static class StateFeedLoader
 
     // -- burnout episodes --
 
+    /// <summary>Parse optional burnout episode records.</summary>
     private static List<BurnoutEpisode> ParseBurnoutEpisodes(JsonElement el)
     {
         var list = new List<BurnoutEpisode>();
@@ -375,6 +385,7 @@ public static class StateFeedLoader
 
     // -- self-recognitions --
 
+    /// <summary>Parse optional self-recognition events.</summary>
     private static List<SelfRecognition> ParseSelfRecognitions(JsonElement el)
     {
         var list = new List<SelfRecognition>();
@@ -392,6 +403,7 @@ public static class StateFeedLoader
 
     // -- events --
 
+    /// <summary>Parse the feed events array.</summary>
     private static List<FeedEvent> ParseEvents(JsonElement el)
     {
         var list = new List<FeedEvent>();
@@ -416,6 +428,7 @@ public static class StateFeedLoader
 
     // -- helpers --
 
+    /// <summary>Read the fixture JSON from disk, failing loudly when missing.</summary>
     private static string ReadFile(string path)
     {
         if (!FileAccess.FileExists(path))
@@ -431,6 +444,7 @@ public static class StateFeedLoader
         return file.GetAsText();
     }
 
+    /// <summary>Require a string property and return it.</summary>
     private static string RequireString(JsonElement el, string key)
     {
         if (!el.TryGetProperty(key, out var val) || val.ValueKind == JsonValueKind.Null)
@@ -439,6 +453,7 @@ public static class StateFeedLoader
             $"StateFeedLoader: required field '{key}' has a null string value");
     }
 
+    /// <summary>Require an integer property and return its value.</summary>
     private static int RequireInt(JsonElement el, string key)
     {
         if (!el.TryGetProperty(key, out var val))
@@ -446,6 +461,7 @@ public static class StateFeedLoader
         return val.GetInt32();
     }
 
+    /// <summary>Require a numeric property and return it as double.</summary>
     private static double RequireDouble(JsonElement el, string key)
     {
         if (!el.TryGetProperty(key, out var val))
@@ -453,6 +469,7 @@ public static class StateFeedLoader
         return val.GetDouble();
     }
 
+    /// <summary>Require a boolean property and return its value.</summary>
     private static bool RequireBool(JsonElement el, string key)
     {
         if (!el.TryGetProperty(key, out var val))
@@ -460,6 +477,7 @@ public static class StateFeedLoader
         return val.GetBoolean();
     }
 
+    /// <summary>Require an object property and return it.</summary>
     private static JsonElement RequireObject(JsonElement el, string key)
     {
         if (!el.TryGetProperty(key, out var val) || val.ValueKind != JsonValueKind.Object)
@@ -468,6 +486,7 @@ public static class StateFeedLoader
         return val;
     }
 
+    /// <summary>Require an array property and return it.</summary>
     private static JsonElement RequireArray(JsonElement el, string key)
     {
         if (!el.TryGetProperty(key, out var val) || val.ValueKind != JsonValueKind.Array)
@@ -476,6 +495,7 @@ public static class StateFeedLoader
         return val;
     }
 
+    /// <summary>Parse an array of strings into a read-only list.</summary>
     private static IReadOnlyList<string> ParseStringArray(JsonElement el, string key)
     {
         if (!el.TryGetProperty(key, out var arr) || arr.ValueKind != JsonValueKind.Array)

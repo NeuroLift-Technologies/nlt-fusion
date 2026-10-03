@@ -81,7 +81,8 @@
 - **Delivered (2026-10-03):**
   - **Phase A complete (A.1–A.5).** Contract doc `docs/contracts/state-feed-v1.md` published (A.1); envelope with velocity (A.2); burnout episodes (A.3); self-recognition (A.4); all present in `fixtures/state-feed.sample.json`.
   - **A.5 — `world-engine-godot/StateFeedLoader.cs`** (491 lines): loads `fixtures/state-feed.sample.json` at startup, validates schema version, all required keys, four canonical need keys + range, warns on unknown need keys, warns on empty agent list. Wired into `WorldView._Ready()`. Build: 0 errors, 0 warnings.
-  - **B.1 sky decision recorded** in `RENDERER-PLAN.md`: keep `SkyBuilder.cs` + `Daylight.cs`; Sky3D adoption deferred until `addons/sky_3d/` is ratified per §8 item 0.1. Once ratified, swap `WorldView.cs` to use Sky3D `WorldEnvironment`+`Sky` resource.
+  - **B.1 sky swap complete (2026-10-03).** Sky3D (`addons/sky_3d/`) adopted; `WorldView.cs` instantiates Sky3D, disables its internal clock, and drives `current_time` from sim time. `SkyBuilder.cs` and `Daylight.cs` are **deleted**. Reduced-motion (D.4) pauses the sim-time write via `SkyPaused`.
+  - **C.1 collision enabled (2026-10-03).** All four level FBX `.import` files set `meshes/create_shapes=3` (trimesh). Reimport pending next editor open / `--headless --import`.
   - **Fixed pre-existing `TerrainBuilderPhysics.cs`** — file was a copy of `TerrainBuilder.cs` with the same class name, causing a duplicate-class compile error. Replaced with a placeholder stub reserving the class for Phase C.1 (interior collision).
 - **Blockers / human-owned:**
   - **Phase B.2 (residents / walk cycles)** is blocked on GRAPH-001 G1 decisions (character asset source, LOD budget, animation source).
@@ -89,7 +90,7 @@
   - ~~Sky3D ratification~~ — resolved 2026-10-03. B.1 implementation (swap `SkyBuilder.cs` → Sky3D) is now unblocked.
   - **Phase C** (interior collision, entry points, task anchors) has no scheduled date.
   - **Phase D** (observer panels) depends on state feed being live from Fusion, which depends on the Python bridge (not yet built; transport for A.5 is undecided per contract §10).
-- **Next action:** B.1 swap (`SkyBuilder.cs` → Sky3D) is unblocked and agent-executable. B.3 (building→interior mapping) and B.4 (Label3D name labels) are unblocked. C.5 (resolve `workplace.tscn` vs `workplace_level.tscn`) is a quick decision that unblocks C.2+.
+- **Next action:** B.1 swap (`SkyBuilder.cs` → Sky3D) is **complete**; C.5 resolved — the `<Name>_level.tscn` convention wins; `workplace.tscn` is superseded (early-iteration wrapper with a stray offset). B.3 (building→interior mapping) and B.4 (Label3D name labels) remain unblocked.
 
 ### 🧪 DET-001 — Deterministic state verification and headless build foundation
 - **Status:** open
