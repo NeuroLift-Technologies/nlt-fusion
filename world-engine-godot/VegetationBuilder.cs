@@ -33,10 +33,10 @@ public static class VegetationBuilder
         var mm = new MultiMesh
         {
             TransformFormat = MultiMesh.TransformFormatEnum.Transform3D,
+            UseCustomData = customData,   // must be set before InstanceCount
             Mesh = mesh,
             InstanceCount = spots.Count,
         };
-        if (customData) mm.UseCustomData = true;
         for (int i = 0; i < spots.Count; i++)
         {
             mm.SetInstanceTransform(i, makeT(spots[i]));
@@ -59,15 +59,17 @@ shader_type spatial;
 uniform vec3 u_albedo : source_color;
 uniform float u_sway;
 uniform float u_time;
+varying vec3 v_tint;
 void vertex() {
-    vec3 ip = INSTANCE_TRANSFORM[3].xyz;
+    vec3 ip = MODEL_MATRIX[3].xyz;
     float ph = ip.x * 0.35 + ip.z * 0.41;
     float w = sin(u_time * 1.6 + ph) + 0.6 * sin(u_time * 2.7 + ph * 1.7);
     float h = clamp(VERTEX.y, 0.0, 4.0) / 4.0;
     VERTEX += vec3(w, 0.0, w * 0.6) * u_sway * h;
+    v_tint = INSTANCE_CUSTOM.rgb;
 }
 void fragment() {
-    ALBEDO = u_albedo * INSTANCE_CUSTOM.rgb;
+    ALBEDO = u_albedo * v_tint;
     ROUGHNESS = 1.0;
 }
 "

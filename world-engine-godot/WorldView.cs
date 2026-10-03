@@ -68,13 +68,13 @@ public partial class WorldView : Node3D
 		_sky3d = (WorldEnvironment)sky3dScript.New().AsGodotObject();
 		_sky3d.Name = "Sky3D";
 
-        // Simulation clock owns the sky: Sky3D's own time timer stays off.
+		// Simulation clock owns the sky: Sky3D's own time timer stays off.
         AddChild(_sky3d);
 
         // Sky3D forwards these to TimeOfDay/SunLight, which only exist after
         // AddChild has run _initialize(). Set them here so the values are not lost.
         _sky3d.Set("game_time_enabled", false);
-        _sky3d.Set("current_time", 6.0f);
+        _sky3d.Set("current_time", 12.0f);
         _sky3d.Set("sun_shadow_opacity", 1.0f);
 
         // After AddChild, Sky3D._initialize() has run and created SunLight/MoonLight/SkyDome/TimeOfDay.
@@ -123,62 +123,62 @@ public partial class WorldView : Node3D
 		_simT += delta;
 
 		// Drive Sky3D's clock from sim elapsed time.
-        // DayLen = 260 s → one full 24-hour cycle = 260 s real time.
-        // current_time is hours [0, 24).
-        if (!_skyPaused)
-        {
-            float hours = (float)((_simT % WorldConstants.DayLen) / WorldConstants.DayLen * 24.0);
-            _sky3d.Set("current_time", hours);
-        }
+		// DayLen = 260 s → one full 24-hour cycle = 260 s real time.
+		// current_time is hours [0, 24).
+		if (!_skyPaused)
+		{
+			float hours = (float)((_simT % WorldConstants.DayLen) / WorldConstants.DayLen * 24.0);
+			_sky3d.Set("current_time", hours);
+		}
 
-        // Update water and vegetation shaders from the live sun state.
-        // Sky3D owns the DirectionalLight3D; we read its world-space forward direction.
-        Vector3 sunDir = -_sun.GlobalTransform.Basis.Z;
-        Color sunColor = _sun.LightColor;
-        float sunEnergy = _sun.LightEnergy;
+		// Update water and vegetation shaders from the live sun state.
+		// Sky3D owns the DirectionalLight3D; we read its world-space forward direction.
+		Vector3 sunDir = -_sun.GlobalTransform.Basis.Z;
+		Color sunColor = _sun.LightColor;
+		float sunEnergy = _sun.LightEnergy;
 
-        // Derive a simple fog/horizon colour from sun elevation (sky contribution absent here;
-        // Sky3D manages the Environment directly, so we only update the water shader uniforms).
-        float elevation = sunDir.Dot(Vector3.Up);                   // -1 (nadir) to 1 (zenith)
-        float t = Mathx.Clamp01(elevation * 0.5f + 0.5f);          // 0 = midnight, 1 = noon
-        Color fog = new Color(0x9fb6c4).Lerp(new Color(0xffd0a0), t * 0.35f);
+		// Derive a simple fog/horizon colour from sun elevation (sky contribution absent here;
+		// Sky3D manages the Environment directly, so we only update the water shader uniforms).
+		float elevation = sunDir.Dot(Vector3.Up);                   // -1 (nadir) to 1 (zenith)
+		float t = Mathx.Clamp01(elevation * 0.5f + 0.5f);          // 0 = midnight, 1 = noon
+		Color fog = new Color(0x9fb6c4).Lerp(new Color(0xffd0a0), t * 0.35f);
 
-        _waterMat.SetShaderParameter("u_time", (float)_simT);
-        _waterMat.SetShaderParameter("u_sky", fog);
-        _waterMat.SetShaderParameter("u_sun_color", sunColor);
-        _waterMat.SetShaderParameter("u_sun_dir", sunDir);
-        _waterMat.SetShaderParameter("u_fog_color", fog);
-        _waterMat.SetShaderParameter("u_fog_density", 0.0016f);
+		_waterMat.SetShaderParameter("u_time", (float)_simT);
+		_waterMat.SetShaderParameter("u_sky", fog);
+		_waterMat.SetShaderParameter("u_sun_color", sunColor);
+		_waterMat.SetShaderParameter("u_sun_dir", sunDir);
+		_waterMat.SetShaderParameter("u_fog_color", fog);
+		_waterMat.SetShaderParameter("u_fog_density", 0.0016f);
 
-        foreach (var m in VegetationBuilder.WindMats)
-            m.SetShaderParameter("u_time", (float)_simT);
-    }
+		foreach (var m in VegetationBuilder.WindMats)
+			m.SetShaderParameter("u_time", (float)_simT);
+	}
 
-    /// <summary>Positions the spectator camera on its orbit target.</summary>
-    private void UpdateCamera()
-    {
-        _cam.Position = _target + new Vector3(
-            MathF.Cos(_pitch) * MathF.Sin(_yaw) * _dist,
-            MathF.Sin(_pitch) * _dist,
-            MathF.Cos(_pitch) * MathF.Cos(_yaw) * _dist);
-        _cam.LookAt(_target, Vector3.Up);
-    }
+	/// <summary>Positions the spectator camera on its orbit target.</summary>
+	private void UpdateCamera()
+	{
+		_cam.Position = _target + new Vector3(
+			MathF.Cos(_pitch) * MathF.Sin(_yaw) * _dist,
+			MathF.Sin(_pitch) * _dist,
+			MathF.Cos(_pitch) * MathF.Cos(_yaw) * _dist);
+		_cam.LookAt(_target, Vector3.Up);
+	}
 
-    /// <summary>Handles spectator input such as camera control.</summary>
-    public override void _UnhandledInput(InputEvent @event)
-    {
-        if (@event is InputEventMouseButton mb)
-        {
-            if (mb.ButtonIndex == MouseButton.Left) _dragging = mb.Pressed;
-            if (mb.ButtonIndex == MouseButton.WheelUp) _dist = MathF.Max(8f, _dist - 6f);
-            if (mb.ButtonIndex == MouseButton.WheelDown) _dist = MathF.Min(340f, _dist + 6f);
-            UpdateCamera();
-        }
-        else if (@event is InputEventMouseMotion mm && _dragging)
-        {
-            _yaw -= mm.Relative.X * 0.005f;
-            _pitch = Mathx.Clamp(_pitch + mm.Relative.Y * 0.004f, 0.05f, Mathf.Pi * 0.487f);
-            UpdateCamera();
-        }
-    }
+	/// <summary>Handles spectator input such as camera control.</summary>
+	public override void _UnhandledInput(InputEvent @event)
+	{
+		if (@event is InputEventMouseButton mb)
+		{
+			if (mb.ButtonIndex == MouseButton.Left) _dragging = mb.Pressed;
+			if (mb.ButtonIndex == MouseButton.WheelUp) _dist = MathF.Max(8f, _dist - 6f);
+			if (mb.ButtonIndex == MouseButton.WheelDown) _dist = MathF.Min(340f, _dist + 6f);
+			UpdateCamera();
+		}
+		else if (@event is InputEventMouseMotion mm && _dragging)
+		{
+			_yaw -= mm.Relative.X * 0.005f;
+			_pitch = Mathx.Clamp(_pitch + mm.Relative.Y * 0.004f, 0.05f, Mathf.Pi * 0.487f);
+			UpdateCamera();
+		}
+	}
 }

@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
+    <AssemblyName>NLT World Engine (Godot)</AssemblyName>
     <RootNamespace>NltWorldEngine</RootNamespace>
     <Nullable>enable</Nullable>
   </PropertyGroup>

@@ -99,12 +99,12 @@ public static class SettlementBuilder
             i++;
         }
 
-        // plaza
+        // plaza — raised 0.5 so it sits visibly on terrain instead of clipping
         root.AddChild(new MeshInstance3D
         {
             Mesh = new CylinderMesh { Height = 0.22f, TopRadius = 13f, BottomRadius = 13f, RadialSegments = 40 },
             MaterialOverride = pathMat,
-            Position = new Vector3(WorldConstants.SettleX, WorldConstants.SettleY + 0.11f, WorldConstants.SettleZ),
+            Position = new Vector3(WorldConstants.SettleX, WorldConstants.SettleY + 0.5f, WorldConstants.SettleZ),
         });
 
         for (int r = 0; r < 5; r++)
@@ -115,7 +115,7 @@ public static class SettlementBuilder
             {
                 Mesh = new BoxMesh { Size = new Vector3(2.5f, 0.2f, len) },
                 MaterialOverride = pathMat,
-                Position = new Vector3(WorldConstants.SettleX, WorldConstants.SettleY + 0.10f, WorldConstants.SettleZ),
+                Position = new Vector3(WorldConstants.SettleX, WorldConstants.SettleY + 0.5f, WorldConstants.SettleZ),
                 Rotation = new Vector3(0, a, 0),
             };
             road.Position += road.Basis * new Vector3(0, 0, len / 2f);

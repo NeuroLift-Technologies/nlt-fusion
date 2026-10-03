@@ -57,7 +57,7 @@ public static class TerrainBuilder
         }
 
         st.GenerateNormals();
-        st.GenerateTangents();
+        // No UVs on this mesh — tangents not needed (vertex colour only).
         var mat = new StandardMaterial3D
         {
             VertexColorUseAsAlbedo = true,
