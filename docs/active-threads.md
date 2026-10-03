@@ -48,7 +48,25 @@
   - `addons/godot_ai/` third-party MCP bridge added outside any thread: OTOI §4.4 external-integration approval unrecorded; bootstraps Python via `uv`; C#/mono compatibility unverified.
 - **Corrected twice on 2026-10-02 — do not repeat:** (1) *"Mass is not initialized / Mass never ticks"* was false, taken from a **teardown** log line; Mass ticked throughout. (2) *"the event bus has zero writers"* was false, taken from grepping `Publish(`, an API that does not exist — the surface is `RaiseEvent`/`RaiseSimpleEvent`/`RaiseEnvironmentEvent`. (3) *"wiring event producers is new behaviour"* followed from (2), so it is void too. **Verify a diagnosis from instrumentation, not from a log line's context.**
 - **Named gaps the migration does not close** (unmet in UE too — own threads needed, not inherited): agent↔agent interaction, NPC population (no NPC system exists), realistic graphics.
+  - **Realistic graphics → now owned by [`GRAPH-001`](#-graph-001--godot-art--asset-pipeline-realistic-graphics), opened 2026-10-02** (`RENDERER-PLAN.md` §0.3 requires each gap to get its own thread).
+  - **NPC population and agent↔agent interaction still have no thread and no owner.** Note these are also in conflict internally: `RENDERER-PLAN.md` §9 lists agent↔agent interaction as **out of scope**, while §0.3 says it **needs its own thread**. Unresolved — Joshua's call.
 - **Next action:** Phase 2 (`NltWorldEngine.Core` + Tier 1 xUnit gate), unblocked now that #69 and #70 exist — Tier 1 and 2-core were never blocked. Retirement of UE remains gated on 2-scenario, 2b, and a minimum viable RL policy before Phase 10 (see plan 10.1).
+
+### 🎨 GRAPH-001 — Godot art & asset pipeline (realistic graphics)
+- **Status:** open — decisions pending with Joshua (Phase G1 blocking)
+- **Owner:** Joshua (decisions) · **Plan:** [`world-engine-godot/ART-PIPELINE.md`](../world-engine-godot/ART-PIPELINE.md)
+- **Started:** 2026-10-02 · **Last updated:** 2026-10-02
+- **Forked from:** `MIGRATE-001`, per `RENDERER-PLAN.md` §0.3 — *"realistic graphics were unmet in UE and remain unimplemented. Each needs its own thread."*
+- **Scope:** Close the realistic-graphics gap in the Godot renderer. **Only** the graphics gap — NPC population and agent↔agent interaction are separate threads and out of scope here.
+- **Trigger:** the Godot open world renders entirely from runtime primitives (`CylinderMesh`/`ConeMesh`/`BoxMesh`/`SphereMesh`) with **zero imported meshes**; against the three.js spectator (`nlt-world-engine.html`) it reads as a blockout.
+- **Key finding — the blockout is partly a real constraint.** `OpenWorld_Level` **cannot** be FBX-exported from UE (World Partition + Landscape + runtime generation), which is why the open world is procedural at all (`RENDERER-PLAN.md` §4). The four FBX files in `assets/levels/` are **interiors only**. That constraint does *not* extend to characters or hero props.
+- **The forcing function is `RENDERER-PLAN.md` B.2**, not aesthetics: *"Open world renders residents — the agent population walking between buildings. This is where articulation and walk cycles earn their keep."* Line 44 specifies *"articulated bodies · walk cycles"*, which **cannot** be assembled from primitives. The asset decision lands at B.2 whether or not it is filed under graphics.
+- **Recommendation on scope:** import art where art is genuinely required (characters, hero props near camera), **not** as a blanket replacement. Terrain, water, buildings-at-distance and the vegetation wind shader are legitimate as-is; sweeping them would add licensing surface and repo weight for little visual return.
+- **Adopted from the stale predecessor** `docs/design/realistic-viewer-architecture.md` (Three.js-era, orphaned — do not implement against): **CC0-only sourcing** (Mixamo/Poly Haven) and **perf targets** 60 FPS · 10–20 animated characters · <16 ms frame time.
+- **⚠️ Licence risk flagged, not resolved (G1.1):** Mixamo's terms have historically **not permitted redistribution of the raw assets**. If residents ship in this repo or a build, that needs a real answer. Do not assume CC0.
+- **⚠️ Constraint conflict (G2.4):** `RENDERER-PLAN.md` D.4 mandates *reduced motion*; animated walk cycles and the unconditional wind shader in `VegetationBuilder.cs` run against it. Must resolve when animation lands, not after.
+- **Inherited constraints:** Godot is a renderer, not a simulation (§1) · no determinism required (§1.3) · third-party plugins reserved to Joshua (§0.1) · **no asset committed blind — provenance manifest row required first** (§0.2) · accessibility is a renderer constraint (§6 D.4) · PR ≤100 files.
+- **Next action:** Joshua to answer G1.1–G1.5 (asset source & redistribution, character count + LOD budget, animation source, hero-prop policy, budget authorisation). G2 pipeline work is blocked until G1.1 and G1.5 land.
 
 ### 🧪 DET-001 — Deterministic state verification and headless build foundation
 - **Status:** open
