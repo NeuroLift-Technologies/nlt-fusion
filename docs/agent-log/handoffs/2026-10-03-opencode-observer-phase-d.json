@@ -1,0 +1,86 @@
+{
+  "handoff_record": {
+    "session_id":         "ses_eff484ba4ffes6G18YlzlOA5Vu",
+    "agent_name":         "OpenCode (opencode agent harness, space-bunny-free)",
+    "date":               "2026-10-03",
+    "otoi_version":       "ORG-DEV-OTOI-1.0.3",
+    "repo":               "NeuroLift-Technologies/nlt-world-engine",
+    "branch":             "feat/observer-phase-d",
+    "work_completed": [
+      "Phase D observer (RENDERER-PLAN.md D.1-D.5): six panels (World View HUD, Avatar State, Aide Intervention Log, Learning Timeline, Independence Meter, Fusion Gate), Simple/Coach/Technical reading levels, and the four-way burnout reading phrased for a human.",
+      "world-engine-godot/Feed/: replay-capable reader and transport built on PR #80's model types unchanged. Adds what Phase A's single-document loader does not do - a sequence of documents, and reporting problems instead of throwing. A rejected document is never rendered.",
+      "Multi-frame replay fixtures via tools/make_replay_fixture.py: stayalert-day (60 frames), collapse-only (10), rescue-only (6). The StayAlert final frame is asserted content-equivalent to state-feed.sample.json, so the two committed fixtures describe one history.",
+      "Accessibility from frame one: Okabe-Ito palette with a distinct shape and a word beside every colour, reduced motion (snaps the timeline axis, pauses the sky via PR #80's SkyPaused seam), text scale, high contrast, no flashing, and a keyboard shortcut on every control.",
+      "Verification tooling: ObserverCapture (--capture renders the real UI to PNG at a chosen reading level; --selftest asserts layout and popup geometry) plus a 43-case feed harness covering 18 mutated fixtures, every bundle, and the fixture-coherence check."
+    ],
+    "work_in_progress": [
+      "Human click-through of the observer's controls. Mouse input could not be machine-verified; see blockers."
+    ],
+    "blockers": [
+      "Mouse input is UNVERIFIED and needs a human. Synthetic Input.ParseInputEvent does not reach Godot's GUI in this environment - a bare probe Button added outside the observer is equally unclickable, which makes a click-based test a false negative. That probe result is why the earlier '13 controls dead' reading was discarded as a harness artefact rather than treated as a UI defect. Layout, popup geometry and shortcuts are asserted automatically; clicking is not.",
+      "The Godot project cannot load its own C# assembly: project.godot declares dotnet/project/assembly_name=\"NLT World Engine (Godot)\" but world-engine-godot.csproj never sets AssemblyName, so the build emits world-engine-godot.dll and Godot cannot instantiate Main.cs. Worked around for verification with dotnet build -p:AssemblyName=\"NLT World Engine (Godot)\". The csproj needs the one-line fix; not applied because it is shared config outside this phase.",
+      "Capture resolution is capped at the machine's 1324x688 display, so no 1920x1080 screenshot was possible. The rails and timeline are sized by stretch ratios and minimum widths, so 1080p behaviour is reasoned rather than photographed.",
+      "No live Fusion bridge exists (contract section 10 leaves transport undecided), so the observer is driven by a fixture replay."
+    ],
+    "decisions_made": [
+      "Reuse PR #80's state-feed model types rather than ship a competing model. I had written my own model and namespace before discovering the collision mid-session; the duplicate was deleted and my reader/validator/transport were adapted onto theirs. Two models of one contract is a fork waiting to happen.",
+      "Fixture only, behind an IStateSource interface. Transport stays undecided per contract section 10; a live source implements the same interface and nothing downstream changes.",
+      "Author multi-frame fixtures rather than synthesise frames at runtime. Nothing is derived during playback - every frame the observer shows was authored in a file, so the renderer never becomes a source of truth for a value it displays.",
+      "'Why chosen' in the Aide log has no wire field. The panel shows the event's required plain-language text as the reason and says so, rather than inventing a field or leaving the question unasked.",
+      "'Whether it helped' stays three-state (true / false / not recorded). Collapsing 'not recorded' into false would invent evidence about whether coaching works.",
+      "Agent pins are screen-space HUD, not Label3D in the 3D scene, because B.2/B.4 are blocked behind GRAPH-001's G1 decisions. This leaves that work free to land on its own terms.",
+      "Keep sentence copy short. Labels in this Godot build do not reliably wrap and clip instead, so long sentences were cut into short ones plus a separate line."
+    ],
+    "decisions_pending": [
+      "Which recoveryMode spelling Fusion emits: 'rrt' (contract + fixture) or 'rt' (the validator's original code). Both are accepted meanwhile. Joshua's call - if it is 'rt' the contract and fixture need a schema-version bump.",
+      "Whether to add pairs[].experienceVolume = { count, target } to the feed so the Learning Timeline can show progress against the target of 50. A schema bump, and Fusion's call, not the renderer's.",
+      "Whether world-engine-godot.csproj should set AssemblyName to match project.godot, or project.godot's assembly_name should change. One line either way; without it the project does not run from a clean checkout."
+    ],
+    "escalations": [
+      "docs/escalations/2026-10-03-state-feed-recovery-mode-spelling.md - the committed validator failed the committed fixture; fixed, with the spelling decision left to Joshua.",
+      "docs/active-threads.md OBS-001 - records the unverified mouse input, the assembly-name blocker, and two pre-existing Phase B rendering errors (wind shader INSTANCE_TRANSFORM removed in 4.7; VegetationBuilder setting MultiMesh.UseCustomData after InstanceCount, which 4.7 rejects)."
+    ],
+    "next_agent_notes": "Read OBS-001 in docs/active-threads.md first. Three things to know that are not obvious from the code. (1) Godot Labels in this build do not reliably honour AutowrapMode - it reads back as WordSmart however it is set - so Ui.Text/Ui.Paragraph/Ui.Inline all declare an explicit CustomMinimumSize.X (measured text width for single-line labels, ParagraphWrapWidth for sentences). Remove that and words stack one per line. (2) MOUSE_FILTER_IGNORE on a container makes Godot skip its entire subtree during hit-testing, which silently kills every control inside; the observer's layout containers are PASS. (3) A Control's size is clamped to its combined minimum size, so a long Ui.Paragraph inside a popup makes the popup wider than the window and it opens off-screen - which looks exactly like a dead button. That was the real cause of 'the top-right buttons do nothing'. Every control also has a keyboard shortcut, so the observer is usable without a mouse while click verification is pending.",
+    "files_modified": [
+      "world-engine-godot/Main.cs",
+      "world-engine-godot/WorldView.cs (added a read-only Camera accessor for the HUD)",
+      "world-engine-godot/Feed/FeedVocabulary.cs",
+      "world-engine-godot/Feed/FeedReader.cs",
+      "world-engine-godot/Feed/FixtureFeedSource.cs",
+      "world-engine-godot/Feed/FeedTransport.cs",
+      "world-engine-godot/Observer/Ui.cs",
+      "world-engine-godot/Observer/AccessibilitySettings.cs",
+      "world-engine-godot/Observer/PlainLanguage.cs",
+      "world-engine-godot/Observer/BurnoutNarrative.cs",
+      "world-engine-godot/Observer/ObserverPanel.cs",
+      "world-engine-godot/Observer/ObserverRoot.cs",
+      "world-engine-godot/Observer/AvatarStatePanel.cs",
+      "world-engine-godot/Observer/AideLogPanel.cs",
+      "world-engine-godot/Observer/LearningTimelinePanel.cs",
+      "world-engine-godot/Observer/IndependenceMeterPanel.cs",
+      "world-engine-godot/Observer/FusionGatePanel.cs",
+      "world-engine-godot/Observer/WorldViewHud.cs",
+      "world-engine-godot/Observer/ObserverCapture.cs",
+      "world-engine-godot/fixtures/README.md",
+      "world-engine-godot/fixtures/replay/stayalert-day.json",
+      "world-engine-godot/fixtures/replay/collapse-only.json",
+      "world-engine-godot/fixtures/replay/rescue-only.json",
+      "tools/make_replay_fixture.py",
+      "tools/validate_state_feed.py",
+      "world-engine-godot/RENDERER-PLAN.md",
+      "docs/active-threads.md",
+      "docs/agent-log/registrations/2026-10-03-opencode-observer-phase-d.json",
+      "docs/escalations/2026-10-03-state-feed-recovery-mode-spelling.md"
+    ],
+    "tests_run": [
+      "dotnet build (0 errors, 0 warnings)",
+      "Feed harness: 43 checks - sample fixture reads and validates; 18 mutated fixtures each rejected or accepted as intended (out-of-range need, missing need key, truncated velocity, unknown event kind, blank event text, invented state, invented role, scene disagreement, future event tick, open episode carrying recoveryMode, recovered before start, non-boolean burnout, emptied agents, blocking dimension not in dimensions, out-of-range level, float stateSince, wrong schema version, unknown field ignored, extra need key warned, unknown dimension warned, rrt spelling warned, invented recovery mode rejected); all three replay bundles load with no frame rejected; final frame lands on tick 1187 with the snapshot's episodes and events; both recovery modes exercised; a recognition not acted on present; independence rises across the run; collapse bundle has three unresolved episodes and never fuses.",
+      "python3 tools/make_replay_fixture.py --check - all bundles up to date and every frame validates against nlt.state-feed.v1",
+      "python3 tools/validate_state_feed.py world-engine-godot/fixtures/state-feed.sample.json - now passes (it did not before this session)",
+      "godot --headless --selftest - 18 controls, all with keyboard shortcuts, both popups opening on screen at 420px, LAYOUT OK",
+      "Rendered capture at Simple, Coach and Technical, reviewed as images"
+    ],
+    "tests_passing": true,
+    "pr_url": ""
+  }
+}

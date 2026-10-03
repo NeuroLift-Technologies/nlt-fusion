@@ -7,6 +7,24 @@
 ---
 
 ## Active Threads
+### 🔭 OBS-001 — Phase D observer (Godot renderer + spectator)
+
+- **Status:** open — D.1–D.5 delivered; **mouse input needs a human click-through**
+- **Owner:** OpenCode · **Forked from:** `MIGRATE-001` · **Branch:** `feat/observer-phase-d`
+- **Started / Last updated:** 2026-10-03
+- **Plan:** [`world-engine-godot/RENDERER-PLAN.md` §6](../world-engine-godot/RENDERER-PLAN.md)
+- **Scope:** the six required panels, three reading levels, transport controls, accessibility, and the four-way burnout reading. Godot is a **renderer** here — it reads state and shows it, and computes no level, burnout verdict or fusion score (contract §2).
+- **Delivered:**
+  - `world-engine-godot/Observer/` — six panels, `ObserverRoot` layout, `AccessibilitySettings`, `BurnoutNarrative`, `PlainLanguage`, `Ui` (colour-safe palette + glyph vocabulary), `WorldViewHud`, `ObserverCapture`.
+  - `world-engine-godot/Feed/` — a replay-capable reader and transport. **Reuses PR #80's model types unchanged**; adds only what Phase A's single-document loader does not do (a *sequence* of documents, and reporting problems instead of throwing).
+  - `tools/make_replay_fixture.py` + `world-engine-godot/fixtures/replay/` — three multi-frame bundles that make the Learning Timeline and all four D.5 readings reachable. The StayAlert bundle's final frame is asserted content-equivalent to `state-feed.sample.json`, so the two fixtures describe one history.
+  - Verification: 43-case feed harness (parse/validate against 18 mutated fixtures, every bundle, coherence check), `--selftest` layout assertions, rendered capture at all three reading levels.
+- **🔴 Blocker — mouse input is unverified.** Synthetic `Input.ParseInputEvent` does not reach Godot's GUI in this environment: a bare probe `Button` outside the observer is equally unclickable, so a click-based test is a false negative and was discarded. Layout, popup geometry and shortcuts are asserted; **clicking needs a human.** Every control also has a keyboard shortcut (`1`/`2`/`3`, `Space`, `←`/`→`, `End`, `R`, `O`, `F1`–`F4`), so the observer is fully operable without a mouse.
+- **Bugs found in existing work, reported not silently absorbed:**
+  - `tools/validate_state_feed.py` **failed the shipped fixture** — the contract and fixture spell the assisted-recovery mode `rrt`, the validator accepted only `rt`. Fixed to accept `rrt` and warn on `rt`; which spelling Fusion emits is Joshua's call. See [`docs/escalations/2026-10-03-state-feed-recovery-mode-spelling.md`](escalations/2026-10-03-state-feed-recovery-mode-spelling.md).
+  - **The Godot project cannot load its own C# assembly.** `project.godot` declares `dotnet/project/assembly_name="NLT World Engine (Godot)"`, but `world-engine-godot.csproj` never sets `AssemblyName`, so the build emits `world-engine-godot.dll` and Godot reports *"Cannot instantiate C# script … associated class could not be found"*. Present since the prototype landed; worked around for verification with `dotnet build -p:AssemblyName="NLT World Engine (Godot)"`. **The csproj needs the one-line fix** — nobody could run the project from a clean checkout without it.
+  - **Pre-existing Phase B rendering errors**, untouched and out of scope: the wind shader fails (`INSTANCE_TRANSFORM` unknown in 4.7), and `VegetationBuilder` sets `MultiMesh.UseCustomData` *after* `InstanceCount`, which 4.7 rejects (*"Instance count must be 0 to toggle whether custom data is used"*) — every tree logs an error at startup.
+- **Next action:** human click-through of the top bar and transport. Then an `experienceVolume` count on the wire if Fusion wants the timeline to show progress against the target of 50 (schema bump, Fusion's call), and B.2/B.4 agent pins in the 3D scene once GRAPH-001's G1 decisions land.
 
 ### 🔀 MIGRATE-001 — UE 5.8 → Godot 4.7.2 engine migration
 - **Status:** open (Phase 1 capture **live**; SIM-001 fixed; awaiting decision on event-stream scope)

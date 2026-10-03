@@ -150,6 +150,10 @@ Four scenes exist (`workplace_level.tscn`, `personal_level.tscn`, `social_level.
 
 ## 6. Phase D — Observer
 
+> **Status: D.1–D.5 delivered 2026-10-03.** Six panels, three reading levels, transport controls,
+> accessibility settings and the four-way burnout reading. Verified by rendered capture at all three
+> levels and by a layout self-test. **Mouse input is not machine-verified — see §6.1.**
+
 The audience is **people with ADHD**. Per the vertical slice: they must *"watch and understand the simulation without needing to parse a dense analytics dashboard."* That makes accessibility a renderer constraint, not a later pass.
 
 **Behaviour is the primary channel; numbers are the third detail level.** Meters and charts belong at `Technical`.
@@ -160,11 +164,19 @@ The audience is **people with ADHD**. Per the vertical slice: they must *"watch 
 | `Coach` | The above, plus what the Aide did and whether it helped |
 | `Technical` | Numbers, graphs, timelines |
 
-- [ ] D.1 **Six panels.** `World View` · `Avatar State` · `Aide Intervention Log` (when / which strategy / why chosen / whether it helped) · `Learning Timeline` · `Independence Meter` · `Fusion Gate`.
-- [ ] D.2 **Learning Timeline is the most valuable panel.** `EXPERIENCE_VOLUME_TARGET = 50` means a pair must accumulate 50 experiences before fusion. Fifty repetitions are not comprehensible in real time — the timeline, step-through and replay are what make a training history legible. It should show burnout episodes marked, severity as depth, recovery arcs, and whether each recovery was solo or assisted.
-- [ ] D.3 **Fusion Gate** is a pure render of `FusionReadiness.to_dict()` — per-dimension score and pass, overall, `blocking_dimensions`, `recommendations`. No world data needed.
-- [ ] D.4 **Accessibility from frame one:** reduced motion · colour-safe indicators · minimal flashing or surprise animation · plain-language events · clear visual hierarchy · pause/resume/step/replay · adjustable speed.
-- [ ] D.5 **Four-way reading of burnout**, and it must be phrased for a human:
+- [x] D.1 **Six panels.** ✅ *Done 2026-10-03.* `World View` · `Avatar State` · `Aide Intervention Log` · `Learning Timeline` · `Independence Meter` · `Fusion Gate` — `world-engine-godot/Observer/`.
+  - The log's *"why chosen"* has **no wire field**. The panel shows the event's required plain-language `text` as the reason and says so, rather than inventing a field. When the bridge lands a real `why` can be added without a layout change.
+  - *"Whether it helped"* is **three-state** — `true`, `false`, and **not recorded** — throughout. Collapsing the third into the second would invent evidence about whether coaching works, which is the one thing this panel exists to report honestly.
+- [x] D.2 **Learning Timeline is the most valuable panel.** ✅ *Done 2026-10-03.* `EXPERIENCE_VOLUME_TARGET = 50` means a pair must accumulate 50 experiences before fusion. Fifty repetitions are not comprehensible in real time — the timeline, step-through and replay are what make a training history legible.
+  - Burnout arcs: **depth = severity**, span = duration, and the closing cap says *who* recovered it — filled circle = alone, hollow square = the RRT core, no cap = still open.
+  - Self-recognitions get their own lane, with a distinct shape for `actedOn: false`. That is the failure signal: it separates self-awareness from self-report.
+  - Scrubbing lands on the nearest **received** document. It never invents a position between documents, because there is nothing delivered there to show.
+- [x] D.3 **Fusion Gate** is a pure render of `FusionReadiness.to_dict()` — per-dimension score and pass, overall, `blocking_dimensions`, `recommendations`. ✅ *Done 2026-10-03.* No world data, no thresholds, no arithmetic: the renderer has no authority over fusion readiness and does not pretend to.
+- [x] D.4 **Accessibility from frame one:** reduced motion · colour-safe indicators · minimal flashing or surprise animation · plain-language events · clear visual hierarchy · pause/resume/step/replay · adjustable speed. ✅ *Done 2026-10-03.*
+  - Colour-safety, no-flashing and plain language are **properties of construction, not switches**: Okabe–Ito hues, a distinct shape per indicator, a word beside every colour.
+  - Every control has a **keyboard shortcut** (`1`/`2`/`3`, `Space`, `←`/`→`, `End`, `R`, `O`, `F1`–`F4`), so nothing depends on hitting a small target.
+  - Reduced motion snaps the timeline axis instead of easing it, and pauses the sky through PR #80's existing `WorldView.SkyPaused` seam. **The vegetation wind shader still runs regardless** — that part of the conflict is Phase B and remains open (GRAPH-001).
+- [x] D.5 **Four-way reading of burnout**, phrased for a human. ✅ *Done 2026-10-03.* Resolution order: any open episode → *collapsed repeatedly*; else the most recent episode's recovery mode → *needed RRT* or *self-recovered*; else *never approached*.
 
   | | Reading |
   |---|---|
@@ -173,7 +185,14 @@ The audience is **people with ADHD**. Per the vertical slice: they must *"watch 
   | Approached, needed RRT | Needed rescue — legitimate, costs readiness |
   | Collapsed repeatedly | Still struggling |
 
-  The permanent `crisis_interventions` penalty means a pair with a hard life is systematically disadvantaged in fusion. The panel has an obligation to explain that as *"not ready yet"*, not *"failed"* — the audience will recognise themselves in the struggling Avatar.
+  The permanent `crisis_interventions` penalty means a pair with a hard life is systematically disadvantaged in fusion. The panel therefore explains a block as *"not ready yet"*, never *"failed"* — the audience will recognise themselves in the struggling Avatar. `BurnoutNarrative.cs` is one pure function over the episodes the feed delivers; it never infers that an episode happened. All four readings are reachable from a committed fixture — see `world-engine-godot/fixtures/README.md`.
+
+### 6.1 Known gaps in Phase D
+
+- **Mouse input is not machine-verified.** Synthetic `Input.ParseInputEvent` does not reach Godot's GUI in this environment — a bare probe `Button` outside the observer is equally unclickable — so the self-test asserts layout and popup geometry rather than clicks, and clicking is verified by hand. It is also bypassable entirely from the keyboard.
+- **The feed is a fixture, not a live bridge.** Transport is still undecided (contract §10). A fixture replay stands in; a live source implements the same `IStateSource` and nothing downstream changes.
+- **No experience count on the wire.** The timeline shows the `EXPERIENTIAL_DEPTH` score and Fusion's own recommendation text, because the feed carries no count against the target of 50. Proposed shape: `pairs[].experienceVolume = { count, target }`. Adding it is a schema-version bump and **Fusion's call** — filed under Phase A open items, not decided here.
+- **World View is a HUD, not world geometry.** B.2/B.4 (articulated residents, `Label3D` name labels) are blocked behind GRAPH-001's G1 decisions, so agent pins are drawn in screen space from the positions already on the feed rather than in the 3D scene.
 
 ---
 

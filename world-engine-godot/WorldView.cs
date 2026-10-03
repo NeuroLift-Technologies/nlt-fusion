@@ -50,6 +50,12 @@ public partial class WorldView : Node3D
         }
     }
 
+    /// <summary>
+    /// The world camera. Exposed so the observer's World View HUD can project agent positions onto
+    /// the screen. Read-only: the observer may look through this camera, never move it.
+    /// </summary>
+    public Camera3D Camera => _cam;
+
     /// <summary>Initializes the state feed, camera, Sky3D sky, terrain, water, settlement and vegetation builders.</summary>
     public override void _Ready()
     {

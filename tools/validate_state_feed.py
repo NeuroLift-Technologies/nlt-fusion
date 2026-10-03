@@ -167,8 +167,14 @@ def validate(doc: Any) -> tuple[Errors, Warnings]:
         if rt is not None:
             err.check(isinstance(rt, int) and rt >= ep.get("startTick", 0),
                       f"{where}.recoveredTick must be >= startTick")
-            err.check(ep.get("recoveryMode") in ("solo", "rt"),
-                      f"{where}.recoveryMode must be solo|rt when recovered")
+            mode = ep.get("recoveryMode")
+            err.check(mode in ("solo", "rrt"),
+                      f"{where}.recoveryMode must be solo|rrt when recovered, got {mode!r}")
+            if mode == "rt":
+                warn.append(
+                    f"{where}.recoveryMode is 'rt'; the contract (section 6) and the shipped "
+                    f"fixture both spell it 'rrt'"
+                )
         else:
             # Open episode: recoveryMode must be absent, not null.
             err.check("recoveryMode" not in ep,
