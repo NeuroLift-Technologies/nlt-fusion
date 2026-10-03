@@ -79,6 +79,23 @@ This section supplies one. `lod_sweep.py` decimates a single body at seven
 densities and exports each **geometry only** (no rig, no animation), so every
 byte is attributable to mesh data. One headless Blender process.
 
+**Reproduce:**
+
+| Script | Role |
+|---|---|
+| `make_lods.py` | builds the `LOD_*` ladder from the probe `Body` mesh |
+| `lod_sweep.py` | measures it, emits JSON between `LODSWEEP_JSON_START/END` |
+| `verify_lod_sweep.cmd` | regression check for both the pass and fail paths |
+
+```bat
+blender -b <lod_source.blend> --python lod_sweep.py -- --out <dir>
+```
+
+The source `.blend` must contain all seven `LOD_*` objects. A missing one is a
+**hard failure** (`LODSWEEP_ERROR:` sentinel, exit 2) rather than a silent skip —
+Blender's `-b` otherwise swallows the exception and still exits 0, letting a
+partial sweep report success.
+
 | Tris | Verts | Plain | Draco | Meshopt |
 |---|---|---|---|---|
 | 6,000 | 3,002 | 109,244 | 19,736 | 52,072 |
@@ -96,20 +113,30 @@ absolute terms.
 
 ### At 20 residents, geometry only
 
-**Share-one-mesh is the right default, and it invalidates the linear budget
-above.** When every resident instances the same mesh, the GPU pays the vertex
-buffer *once*; only the per-instance transform costs anything:
+**These are compressed GLB sizes on disk, not GPU memory.** `lod_sweep.py`
+measures exported file bytes. Godot imported the files successfully, but this
+sweep did **not** measure the imported GPU vertex buffers, so it does not
+establish a GPU memory budget for G1.2.
 
-| Tris/resident | One Draco mesh | 20 instances, GPU geometry |
-|---|---|---|
-| 6,000 | 19.7 KB | 19.7 KB |
-| 3,000 | 11.0 KB | 11.0 KB |
-| 1,500 | 6.5 KB | 6.5 KB |
+| Tris/resident | One Draco GLB (on disk) |
+|---|---|
+| 6,000 | 19.7 KB |
+| 3,000 | 11.0 KB |
+| 1,500 | 6.5 KB |
 
-§2's 20-resident figures assumed size scales linearly with population. **For
-shared geometry that assumption is wrong — and it was the pessimistic
-direction.** Mesh memory does not multiply by population. Skeletons, animation
-tracks, and per-instance CPU skinning still do.
+What can be said: **sharing one mesh avoids duplicating the mesh resource per
+resident.** If residents instance the same `Mesh`, the geometry resource is held
+once rather than copied 20 times — so §2's linear reading of "20 residents ×
+per-character size" overstates duplication. That is a structural argument about
+resource sharing, *not* a measurement of what the GPU ends up holding, and the
+actual figure depends on vertex format, Godot's import-side compression, and
+whether the mesh is uploaded once or per-instance.
+
+§2's figures assumed size scales linearly with population. For shared geometry
+that assumption is pessimistic, but **the size on disk and the resident GPU
+allocation are different quantities and only the former was measured.** Skeletons,
+animation tracks, and per-instance CPU skinning still scale with population and
+remain the real cost.
 
 ## 5. Godot 4.7.2 import verification
 
@@ -203,6 +230,9 @@ interactive session is unsaved and was lost once to this.
   case for silhouette retention.
 - **Still not G3.1.** No frame-time measurement here, and probe geometry would not
   predict real performance regardless.
+- **Not a GPU memory budget.** Every byte figure in this document is a compressed
+  GLB file size on disk. Godot's successful import proves the files load, not what
+  they occupy once resident on the GPU. G1.2's memory half needs a separate capture.
 - Two probe errors in this session were **mine, not Blender's** (`vertex_groups`
   lives on `Object`, not `Mesh`). Noted so the transcript is not misread.
 
@@ -272,8 +302,10 @@ a tri count." Now:
 - A density ladder exists with **measured, monotonic, Godot-verified** numbers at
   480–6,000 tris.
 - **Draco is decided** — 2.1–2.6× better than Meshopt at every level.
-- **The 20-resident memory concern resolves downward.** Shared geometry does not
-  multiply by population; §4's linear reading was pessimistic.
+- **§2's linear 20-resident reading was overstated.** Sharing one `Mesh` avoids
+  duplicating the geometry resource per resident. Those are **on-disk GLB sizes,
+  not measured GPU memory** — the GPU budget remains unmeasured and would need a
+  separate capture.
 - **The remaining cost is skeleton count and skinning**, confirming §2 at higher
   density. That is a `Skeleton3D`/animation budget question, answerable without art.
 

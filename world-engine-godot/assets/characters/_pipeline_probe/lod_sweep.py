@@ -4,7 +4,12 @@ Runs one Blender process per decimation level so each export contains exactly on
 mesh with no rig, no animation, and no sibling objects. `use_selection=True` is
 NOT sufficient -- this build ignores it and re-exports every mesh in the file.
 
-Usage:  blender -b --python lod_sweep.py -- --out <dir>
+Usage:
+    blender -b <lod_source.blend> --python lod_sweep.py -- --out <dir>
+
+The source .blend must contain all seven LOD_* objects. A missing object is a
+hard error, not a skip -- silently dropping a level would report a successful
+partial sweep.
 """
 
 import json
@@ -66,7 +71,16 @@ for r in RATIOS:
     name = "LOD_%03d" % int(r * 100)
     src = bpy.data.objects.get(name)
     if src is None:
-        continue
+        # Blender's -b swallows Python exceptions and still exits 0, so the
+        # message alone would not fail a CI step. Print a sentinel the caller
+        # can grep, then hard-exit non-zero.
+        msg = ("Required LOD object is missing: %s. Pass the source .blend that "
+               "contains all %d LOD_* objects: blender -b <lod_source.blend> "
+               "--python lod_sweep.py -- --out <dir>"
+               % (name, len(RATIOS)))
+        print("LODSWEEP_ERROR: %s" % msg)
+        sys.stdout.flush()
+        sys.exit(2)
     targets.append({
         "ratio": r,
         "name": name,
