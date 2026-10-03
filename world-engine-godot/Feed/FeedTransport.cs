@@ -179,15 +179,28 @@ public partial class FeedTransport : Node
         StatusChanged?.Invoke();
     }
 
-    /// <summary>Advance one document. Pulls the next one if the cursor was already live.</summary>
+    /// <summary>Advance one document. Pulls a new one only when the cursor was already live.</summary>
     public void StepForward()
     {
         Paused = true;
-        if (Live && AtEnd)
+
+        // Scrubbed back into history: walk forward one document that has already arrived, rather
+        // than pulling the next one off the source and jumping the cursor to it. Stepping forward
+        // from history must land next door, not at the end of the recording.
+        if (!Live)
+        {
+            _cursor = Math.Min(_cursor + 1, _frames.Count - 1);
+            Notify();
+            StatusChanged?.Invoke();
+            return;
+        }
+
+        if (AtEnd)
         {
             Notify();
             return;
         }
+
         PullNext();
         _cursor = _frames.Count - 1;
         Notify();

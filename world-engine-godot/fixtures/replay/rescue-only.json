@@ -5,7 +5,7 @@
   "provenance": {
     "authored": true,
     "authoringTool": "tools/make_replay_fixture.py",
-    "generatedUtc": "2026-10-03T10:19:49Z",
+    "generatedUtc": "2026-10-03T11:45:08Z",
     "note": "Synthetic fixture. Makes the 'needed rescue' reading (RENDERER-PLAN.md D.5) reachable: StayAlert's most recent episode recovers solo, so it never reads as 'needed rescue'."
   },
   "frameCount": 6,
@@ -25,9 +25,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.0,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.0
           },
           "velocity": {
             "x": 0.0,
@@ -67,9 +67,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.9,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.3
           },
           "velocity": {
             "x": 0.0,
@@ -175,14 +175,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.147,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.32
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.053,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.02
           },
           "appearance": {
             "body": "avatar_01",
@@ -203,7 +203,7 @@
             "stimulation": 0.4
           },
           "state": "overwhelmed",
-          "stateSince": 1,
+          "stateSince": 450,
           "currentGoal": "Get to the appointment",
           "currentTask": "Get to the appointment",
           "struggleSignals": [
@@ -220,14 +220,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.047,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.62
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.053,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.02
           },
           "appearance": {
             "body": "aide_01",
@@ -248,7 +248,7 @@
             "stimulation": 0.6
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 414,
           "currentGoal": null,
           "currentTask": "Keep the morning moving",
           "struggleSignals": [],
@@ -335,14 +335,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.28,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.48
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.06,
             "y": 0.0,
-            "z": 1.0
+            "z": 0.06
           },
           "appearance": {
             "body": "avatar_01",
@@ -363,7 +363,7 @@
             "stimulation": 0.4
           },
           "state": "overwhelmed",
-          "stateSince": 1,
+          "stateSince": 450,
           "currentGoal": "Get to the appointment",
           "currentTask": "Get to the appointment",
           "struggleSignals": [
@@ -380,14 +380,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.18,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.78
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.06,
             "y": 0.0,
-            "z": 1.0
+            "z": 0.06
           },
           "appearance": {
             "body": "aide_01",
@@ -408,7 +408,7 @@
             "stimulation": 0.6
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 414,
           "currentGoal": null,
           "currentTask": "Keep the morning moving",
           "struggleSignals": [],
@@ -534,12 +534,12 @@
           "position": {
             "x": 0.32,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.52
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.06,
             "y": 0.0,
-            "z": 1.0
+            "z": 0.06
           },
           "appearance": {
             "body": "avatar_01",
@@ -560,7 +560,7 @@
             "stimulation": 0.46
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 452,
           "currentGoal": "Get to the appointment",
           "currentTask": "One step at a time to the appointment",
           "struggleSignals": [
@@ -576,14 +576,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.22,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.82
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.06,
             "y": 0.0,
-            "z": 1.0
+            "z": 0.06
           },
           "appearance": {
             "body": "aide_01",
@@ -604,7 +604,7 @@
             "stimulation": 0.58
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 452,
           "currentGoal": null,
           "currentTask": "Bring Jamie back up, then step back",
           "struggleSignals": [],
@@ -730,9 +730,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.133,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.773
           },
           "velocity": {
             "x": 0.0,
@@ -758,7 +758,7 @@
             "stimulation": 0.46
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 452,
           "currentGoal": "Get to the appointment",
           "currentTask": "One step at a time to the appointment",
           "struggleSignals": [
@@ -774,9 +774,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.033,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.073
           },
           "velocity": {
             "x": 0.0,
@@ -802,7 +802,7 @@
             "stimulation": 0.58
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 452,
           "currentGoal": null,
           "currentTask": "Bring Jamie back up, then step back",
           "struggleSignals": [],
@@ -928,9 +928,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.2,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.2
           },
           "velocity": {
             "x": 0.0,
@@ -972,9 +972,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.1,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.5
           },
           "velocity": {
             "x": 0.0,

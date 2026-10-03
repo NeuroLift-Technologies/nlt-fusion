@@ -224,11 +224,26 @@ public partial class TimelinePlot : Control
 
         // Ease toward the target so the axis grows smoothly — unless reduced motion is on, when it
         // snaps, because an animated axis is exactly the motion that setting exists to remove.
+        //
+        // Snap once the remaining distance is a tick or two. Rounding an eased value that is nearly
+        // there returns the current value unchanged, so the axis used to stall a few ticks short of
+        // its target and never arrive.
         float ease = _a11y.ReducedMotion ? 1f : 0.25f;
-        _lo = Mathf.RoundToInt(Mathf.Lerp(_lo == 0 ? lo : _lo, lo, ease));
-        _hi = Mathf.RoundToInt(Mathf.Lerp(_hi <= 1 ? hi : _hi, hi, ease));
+        _lo = Eased(_lo, lo, ease, _initialised);
+        _hi = Eased(_hi, hi, ease, _initialised);
+        _initialised = true;
         if (_hi <= _lo)
             _hi = _lo + 1;
+    }
+
+    private bool _initialised;
+
+    private static int Eased(int current, int target, float ease, bool initialised)
+    {
+        if (initialised && Math.Abs(target - current) <= 2)
+            return target;
+        int from = initialised ? current : target;
+        return Mathf.RoundToInt(Mathf.Lerp(from, target, ease));
     }
 
     private float TickToX(int tick, float x0, float x1)

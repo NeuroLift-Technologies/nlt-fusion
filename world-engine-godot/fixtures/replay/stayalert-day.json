@@ -5,7 +5,7 @@
   "provenance": {
     "authored": true,
     "authoringTool": "tools/make_replay_fixture.py",
-    "generatedUtc": "2026-10-03T10:19:49Z",
+    "generatedUtc": "2026-10-03T11:45:08Z",
     "note": "Synthetic fixture authored to exercise the Learning Timeline. Its final frame is content-equivalent to world-engine-godot/fixtures/state-feed.sample.json, so the two describe one continuous history. Not simulation output: no policy has run here."
   },
   "frameCount": 60,
@@ -25,9 +25,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 4.2,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.8
           },
           "velocity": {
             "x": 0.0,
@@ -67,9 +67,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 5.1,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.1
           },
           "velocity": {
             "x": 0.0,
@@ -176,14 +176,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.62,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.94
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.058,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.014
           },
           "appearance": {
             "body": "avatar_01",
@@ -204,7 +204,7 @@
             "stimulation": 0.58
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 596,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [],
@@ -218,14 +218,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 4.52,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.25
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.058,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "aide_01",
@@ -246,7 +246,7 @@
             "stimulation": 0.62
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 596,
           "currentGoal": null,
           "currentTask": "Keep the morning moving without taking over",
           "struggleSignals": [],
@@ -327,14 +327,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.04,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.08
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.058,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.014
           },
           "appearance": {
             "body": "avatar_01",
@@ -355,7 +355,7 @@
             "stimulation": 0.6
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 596,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -371,14 +371,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.94,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.4
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.058,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "aide_01",
@@ -399,7 +399,7 @@
             "stimulation": 0.62
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 596,
           "currentGoal": null,
           "currentTask": "Keep the morning moving without taking over",
           "struggleSignals": [],
@@ -487,14 +487,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.46,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.22
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.058,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.014
           },
           "appearance": {
             "body": "avatar_01",
@@ -515,7 +515,7 @@
             "stimulation": 0.6
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 596,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -531,14 +531,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.36,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.55
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.058,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "aide_01",
@@ -559,7 +559,7 @@
             "stimulation": 0.62
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 596,
           "currentGoal": null,
           "currentTask": "Keep the morning moving without taking over",
           "struggleSignals": [],
@@ -647,14 +647,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.88,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.36
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.058,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.014
           },
           "appearance": {
             "body": "avatar_01",
@@ -675,7 +675,7 @@
             "stimulation": 0.6
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 596,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -691,14 +691,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.78,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.7
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.058,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "aide_01",
@@ -719,7 +719,7 @@
             "stimulation": 0.62
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 596,
           "currentGoal": null,
           "currentTask": "Keep the morning moving without taking over",
           "struggleSignals": [],
@@ -821,14 +821,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.3,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.5
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.058,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.014
           },
           "appearance": {
             "body": "avatar_01",
@@ -849,7 +849,7 @@
             "stimulation": 0.6
           },
           "state": "drifting",
-          "stateSince": 1,
+          "stateSince": 646,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -866,14 +866,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.2,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.85
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.058,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "aide_01",
@@ -894,7 +894,7 @@
             "stimulation": 0.62
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 596,
           "currentGoal": null,
           "currentTask": "Keep the morning moving without taking over",
           "struggleSignals": [],
@@ -1005,12 +1005,12 @@
           "position": {
             "x": 0.72,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.64
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.058,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.014
           },
           "appearance": {
             "body": "avatar_01",
@@ -1031,7 +1031,7 @@
             "stimulation": 0.6
           },
           "state": "drifting",
-          "stateSince": 1,
+          "stateSince": 646,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -1048,14 +1048,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.62,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.0
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.058,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "aide_01",
@@ -1076,7 +1076,7 @@
             "stimulation": 0.62
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 596,
           "currentGoal": null,
           "currentTask": "Keep the morning moving without taking over",
           "struggleSignals": [],
@@ -1187,12 +1187,12 @@
           "position": {
             "x": 0.14,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.78
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.058,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.014
           },
           "appearance": {
             "body": "avatar_01",
@@ -1213,7 +1213,7 @@
             "stimulation": 0.6
           },
           "state": "drifting",
-          "stateSince": 1,
+          "stateSince": 646,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -1230,14 +1230,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.04,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.15
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.058,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "aide_01",
@@ -1258,7 +1258,7 @@
             "stimulation": 0.62
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 596,
           "currentGoal": null,
           "currentTask": "Keep the morning moving without taking over",
           "struggleSignals": [],
@@ -1367,14 +1367,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.44,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.92
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.058,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.014
           },
           "appearance": {
             "body": "avatar_01",
@@ -1395,7 +1395,7 @@
             "stimulation": 0.58
           },
           "state": "resisting",
-          "stateSince": 1,
+          "stateSince": 660,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -1414,12 +1414,12 @@
           "position": {
             "x": 0.46,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.3
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.058,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "aide_01",
@@ -1440,7 +1440,7 @@
             "stimulation": 0.62
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 596,
           "currentGoal": null,
           "currentTask": "Keep the morning moving without taking over",
           "struggleSignals": [],
@@ -1549,14 +1549,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -1.02,
             "y": 0.0,
-            "z": 0.0
+            "z": -3.06
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.058,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.014
           },
           "appearance": {
             "body": "avatar_01",
@@ -1577,7 +1577,7 @@
             "stimulation": 0.58
           },
           "state": "resisting",
-          "stateSince": 1,
+          "stateSince": 660,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -1594,14 +1594,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.12,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.45
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.058,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "aide_01",
@@ -1622,7 +1622,7 @@
             "stimulation": 0.62
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 596,
           "currentGoal": null,
           "currentTask": "Keep the morning moving without taking over",
           "struggleSignals": [],
@@ -1731,14 +1731,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -1.6,
             "y": 0.0,
-            "z": 0.0
+            "z": -3.2
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.058,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.014
           },
           "appearance": {
             "body": "avatar_01",
@@ -1759,7 +1759,7 @@
             "stimulation": 0.58
           },
           "state": "resisting",
-          "stateSince": 1,
+          "stateSince": 660,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -1776,14 +1776,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.7,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.6
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.058,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "aide_01",
@@ -1804,7 +1804,7 @@
             "stimulation": 0.62
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 596,
           "currentGoal": null,
           "currentTask": "Keep the morning moving without taking over",
           "struggleSignals": [],
@@ -1920,14 +1920,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -1.426,
             "y": 0.0,
-            "z": 0.0
+            "z": -3.163
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.224
+            "z": 0.004
           },
           "appearance": {
             "body": "avatar_01",
@@ -1948,7 +1948,7 @@
             "stimulation": 0.58
           },
           "state": "resisting",
-          "stateSince": 1,
+          "stateSince": 660,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -1965,14 +1965,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.526,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.557
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.261
+            "z": 0.004
           },
           "appearance": {
             "body": "aide_01",
@@ -1993,7 +1993,7 @@
             "stimulation": 0.62
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 596,
           "currentGoal": null,
           "currentTask": "Keep the morning moving without taking over",
           "struggleSignals": [],
@@ -2109,14 +2109,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -1.252,
             "y": 0.0,
-            "z": 0.0
+            "z": -3.125
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.224
+            "z": 0.004
           },
           "appearance": {
             "body": "avatar_01",
@@ -2137,7 +2137,7 @@
             "stimulation": 0.58
           },
           "state": "resisting",
-          "stateSince": 1,
+          "stateSince": 660,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -2154,14 +2154,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.352,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.513
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.261
+            "z": 0.004
           },
           "appearance": {
             "body": "aide_01",
@@ -2182,7 +2182,7 @@
             "stimulation": 0.62
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 596,
           "currentGoal": null,
           "currentTask": "Keep the morning moving without taking over",
           "struggleSignals": [],
@@ -2298,14 +2298,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -1.078,
             "y": 0.0,
-            "z": 0.0
+            "z": -3.088
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.224
+            "z": 0.004
           },
           "appearance": {
             "body": "avatar_01",
@@ -2326,7 +2326,7 @@
             "stimulation": 0.58
           },
           "state": "resisting",
-          "stateSince": 1,
+          "stateSince": 660,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -2343,14 +2343,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.178,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.47
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.261
+            "z": 0.004
           },
           "appearance": {
             "body": "aide_01",
@@ -2371,7 +2371,7 @@
             "stimulation": 0.62
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 596,
           "currentGoal": null,
           "currentTask": "Keep the morning moving without taking over",
           "struggleSignals": [],
@@ -2487,14 +2487,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.904,
             "y": 0.0,
-            "z": 0.0
+            "z": -3.051
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.224
+            "z": 0.004
           },
           "appearance": {
             "body": "avatar_01",
@@ -2515,7 +2515,7 @@
             "stimulation": 0.56
           },
           "state": "resisting",
-          "stateSince": 1,
+          "stateSince": 660,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -2533,14 +2533,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.004,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.426
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.261
+            "z": 0.004
           },
           "appearance": {
             "body": "aide_01",
@@ -2561,7 +2561,7 @@
             "stimulation": 0.6
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -2677,14 +2677,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.73,
             "y": 0.0,
-            "z": 0.0
+            "z": -3.014
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.224
+            "z": 0.004
           },
           "appearance": {
             "body": "avatar_01",
@@ -2705,7 +2705,7 @@
             "stimulation": 0.56
           },
           "state": "resisting",
-          "stateSince": 1,
+          "stateSince": 660,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -2725,12 +2725,12 @@
           "position": {
             "x": 0.17,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.383
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.261
+            "z": 0.004
           },
           "appearance": {
             "body": "aide_01",
@@ -2751,7 +2751,7 @@
             "stimulation": 0.6
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -2867,14 +2867,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.557,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.976
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.224
+            "z": 0.004
           },
           "appearance": {
             "body": "avatar_01",
@@ -2895,7 +2895,7 @@
             "stimulation": 0.56
           },
           "state": "resisting",
-          "stateSince": 1,
+          "stateSince": 660,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -2915,12 +2915,12 @@
           "position": {
             "x": 0.343,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.339
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.261
+            "z": 0.004
           },
           "appearance": {
             "body": "aide_01",
@@ -2941,7 +2941,7 @@
             "stimulation": 0.6
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -3050,14 +3050,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.383,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.939
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.224
+            "z": 0.004
           },
           "appearance": {
             "body": "avatar_01",
@@ -3078,7 +3078,7 @@
             "stimulation": 0.56
           },
           "state": "resisting",
-          "stateSince": 1,
+          "stateSince": 660,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -3098,12 +3098,12 @@
           "position": {
             "x": 0.517,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.296
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.261
+            "z": 0.004
           },
           "appearance": {
             "body": "aide_01",
@@ -3124,7 +3124,7 @@
             "stimulation": 0.6
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -3226,14 +3226,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.209,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.902
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.224
+            "z": 0.004
           },
           "appearance": {
             "body": "avatar_01",
@@ -3254,7 +3254,7 @@
             "stimulation": 0.56
           },
           "state": "resisting",
-          "stateSince": 1,
+          "stateSince": 660,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -3274,12 +3274,12 @@
           "position": {
             "x": 0.691,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.252
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.261
+            "z": 0.004
           },
           "appearance": {
             "body": "aide_01",
@@ -3300,7 +3300,7 @@
             "stimulation": 0.6
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -3402,14 +3402,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.035,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.865
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.224
+            "z": 0.004
           },
           "appearance": {
             "body": "avatar_01",
@@ -3430,7 +3430,7 @@
             "stimulation": 0.56
           },
           "state": "resisting",
-          "stateSince": 1,
+          "stateSince": 660,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -3450,12 +3450,12 @@
           "position": {
             "x": 0.865,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.209
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.261
+            "z": 0.004
           },
           "appearance": {
             "body": "aide_01",
@@ -3476,7 +3476,7 @@
             "stimulation": 0.6
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -3580,12 +3580,12 @@
           "position": {
             "x": 0.139,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.827
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.224
+            "z": 0.004
           },
           "appearance": {
             "body": "avatar_01",
@@ -3606,7 +3606,7 @@
             "stimulation": 0.56
           },
           "state": "resisting",
-          "stateSince": 1,
+          "stateSince": 660,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -3624,14 +3624,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.039,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.165
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.261
+            "z": 0.004
           },
           "appearance": {
             "body": "aide_01",
@@ -3652,7 +3652,7 @@
             "stimulation": 0.6
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -3742,12 +3742,12 @@
           "position": {
             "x": 0.313,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.79
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.224
+            "z": 0.004
           },
           "appearance": {
             "body": "avatar_01",
@@ -3768,7 +3768,7 @@
             "stimulation": 0.56
           },
           "state": "resisting",
-          "stateSince": 1,
+          "stateSince": 660,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -3786,14 +3786,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.213,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.122
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.261
+            "z": 0.004
           },
           "appearance": {
             "body": "aide_01",
@@ -3814,7 +3814,7 @@
             "stimulation": 0.6
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -3904,12 +3904,12 @@
           "position": {
             "x": 0.487,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.753
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.224
+            "z": 0.004
           },
           "appearance": {
             "body": "avatar_01",
@@ -3930,7 +3930,7 @@
             "stimulation": 0.56
           },
           "state": "resisting",
-          "stateSince": 1,
+          "stateSince": 660,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -3948,14 +3948,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.387,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.078
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.261
+            "z": 0.004
           },
           "appearance": {
             "body": "aide_01",
@@ -3976,7 +3976,7 @@
             "stimulation": 0.6
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -4066,12 +4066,12 @@
           "position": {
             "x": 0.661,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.716
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.224
+            "z": 0.004
           },
           "appearance": {
             "body": "avatar_01",
@@ -4092,7 +4092,7 @@
             "stimulation": 0.44
           },
           "state": "overwhelmed",
-          "stateSince": 1,
+          "stateSince": 861,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -4110,14 +4110,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.561,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.035
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.261
+            "z": 0.004
           },
           "appearance": {
             "body": "aide_01",
@@ -4138,7 +4138,7 @@
             "stimulation": 0.6
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -4228,12 +4228,12 @@
           "position": {
             "x": 0.835,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.678
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.224
+            "z": 0.004
           },
           "appearance": {
             "body": "avatar_01",
@@ -4254,7 +4254,7 @@
             "stimulation": 0.44
           },
           "state": "overwhelmed",
-          "stateSince": 1,
+          "stateSince": 861,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -4272,14 +4272,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.735,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.991
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.261
+            "z": 0.004
           },
           "appearance": {
             "body": "aide_01",
@@ -4300,7 +4300,7 @@
             "stimulation": 0.6
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -4388,14 +4388,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.009,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.641
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.224
+            "z": 0.004
           },
           "appearance": {
             "body": "avatar_01",
@@ -4416,7 +4416,7 @@
             "stimulation": 0.44
           },
           "state": "overwhelmed",
-          "stateSince": 1,
+          "stateSince": 861,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -4434,14 +4434,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.909,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.948
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.261
+            "z": 0.004
           },
           "appearance": {
             "body": "aide_01",
@@ -4462,7 +4462,7 @@
             "stimulation": 0.6
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -4550,14 +4550,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.183,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.604
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.224
+            "z": 0.004
           },
           "appearance": {
             "body": "avatar_01",
@@ -4578,7 +4578,7 @@
             "stimulation": 0.44
           },
           "state": "overwhelmed",
-          "stateSince": 1,
+          "stateSince": 861,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -4596,14 +4596,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.083,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.904
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.017,
             "y": 0.0,
-            "z": 0.261
+            "z": 0.004
           },
           "appearance": {
             "body": "aide_01",
@@ -4624,7 +4624,7 @@
             "stimulation": 0.6
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -4720,12 +4720,12 @@
           "position": {
             "x": 0.904,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.378
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.033,
             "y": 0.0,
-            "z": 1.0
+            "z": 0.025
           },
           "appearance": {
             "body": "avatar_01",
@@ -4746,7 +4746,7 @@
             "stimulation": 0.44
           },
           "state": "overwhelmed",
-          "stateSince": 1,
+          "stateSince": 861,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -4764,14 +4764,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.804,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.69
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.033,
             "y": 0.0,
-            "z": 1.0
+            "z": 0.023
           },
           "appearance": {
             "body": "aide_01",
@@ -4792,7 +4792,7 @@
             "stimulation": 0.6
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -4911,12 +4911,12 @@
           "position": {
             "x": 0.575,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.132
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.033,
             "y": 0.0,
-            "z": 1.0
+            "z": 0.025
           },
           "appearance": {
             "body": "avatar_01",
@@ -4937,7 +4937,7 @@
             "stimulation": 0.44
           },
           "state": "overwhelmed",
-          "stateSince": 1,
+          "stateSince": 861,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Get dressed and eat something",
           "struggleSignals": [
@@ -4955,14 +4955,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.475,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.458
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.033,
             "y": 0.0,
-            "z": 1.0
+            "z": 0.023
           },
           "appearance": {
             "body": "aide_01",
@@ -4983,7 +4983,7 @@
             "stimulation": 0.6
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -5102,12 +5102,12 @@
           "position": {
             "x": 0.247,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.885
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.033,
             "y": 0.0,
-            "z": 1.0
+            "z": 0.025
           },
           "appearance": {
             "body": "avatar_01",
@@ -5128,7 +5128,7 @@
             "stimulation": 0.48
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Pack work items, one step at a time",
           "struggleSignals": [
@@ -5144,14 +5144,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.147,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.225
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.033,
             "y": 0.0,
-            "z": 1.0
+            "z": 0.023
           },
           "appearance": {
             "body": "aide_01",
@@ -5172,7 +5172,7 @@
             "stimulation": 0.6
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -5289,14 +5289,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.082,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.638
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.033,
             "y": 0.0,
-            "z": 1.0
+            "z": 0.025
           },
           "appearance": {
             "body": "avatar_01",
@@ -5317,7 +5317,7 @@
             "stimulation": 0.48
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Pack work items, one step at a time",
           "struggleSignals": [
@@ -5335,12 +5335,12 @@
           "position": {
             "x": 0.818,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.992
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.033,
             "y": 0.0,
-            "z": 1.0
+            "z": 0.023
           },
           "appearance": {
             "body": "aide_01",
@@ -5361,7 +5361,7 @@
             "stimulation": 0.62
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Step back once Jamie is moving again",
           "struggleSignals": [],
@@ -5477,14 +5477,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.411,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.392
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.033,
             "y": 0.0,
-            "z": 1.0
+            "z": 0.025
           },
           "appearance": {
             "body": "avatar_01",
@@ -5505,7 +5505,7 @@
             "stimulation": 0.48
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Pack work items, one step at a time",
           "struggleSignals": [
@@ -5523,12 +5523,12 @@
           "position": {
             "x": 0.489,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.759
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.033,
             "y": 0.0,
-            "z": 1.0
+            "z": 0.023
           },
           "appearance": {
             "body": "aide_01",
@@ -5549,7 +5549,7 @@
             "stimulation": 0.62
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Step back once Jamie is moving again",
           "struggleSignals": [],
@@ -5665,14 +5665,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.74,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.145
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.033,
             "y": 0.0,
-            "z": 1.0
+            "z": 0.025
           },
           "appearance": {
             "body": "avatar_01",
@@ -5693,7 +5693,7 @@
             "stimulation": 0.54
           },
           "state": "recovering",
-          "stateSince": 1,
+          "stateSince": 934,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Finish the last packing step",
           "struggleSignals": [],
@@ -5711,12 +5711,12 @@
           "position": {
             "x": 0.16,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.526
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.033,
             "y": 0.0,
-            "z": 1.0
+            "z": 0.023
           },
           "appearance": {
             "body": "aide_01",
@@ -5737,7 +5737,7 @@
             "stimulation": 0.62
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Step back once Jamie is moving again",
           "struggleSignals": [],
@@ -5853,14 +5853,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -1.068,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.899
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.033,
             "y": 0.0,
-            "z": 1.0
+            "z": 0.025
           },
           "appearance": {
             "body": "avatar_01",
@@ -5881,7 +5881,7 @@
             "stimulation": 0.54
           },
           "state": "recovering",
-          "stateSince": 1,
+          "stateSince": 934,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Finish the last packing step",
           "struggleSignals": [],
@@ -5897,14 +5897,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.168,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.293
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.033,
             "y": 0.0,
-            "z": 1.0
+            "z": 0.023
           },
           "appearance": {
             "body": "aide_01",
@@ -5925,7 +5925,7 @@
             "stimulation": 0.62
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Step back once Jamie is moving again",
           "struggleSignals": [],
@@ -6041,9 +6041,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.823,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.87
           },
           "velocity": {
             "x": 0.0,
@@ -6069,7 +6069,7 @@
             "stimulation": 0.54
           },
           "state": "recovering",
-          "stateSince": 1,
+          "stateSince": 934,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Finish the last packing step",
           "struggleSignals": [],
@@ -6087,7 +6087,7 @@
           "position": {
             "x": 0.077,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.263
           },
           "velocity": {
             "x": 0.0,
@@ -6113,7 +6113,7 @@
             "stimulation": 0.62
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Step back once Jamie is moving again",
           "struggleSignals": [],
@@ -6243,9 +6243,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.195,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.986
           },
           "velocity": {
             "x": 0.0,
@@ -6271,7 +6271,7 @@
             "stimulation": 0.54
           },
           "state": "recovering",
-          "stateSince": 1,
+          "stateSince": 934,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Finish the last packing step",
           "struggleSignals": [],
@@ -6289,7 +6289,7 @@
           "position": {
             "x": 0.705,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.367
           },
           "velocity": {
             "x": 0.0,
@@ -6315,7 +6315,7 @@
             "stimulation": 0.62
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Step back once Jamie is moving again",
           "struggleSignals": [],
@@ -6447,7 +6447,7 @@
           "position": {
             "x": 0.433,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.102
           },
           "velocity": {
             "x": 0.0,
@@ -6473,7 +6473,7 @@
             "stimulation": 0.54
           },
           "state": "recovering",
-          "stateSince": 1,
+          "stateSince": 934,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Finish the last packing step",
           "struggleSignals": [],
@@ -6489,9 +6489,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.333,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.472
           },
           "velocity": {
             "x": 0.0,
@@ -6517,7 +6517,7 @@
             "stimulation": 0.62
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Step back once Jamie is moving again",
           "struggleSignals": [],
@@ -6654,9 +6654,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.06,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.219
           },
           "velocity": {
             "x": 0.0,
@@ -6682,7 +6682,7 @@
             "stimulation": 0.54
           },
           "state": "recovering",
-          "stateSince": 1,
+          "stateSince": 934,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Finish the last packing step",
           "struggleSignals": [],
@@ -6698,9 +6698,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.96,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.577
           },
           "velocity": {
             "x": 0.0,
@@ -6726,7 +6726,7 @@
             "stimulation": 0.62
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Step back once Jamie is moving again",
           "struggleSignals": [],
@@ -6863,9 +6863,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.688,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.335
           },
           "velocity": {
             "x": 0.0,
@@ -6891,7 +6891,7 @@
             "stimulation": 0.52
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 960,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Put the bag by the door",
           "struggleSignals": [],
@@ -6907,9 +6907,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.588,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.681
           },
           "velocity": {
             "x": 0.0,
@@ -6935,7 +6935,7 @@
             "stimulation": 0.62
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Step back once Jamie is moving again",
           "struggleSignals": [],
@@ -7072,9 +7072,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.316,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.451
           },
           "velocity": {
             "x": 0.0,
@@ -7100,7 +7100,7 @@
             "stimulation": 0.52
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 960,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Put the bag by the door",
           "struggleSignals": [],
@@ -7116,9 +7116,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.216,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.786
           },
           "velocity": {
             "x": 0.0,
@@ -7144,7 +7144,7 @@
             "stimulation": 0.62
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Step back once Jamie is moving again",
           "struggleSignals": [],
@@ -7281,9 +7281,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.944,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.567
           },
           "velocity": {
             "x": 0.0,
@@ -7309,7 +7309,7 @@
             "stimulation": 0.52
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 960,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Put the bag by the door",
           "struggleSignals": [],
@@ -7325,9 +7325,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.844,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.891
           },
           "velocity": {
             "x": 0.0,
@@ -7353,7 +7353,7 @@
             "stimulation": 0.62
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Step back once Jamie is moving again",
           "struggleSignals": [],
@@ -7490,9 +7490,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.572,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.684
           },
           "velocity": {
             "x": 0.0,
@@ -7518,7 +7518,7 @@
             "stimulation": 0.52
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 960,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Put the bag by the door",
           "struggleSignals": [],
@@ -7534,9 +7534,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 4.472,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.995
           },
           "velocity": {
             "x": 0.0,
@@ -7562,7 +7562,7 @@
             "stimulation": 0.62
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Step back once Jamie is moving again",
           "struggleSignals": [],
@@ -7692,9 +7692,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 4.2,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.8
           },
           "velocity": {
             "x": 0.0,
@@ -7720,7 +7720,7 @@
             "stimulation": 0.52
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 960,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Put the bag by the door",
           "struggleSignals": [],
@@ -7736,9 +7736,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 5.1,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.1
           },
           "velocity": {
             "x": 0.0,
@@ -7764,7 +7764,7 @@
             "stimulation": 0.62
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Step back once Jamie is moving again",
           "struggleSignals": [],
@@ -7886,14 +7886,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.98,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.946
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.022,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "avatar_01",
@@ -7914,7 +7914,7 @@
             "stimulation": 0.52
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 960,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Put the bag by the door",
           "struggleSignals": [],
@@ -7930,14 +7930,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 4.88,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.246
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.022,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "aide_01",
@@ -7958,7 +7958,7 @@
             "stimulation": 0.62
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Step back once Jamie is moving again",
           "struggleSignals": [],
@@ -8080,14 +8080,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.761,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.093
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.022,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "avatar_01",
@@ -8108,7 +8108,7 @@
             "stimulation": 0.52
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 960,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Put the bag by the door",
           "struggleSignals": [],
@@ -8124,14 +8124,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 4.661,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.393
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.022,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "aide_01",
@@ -8152,7 +8152,7 @@
             "stimulation": 0.62
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Step back once Jamie is moving again",
           "struggleSignals": [],
@@ -8274,14 +8274,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.541,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.239
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.022,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "avatar_01",
@@ -8302,7 +8302,7 @@
             "stimulation": 0.52
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 960,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Put the bag by the door",
           "struggleSignals": [],
@@ -8318,14 +8318,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 4.441,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.539
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.022,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "aide_01",
@@ -8346,7 +8346,7 @@
             "stimulation": 0.62
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Step back once Jamie is moving again",
           "struggleSignals": [],
@@ -8468,14 +8468,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.322,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.385
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.022,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "avatar_01",
@@ -8496,7 +8496,7 @@
             "stimulation": 0.52
           },
           "state": "settled",
-          "stateSince": 1,
+          "stateSince": 960,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Put the bag by the door",
           "struggleSignals": [],
@@ -8512,14 +8512,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 4.222,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.685
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.022,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "aide_01",
@@ -8540,7 +8540,7 @@
             "stimulation": 0.62
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 866,
           "currentGoal": null,
           "currentTask": "Step back once Jamie is moving again",
           "struggleSignals": [],
@@ -8662,14 +8662,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.102,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.532
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.022,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "avatar_01",
@@ -8690,7 +8690,7 @@
             "stimulation": 0.42
           },
           "state": "overwhelmed",
-          "stateSince": 1,
+          "stateSince": 1102,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Pack work items",
           "struggleSignals": [
@@ -8709,14 +8709,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 4.002,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.832
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.022,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "aide_01",
@@ -8737,7 +8737,7 @@
             "stimulation": 0.64
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 1183,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -8860,14 +8860,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.883,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.678
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.022,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "avatar_01",
@@ -8888,7 +8888,7 @@
             "stimulation": 0.42
           },
           "state": "overwhelmed",
-          "stateSince": 1,
+          "stateSince": 1102,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Pack work items",
           "struggleSignals": [
@@ -8907,14 +8907,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.783,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.978
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.022,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "aide_01",
@@ -8935,7 +8935,7 @@
             "stimulation": 0.64
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 1183,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -9058,14 +9058,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.663,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.824
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.022,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "avatar_01",
@@ -9086,7 +9086,7 @@
             "stimulation": 0.42
           },
           "state": "overwhelmed",
-          "stateSince": 1,
+          "stateSince": 1102,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Pack work items",
           "struggleSignals": [
@@ -9105,14 +9105,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.563,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.124
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.022,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "aide_01",
@@ -9133,7 +9133,7 @@
             "stimulation": 0.64
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 1183,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -9249,14 +9249,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.444,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.971
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.022,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "avatar_01",
@@ -9277,7 +9277,7 @@
             "stimulation": 0.42
           },
           "state": "overwhelmed",
-          "stateSince": 1,
+          "stateSince": 1102,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Pack work items",
           "struggleSignals": [
@@ -9296,14 +9296,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.344,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.271
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.022,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.015
           },
           "appearance": {
             "body": "aide_01",
@@ -9324,7 +9324,7 @@
             "stimulation": 0.64
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 1183,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -9446,9 +9446,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.569,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.887
           },
           "velocity": {
             "x": 0.0,
@@ -9474,7 +9474,7 @@
             "stimulation": 0.42
           },
           "state": "overwhelmed",
-          "stateSince": 1,
+          "stateSince": 1102,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Pack work items",
           "struggleSignals": [
@@ -9493,9 +9493,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.469,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.187
           },
           "velocity": {
             "x": 0.0,
@@ -9521,7 +9521,7 @@
             "stimulation": 0.64
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 1183,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -9665,9 +9665,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.781,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.746
           },
           "velocity": {
             "x": 0.0,
@@ -9693,7 +9693,7 @@
             "stimulation": 0.42
           },
           "state": "overwhelmed",
-          "stateSince": 1,
+          "stateSince": 1102,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Pack work items",
           "struggleSignals": [
@@ -9712,9 +9712,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.681,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.046
           },
           "velocity": {
             "x": 0.0,
@@ -9740,7 +9740,7 @@
             "stimulation": 0.64
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 1183,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -9877,9 +9877,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.993,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.605
           },
           "velocity": {
             "x": 0.0,
@@ -9905,7 +9905,7 @@
             "stimulation": 0.46
           },
           "state": "recovering",
-          "stateSince": 1,
+          "stateSince": 1186,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Pack work items",
           "struggleSignals": [
@@ -9924,9 +9924,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.893,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.905
           },
           "velocity": {
             "x": 0.0,
@@ -9952,7 +9952,7 @@
             "stimulation": 0.64
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 1183,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -10089,9 +10089,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.205,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.464
           },
           "velocity": {
             "x": 0.0,
@@ -10117,7 +10117,7 @@
             "stimulation": 0.46
           },
           "state": "recovering",
-          "stateSince": 1,
+          "stateSince": 1186,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Pack work items",
           "struggleSignals": [
@@ -10136,9 +10136,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 4.105,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.764
           },
           "velocity": {
             "x": 0.0,
@@ -10164,7 +10164,7 @@
             "stimulation": 0.64
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 1183,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -10301,9 +10301,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.416,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.322
           },
           "velocity": {
             "x": 0.0,
@@ -10329,7 +10329,7 @@
             "stimulation": 0.46
           },
           "state": "recovering",
-          "stateSince": 1,
+          "stateSince": 1186,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Pack work items",
           "struggleSignals": [
@@ -10348,9 +10348,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 4.316,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.622
           },
           "velocity": {
             "x": 0.0,
@@ -10376,7 +10376,7 @@
             "stimulation": 0.64
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 1183,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -10513,9 +10513,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.628,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.181
           },
           "velocity": {
             "x": 0.0,
@@ -10541,7 +10541,7 @@
             "stimulation": 0.46
           },
           "state": "recovering",
-          "stateSince": 1,
+          "stateSince": 1186,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Pack work items",
           "struggleSignals": [
@@ -10560,9 +10560,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 4.528,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.481
           },
           "velocity": {
             "x": 0.0,
@@ -10588,7 +10588,7 @@
             "stimulation": 0.64
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 1183,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -10725,9 +10725,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.84,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.04
           },
           "velocity": {
             "x": 0.0,
@@ -10753,7 +10753,7 @@
             "stimulation": 0.52
           },
           "state": "recovering",
-          "stateSince": 1,
+          "stateSince": 1186,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Pack work items",
           "struggleSignals": [
@@ -10774,9 +10774,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 4.74,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.34
           },
           "velocity": {
             "x": 0.0,
@@ -10802,7 +10802,7 @@
             "stimulation": 0.64
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 1183,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -10939,9 +10939,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 4.052,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.899
           },
           "velocity": {
             "x": 0.0,
@@ -10967,7 +10967,7 @@
             "stimulation": 0.52
           },
           "state": "recovering",
-          "stateSince": 1,
+          "stateSince": 1186,
           "currentGoal": "Get ready for the work meeting",
           "currentTask": "Pack work items",
           "struggleSignals": [
@@ -10988,9 +10988,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 4.952,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.199
           },
           "velocity": {
             "x": 0.0,
@@ -11016,7 +11016,7 @@
             "stimulation": 0.64
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 1183,
           "currentGoal": null,
           "currentTask": "Support Jamie's recovery without taking over",
           "struggleSignals": [],
@@ -11146,9 +11146,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 4.2,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.8
           },
           "velocity": {
             "x": 0.0,
@@ -11195,9 +11195,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 5.1,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.1
           },
           "velocity": {
             "x": 0.0,

@@ -115,11 +115,15 @@ public partial class IndependenceMeterPanel : ObserverPanel
     /// </summary>
     private static TrendInfo Trend(List<float> series)
     {
-        if (series.Count < 3)
+        if (series.Count < 4)
             return new TrendInfo("too early to tell", Glyph.Bar, "Not enough of the run yet.");
 
+        // Half the series, so the opening and closing windows cannot share samples. Overlapping
+        // windows made first == last for any short series, and a strictly rising 0.1, 0.5, 0.9
+        // reported itself as "steady".
+        int window = Math.Max(2, Math.Min(6, series.Count / 2));
+
         float first = 0f, last = 0f;
-        int window = Mathf.Min(6, series.Count);
         for (int i = 0; i < window; i++)
         {
             first += series[i];

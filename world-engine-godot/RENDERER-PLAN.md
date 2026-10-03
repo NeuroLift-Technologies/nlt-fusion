@@ -187,6 +187,8 @@ The audience is **people with ADHD**. Per the vertical slice: they must *"watch 
 
   The permanent `crisis_interventions` penalty means a pair with a hard life is systematically disadvantaged in fusion. The panel therefore explains a block as *"not ready yet"*, never *"failed"* — the audience will recognise themselves in the struggling Avatar. `BurnoutNarrative.cs` is one pure function over the episodes the feed delivers; it never infers that an episode happened. All four readings are reachable from a committed fixture — see `world-engine-godot/fixtures/README.md`.
 
+  **One deviation, deliberate.** The table above describes four *endings*, so a single episode that is still open matches none of them. Labelling it *"collapsed repeatedly"* would tell someone mid-episode that they had collapsed repeatedly — untrue, and needlessly bleak for this audience. It gets its own wording, **"Burnt out, and not out of it yet" / "Mid-episode"**, and `RepeatedCollapse` now requires actual repetition: two open episodes, or a new collapse after one had already resolved.
+
 ### 6.1 Known gaps in Phase D
 
 - **Mouse input is not machine-verified.** Synthetic `Input.ParseInputEvent` does not reach Godot's GUI in this environment — a bare probe `Button` outside the observer is equally unclickable — so the self-test asserts layout and popup geometry rather than clicks, and clicking is verified by hand. It is also bypassable entirely from the keyboard.

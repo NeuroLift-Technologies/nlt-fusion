@@ -5,13 +5,21 @@ using NltWorldEngine.Feed;
 
 namespace NltWorldEngine.Observer;
 
-/// <summary>The four ways a pair's burnout history can read. RENDERER-PLAN.md §6 D.5.</summary>
+/// <summary>The ways a pair's burnout history can read. RENDERER-PLAN.md §6 D.5.</summary>
 public enum BurnoutPattern
 {
     NeverApproached,
     SelfRecovered,
     NeededRescue,
     RepeatedCollapse,
+
+    /// <summary>
+    /// One episode, still open. Not one of the plan's four endings — the plan describes how a
+    /// history *ends*, and this is a history still running. Added because labelling it
+    /// <see cref="RepeatedCollapse"/> would tell someone mid-episode that they had collapsed
+    /// repeatedly, which is both untrue and needlessly bleak.
+    /// </summary>
+    StillOut,
 }
 
 /// <summary>One panel's obligation, resolved to words.</summary>
@@ -64,13 +72,24 @@ public static class BurnoutNarrative
         }
         else if (unresolved > 0)
         {
-            pattern = BurnoutPattern.RepeatedCollapse;
-            heading = unresolved == 1 ? "Burnt out, and not out of it yet" : "Collapsed repeatedly";
-            verdict = "Still struggling";
-            why = unresolved == 1
-                ? "One episode is still open. It may resolve — a stage, not an ending."
-                : $"{unresolved} episodes open at once: recovery never got to finish. A hard run, "
-                  + "not a verdict on the pair.";
+            // "Repeated" has to mean repeated. One open episode on its own is not a collapse
+            // pattern, it is a collapse in progress — and telling someone who is mid-episode that
+            // they have collapsed repeatedly is both wrong and needlessly bleak. The plan's table
+            // describes four *endings*; an episode with no ending yet is not one of them, so it gets
+            // its own wording.
+            bool repeated = unresolved >= 2 || episodes.Count > 1;
+            pattern = repeated ? BurnoutPattern.RepeatedCollapse : BurnoutPattern.StillOut;
+            heading = repeated
+                ? (unresolved >= 2 ? "Collapsed repeatedly" : "Collapsed again before recovering")
+                : "Burnt out, and not out of it yet";
+            verdict = repeated ? "Still struggling" : "Mid-episode";
+            why = repeated
+                ? (unresolved >= 2
+                    ? $"{unresolved} episodes open at once: recovery never got to finish. A hard run, "
+                      + "not a verdict on the pair."
+                    : "A new collapse started before the last one finished. That is a hard run, "
+                      + "not a verdict on the pair.")
+                : "One episode is open. It may well resolve — a stage, not an ending.";
             glyph = Glyph.TriangleUp;
         }
         else
@@ -114,6 +133,7 @@ public static class BurnoutNarrative
         BurnoutPattern.NeverApproached => p.Cool,
         BurnoutPattern.SelfRecovered => p.Pass,
         BurnoutPattern.NeededRescue => p.Warn,
+        BurnoutPattern.StillOut => p.Alert,
         _ => p.Alert,
     };
 

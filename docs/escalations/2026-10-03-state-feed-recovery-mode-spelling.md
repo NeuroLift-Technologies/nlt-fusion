@@ -32,17 +32,23 @@ Failing loudly is correct; being unable to read the shipped fixture is not.
 
 ## What I changed
 
-`tools/validate_state_feed.py` now accepts `solo` and `rrt` — the contract's spelling — and emits a
-**warning**, not an error, for `rt`, so a producer that picked up the earlier wording is still read
-rather than dropped:
+`tools/validate_state_feed.py` now **accepts** `solo`, `rrt` *and* `rt` — the contract's spelling plus
+the one a buggy producer may have copied — and emits a **warning**, not an error, for `rt`. The C#
+reader (`Feed/FeedVocabulary.cs`, `Feed/FeedReader.cs`) accepts the same set with the same warning, so
+a document is never accepted by one tool and rejected by the other:
 
 ```python
-err.check(mode in ("solo", "rrt"),
+err.check(mode in ("solo", "rrt", "rt"),
           f"{where}.recoveryMode must be solo|rrt when recovered, got {mode!r}")
 if mode == "rt":
     warn.append(f"{where}.recoveryMode is 'rt'; the contract (section 6) and the shipped "
-                f"fixture both spell it 'rrt'")
+                f"fixture both spell it 'rrt'. Accepted and read as assisted — see "
+                f"docs/escalations/2026-10-03-state-feed-recovery-mode-spelling.md")
 ```
+
+The rationale for tolerating rather than rejecting: rejecting a document over one letter of a
+recovery mode would mean the observer silently omits an episode from the Learning Timeline. A
+warning keeps the arc visible while naming the discrepancy, which is the honest failure.
 
 The same tolerance is in `Feed/FeedVocabulary.cs` and `Feed/FeedReader.cs` on the renderer side,
 with the warning text pointing here.

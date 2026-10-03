@@ -84,6 +84,13 @@ public partial class ObserverRoot : Control
         _feed.StatusChanged += RefreshStatus;
         _a11y.Changed += OnAccessibilityChanged;
         _feed.Load(ReplayFixture);
+
+        // Apply the world-side accessibility state up front, not only on the first change. PR #80
+        // gave WorldView a SkyPaused seam for reduced motion; if the setting starts on, the sky has
+        // to be paused before anything can toggle it.
+        if (_world != null)
+            _world.SkyPaused = _a11y.ReducedMotion;
+
         RefreshAll();
         RefreshStatus();
     }

@@ -44,7 +44,10 @@ public partial class ObserverCapture : Node
 
         int levelAt = System.Array.IndexOf(args, "--level");
         if (levelAt + 1 < args.Length
-            && System.Enum.TryParse<ReadingLevel>(args[levelAt + 1], out var parsed))
+            // Case-insensitive: the usage line documents `--level technical` in lower case, and
+            // Enum.TryParse is case-sensitive by default, so the documented example silently
+            // stayed at Simple.
+            && System.Enum.TryParse(args[levelAt + 1], ignoreCase: true, out ReadingLevel parsed))
             capture._level = parsed;
 
         int framesAt = System.Array.IndexOf(args, "--frames");

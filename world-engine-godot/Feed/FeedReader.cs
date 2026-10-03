@@ -87,10 +87,10 @@ public static class FeedReader
                 SimTimeIso = iso,
                 Scene = scene,
                 Agents = agents,
-                Pairs = ReadPairs(Opt(root, "pairs", r), r),
-                BurnoutEpisodes = ReadEpisodes(Opt(root, "burnoutEpisodes", r), r),
-                SelfRecognitions = ReadRecognitions(Opt(root, "selfRecognitions", r), r),
-                Events = ReadEvents(Opt(root, "events", r), r, tick),
+                Pairs = ReadPairs(Opt(root, "pairs", r, "an array"), r),
+                BurnoutEpisodes = ReadEpisodes(Opt(root, "burnoutEpisodes", r, "an array"), r),
+                SelfRecognitions = ReadRecognitions(Opt(root, "selfRecognitions", r, "an array"), r),
+                Events = ReadEvents(Opt(root, "events", r, "an array"), r, tick),
             };
 
             Validate(feed, r);
@@ -153,9 +153,9 @@ public static class FeedReader
                 Scene = Str(el, "scene", r) ?? "",
                 Position = Vec(el, "position", r),
                 Velocity = Vec(el, "velocity", r),
-                Appearance = ReadAppearance(Opt(el, "appearance", r), r),
-                Levels = ReadLevels(Opt(el, "levels", r), r),
-                Needs = ReadNeeds(Opt(el, "needs", r), r, w),
+                Appearance = ReadAppearance(Opt(el, "appearance", r, "an object"), r),
+                Levels = ReadLevels(Opt(el, "levels", r, "an object"), r),
+                Needs = ReadNeeds(Opt(el, "needs", r, "an object"), r, w),
                 State = Str(el, "state", r) ?? "",
                 StateSince = since,
                 CurrentGoal = OptStr(el, "currentGoal"),
@@ -243,7 +243,7 @@ public static class FeedReader
                 continue;
             }
             var dims = new Dictionary<string, DimensionScore>();
-            var dimOpt = Opt(el, "dimensions", r);
+            var dimOpt = Opt(el, "dimensions", r, "an object");
             if (dimOpt.ValueKind == JsonValueKind.Object)
             {
                 foreach (var prop in dimOpt.EnumerateObject())
@@ -459,11 +459,23 @@ public static class FeedReader
         return v.Value;
     }
 
-    /// <summary>An optional block or array. Absent is fine; present-but-wrong-type is not.</summary>
-    private static JsonElement Opt(JsonElement el, string key, FeedReadResult r)
+    /// <summary>
+    /// An optional block or array. Absent is fine; present with the wrong type is not.
+    ///
+    /// Reporting the difference matters: a malformed <c>events: "soon"</c> used to be read as "no
+    /// events", which is the one thing this contract forbids — a silently-defaulted field is how
+    /// burnout becomes undetectable, and a silently-dropped event list is how a recovery arc
+    /// disappears from the timeline without a word.
+    /// </summary>
+    private static JsonElement Opt(JsonElement el, string key, FeedReadResult r, string? want = null)
     {
         var v = Prop(el, key);
-        return v ?? default;
+        if (v is null || v.Value.ValueKind == JsonValueKind.Null)
+            return default;
+        if (v.Value.ValueKind == JsonValueKind.Object || v.Value.ValueKind == JsonValueKind.Array)
+            return v.Value;
+        r.Errors.Add($"'{key}' must be {(want ?? "an object or an array")}, got {v.Value.ValueKind}");
+        return default;
     }
 
     private static string? Str(JsonElement el, string key, FeedReadResult r, bool required = true)

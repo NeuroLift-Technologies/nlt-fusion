@@ -68,15 +68,39 @@ def smooth(t: float) -> float:
 
 
 def r2(v: float) -> float:
+    """Round a 0..1 scalar, clamped. Only for levels, needs, scores and severities."""
     return round(max(0.0, min(1.0, v)), 3)
 
 
+def r3(v: float) -> float:
+    """Round a world coordinate or velocity. NOT clamped.
+
+    This exists because clamping unit scalars and clamping positions are different operations. Using
+    r2 for a coordinate pins every agent inside a 1 m square at the origin, which is invisible in the
+    generator and obvious in the observer: the agents never move, and their pins sit on top of each
+    other. A negative velocity is impossible under a 0..1 clamp too.
+    """
+    return round(v, 3)
+
+
+# Keys that must not be interpolated numerically. `stateSince` is a tick, not a quantity: blending
+# it means an agent appears to have entered its state at a fractional tick, and clamping it to 0..1
+# makes every agent look like it changed state on tick 1 — so "in this state for 709 seconds".
+DISCRETE_KEYS = {"stateSince"}
+
+
 def blend(before: dict, after: dict, t: float) -> dict:
-    """Interpolate every numeric leaf; take non-numeric leaves from `before` until `after` lands."""
+    """Interpolate every numeric leaf; take non-numeric leaves from `before` until `after` lands.
+
+    `stateSince` snaps at the start of the interval, which is how a state change actually behaves:
+    the tick it began is fixed, and only the next keyframe can move it.
+    """
     out = {}
     for key in set(before) | set(after):
         bv, av = before.get(key), after.get(key)
-        if isinstance(bv, (int, float)) and isinstance(av, (int, float)) and not isinstance(bv, bool):
+        if key in DISCRETE_KEYS:
+            out[key] = copy.deepcopy(av if t >= 0.5 else bv)
+        elif isinstance(bv, (int, float)) and isinstance(av, (int, float)) and not isinstance(bv, bool):
             out[key] = r2(lerp(float(bv), float(av), t))
         else:
             out[key] = copy.deepcopy(bv if t < 0.5 else av)
@@ -102,7 +126,7 @@ def strip_tick(key: dict) -> dict:
 
 def lerp_point(a: list[float], b: list[float], t: float) -> list[float]:
     """Paths are authored as [x, z] in the scene's plane; the feed wants a full [x, y, z]."""
-    return [r2(lerp(a[0], b[0], t)), 0.0, r2(lerp(a[1], b[1], t))]
+    return [r3(lerp(a[0], b[0], t)), 0.0, r3(lerp(a[1], b[1], t))]
 
 
 def position_at(keys: list[dict], tick: int, speed_scale: float = 1.0) -> tuple[list[float], list[float]]:
@@ -126,9 +150,12 @@ def position_at(keys: list[dict], tick: int, speed_scale: float = 1.0) -> tuple[
     parked = keys[hi].get("parked", False)
     vel = [0.0, 0.0, 0.0]
     if not parked:
-        vel = [r2((p1[0] - p0[0]) / span * speed_scale * 60.0),
+        # Metres per tick, signed. The contract's cadence is ~1 Hz (section 3), so one tick is about
+        # one second and no conversion factor applies: dividing by the span is already m/s. The ×60
+        # that used to be here assumed 60 Hz ticks and reported every resident as a sprinter.
+        vel = [r3((p1[0] - p0[0]) / span * speed_scale),
                0.0,
-               r2((p1[1] - p0[1]) / span * speed_scale * 60.0)]
+               r3((p1[1] - p0[1]) / span * speed_scale)]
     return lerp_point(p0, p1, t), vel
 
 
@@ -735,17 +762,27 @@ def main() -> int:
 
     failures = 0
     for path, bundle in bundles.items():
-        text = json.dumps(bundle, indent=2) + "\n"
         if args.check:
+            # The bundle carries a generation timestamp, so a byte comparison always differs. Reuse
+            # the committed timestamp for the comparison — otherwise --check can only ever fail, and
+            # a check that cannot pass is a check nobody runs. Everything else is still compared.
             if not path.exists():
                 print(f"FAIL  {path.name} is missing", file=sys.stderr)
                 failures += 1
-            elif path.read_text(encoding="utf-8") != text:
-                print(f"FAIL  {path.name} differs from tools/make_replay_fixture.py output", file=sys.stderr)
+                continue
+            committed = json.loads(path.read_text(encoding="utf-8"))
+            bundle["provenance"]["generatedUtc"] = (
+                committed.get("provenance", {}).get("generatedUtc")
+            )
+            text = json.dumps(bundle, indent=2) + "\n"
+            if path.read_text(encoding="utf-8") != text:
+                print(f"FAIL  {path.name} differs from tools/make_replay_fixture.py output",
+                      file=sys.stderr)
                 failures += 1
             else:
                 print(f"OK    {path.name} up to date ({bundle['frameCount']} frames)")
             continue
+        text = json.dumps(bundle, indent=2) + "\n"
         path.write_text(text, encoding="utf-8")
         print(f"wrote {path.relative_to(REPO)} ({bundle['frameCount']} frames, "
               f"{len(text.encode('utf-8')) // 1024} KB)")

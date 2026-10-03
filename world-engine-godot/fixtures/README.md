@@ -26,7 +26,7 @@ committed fixtures quietly disagreeing is a lie nobody would notice.
 ## Regenerating
 
 ```
-python3 tools/make_replay_fixture.py           # rewrite both bundles
+python3 tools/make_replay_fixture.py           # rewrite all three bundles
 python3 tools/make_replay_fixture.py --check   # fail if the committed files are stale
 ```
 
@@ -34,6 +34,10 @@ The tool expands an authored storyboard — keyframed states plus an event list 
 is authoring-time only; the renderer never derives anything, it reads documents that already exist.
 Every emitted frame is validated against the contract before it is written, so a fixture cannot
 quietly become invalid.
+
+`--check` reuses the committed generation timestamp before comparing, because the bundles carry one
+and a byte-for-byte comparison would otherwise always differ — a check that cannot pass is a check
+nobody runs.
 
 ## How the renderer reads them
 

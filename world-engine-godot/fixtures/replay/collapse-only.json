@@ -5,7 +5,7 @@
   "provenance": {
     "authored": true,
     "authoringTool": "tools/make_replay_fixture.py",
-    "generatedUtc": "2026-10-03T10:19:49Z",
+    "generatedUtc": "2026-10-03T11:45:08Z",
     "note": "Synthetic fixture. Exists so the 'collapsed repeatedly' reading (RENDERER-PLAN.md D.5) is reachable; the StayAlert bundle never triggers it."
   },
   "frameCount": 10,
@@ -25,9 +25,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.0,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.0
           },
           "velocity": {
             "x": 0.0,
@@ -69,9 +69,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.9,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.3
           },
           "velocity": {
             "x": 0.0,
@@ -179,14 +179,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.467,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.4
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.023,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.02
           },
           "appearance": {
             "body": "avatar_01",
@@ -207,7 +207,7 @@
             "stimulation": 0.48
           },
           "state": "resisting",
-          "stateSince": 1,
+          "stateSince": 188,
           "currentGoal": "Finish the morning routine",
           "currentTask": "Finish the morning routine",
           "struggleSignals": [
@@ -223,14 +223,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.367,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.7
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.023,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.02
           },
           "appearance": {
             "body": "aide_01",
@@ -251,7 +251,7 @@
             "stimulation": 0.58
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 188,
           "currentGoal": null,
           "currentTask": "Try to get Jamie started without taking over",
           "struggleSignals": [],
@@ -333,14 +333,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.933,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.8
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.023,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.02
           },
           "appearance": {
             "body": "avatar_01",
@@ -361,7 +361,7 @@
             "stimulation": 0.32
           },
           "state": "overwhelmed",
-          "stateSince": 1,
+          "stateSince": 260,
           "currentGoal": "Finish the morning routine",
           "currentTask": "Finish the morning routine",
           "struggleSignals": [
@@ -378,14 +378,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.833,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.1
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.023,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.02
           },
           "appearance": {
             "body": "aide_01",
@@ -406,7 +406,7 @@
             "stimulation": 0.58
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 188,
           "currentGoal": null,
           "currentTask": "Try to get Jamie started without taking over",
           "struggleSignals": [],
@@ -495,14 +495,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 3.4,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.2
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.023,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.02
           },
           "appearance": {
             "body": "avatar_01",
@@ -523,7 +523,7 @@
             "stimulation": 0.32
           },
           "state": "overwhelmed",
-          "stateSince": 1,
+          "stateSince": 260,
           "currentGoal": "Finish the morning routine",
           "currentTask": "Finish the morning routine",
           "struggleSignals": [
@@ -540,14 +540,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 4.3,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.5
           },
           "velocity": {
-            "x": 1.0,
+            "x": 0.023,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.02
           },
           "appearance": {
             "body": "aide_01",
@@ -568,7 +568,7 @@
             "stimulation": 0.58
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 188,
           "currentGoal": null,
           "currentTask": "Try to get Jamie started without taking over",
           "struggleSignals": [],
@@ -684,14 +684,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.6,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.467
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.09,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.013
           },
           "appearance": {
             "body": "avatar_01",
@@ -712,7 +712,7 @@
             "stimulation": 0.32
           },
           "state": "overwhelmed",
-          "stateSince": 1,
+          "stateSince": 260,
           "currentGoal": "Finish the morning routine",
           "currentTask": "Finish the morning routine",
           "struggleSignals": [
@@ -729,14 +729,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 2.5,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.767
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.09,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.013
           },
           "appearance": {
             "body": "aide_01",
@@ -757,7 +757,7 @@
             "stimulation": 0.58
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 188,
           "currentGoal": null,
           "currentTask": "Try to get Jamie started without taking over",
           "struggleSignals": [],
@@ -881,14 +881,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.2,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.733
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.09,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.013
           },
           "appearance": {
             "body": "avatar_01",
@@ -909,7 +909,7 @@
             "stimulation": 0.28
           },
           "state": "overwhelmed",
-          "stateSince": 1,
+          "stateSince": 320,
           "currentGoal": "Finish the morning routine",
           "currentTask": "Finish the morning routine",
           "struggleSignals": [
@@ -927,12 +927,12 @@
           "position": {
             "x": 0.7,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.033
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.09,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.013
           },
           "appearance": {
             "body": "aide_01",
@@ -953,7 +953,7 @@
             "stimulation": 0.54
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 262,
           "currentGoal": null,
           "currentTask": "Call the RRT core for support",
           "struggleSignals": [],
@@ -1079,14 +1079,14 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -2.0,
             "y": 0.0,
-            "z": 0.0
+            "z": -3.0
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.09,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.013
           },
           "appearance": {
             "body": "avatar_01",
@@ -1107,7 +1107,7 @@
             "stimulation": 0.28
           },
           "state": "overwhelmed",
-          "stateSince": 1,
+          "stateSince": 320,
           "currentGoal": "Finish the morning routine",
           "currentTask": "Finish the morning routine",
           "struggleSignals": [
@@ -1123,14 +1123,14 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -1.1,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.3
           },
           "velocity": {
-            "x": 0.0,
+            "x": -0.09,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.013
           },
           "appearance": {
             "body": "aide_01",
@@ -1151,7 +1151,7 @@
             "stimulation": 0.54
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 262,
           "currentGoal": null,
           "currentTask": "Call the RRT core for support",
           "struggleSignals": [],
@@ -1302,9 +1302,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -1.133,
             "y": 0.0,
-            "z": 0.0
+            "z": -2.133
           },
           "velocity": {
             "x": 0.0,
@@ -1330,7 +1330,7 @@
             "stimulation": 0.28
           },
           "state": "overwhelmed",
-          "stateSince": 1,
+          "stateSince": 320,
           "currentGoal": "Finish the morning routine",
           "currentTask": "Finish the morning routine",
           "struggleSignals": [
@@ -1346,9 +1346,9 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.233,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.433
           },
           "velocity": {
             "x": 0.0,
@@ -1374,7 +1374,7 @@
             "stimulation": 0.54
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 262,
           "currentGoal": null,
           "currentTask": "Call the RRT core for support",
           "struggleSignals": [],
@@ -1525,9 +1525,9 @@
           "role": "avatar",
           "scene": "personal_1",
           "position": {
-            "x": 0.0,
+            "x": -0.267,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.267
           },
           "velocity": {
             "x": 0.0,
@@ -1553,7 +1553,7 @@
             "stimulation": 0.24
           },
           "state": "overwhelmed",
-          "stateSince": 1,
+          "stateSince": 380,
           "currentGoal": "Finish the morning routine",
           "currentTask": "Finish the morning routine",
           "struggleSignals": [
@@ -1571,7 +1571,7 @@
           "position": {
             "x": 0.633,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.567
           },
           "velocity": {
             "x": 0.0,
@@ -1597,7 +1597,7 @@
             "stimulation": 0.54
           },
           "state": "coached",
-          "stateSince": 1,
+          "stateSince": 262,
           "currentGoal": null,
           "currentTask": "Call the RRT core for support",
           "struggleSignals": [],
@@ -1743,7 +1743,7 @@
           "position": {
             "x": 0.6,
             "y": 0.0,
-            "z": 0.0
+            "z": -0.4
           },
           "velocity": {
             "x": 0.0,
@@ -1785,7 +1785,7 @@
           "role": "aide",
           "scene": "personal_1",
           "position": {
-            "x": 1.0,
+            "x": 1.5,
             "y": 0.0,
             "z": 0.3
           },

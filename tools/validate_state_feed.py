@@ -168,12 +168,17 @@ def validate(doc: Any) -> tuple[Errors, Warnings]:
             err.check(isinstance(rt, int) and rt >= ep.get("startTick", 0),
                       f"{where}.recoveredTick must be >= startTick")
             mode = ep.get("recoveryMode")
-            err.check(mode in ("solo", "rrt"),
+            # "rt" is not in the contract; it was the wording of a validator bug and is still in the
+            # wild. Read it rather than dropping the document, and say so — the C# reader
+            # (Feed/FeedReader.cs) accepts the same set and emits the same warning, so a feed is never
+            # accepted by one and rejected by the other.
+            err.check(mode in ("solo", "rrt", "rt"),
                       f"{where}.recoveryMode must be solo|rrt when recovered, got {mode!r}")
             if mode == "rt":
                 warn.append(
                     f"{where}.recoveryMode is 'rt'; the contract (section 6) and the shipped "
-                    f"fixture both spell it 'rrt'"
+                    f"fixture both spell it 'rrt'. Accepted and read as assisted — see "
+                    f"docs/escalations/2026-10-03-state-feed-recovery-mode-spelling.md"
                 )
         else:
             # Open episode: recoveryMode must be absent, not null.

@@ -78,28 +78,50 @@ public sealed class FixtureFeedSource : IStateSource
         return false;
     }
 
-    /// <summary>Accept a <c>res://</c> path as well as a filesystem path.</summary>
+    /// <summary>
+    /// Read a fixture from a <c>res://</c> path or an ordinary filesystem path.
+    ///
+    /// <para>
+    /// Goes through Godot's <see cref="FileAccess"/> rather than <c>System.IO.File</c>.
+    /// <c>ProjectSettings.GlobalizePath</c> maps <c>res://</c> to a native path, but in an exported
+    /// build the file lives inside the PCK and <c>System.IO.File</c> cannot see it — so the
+    /// filesystem route silently returns nothing once the project is exported. <c>FileAccess</c>
+    /// reads the real virtual filesystem in the editor, at runtime and in an export, and falls back to
+    /// native paths for paths that are not <c>res://</c>.
+    /// </para>
+    /// </summary>
     public static FixtureFeedSource FromFile(string path)
     {
-        string resolved = path.StartsWith("res://", StringComparison.Ordinal)
-            ? ProjectSettings.GlobalizePath(path)
-            : path;
-
-        var origin = Path.GetFileName(resolved);
-        if (!File.Exists(resolved))
-        {
-            var missing = new FixtureFeedSource(origin, "missing");
-            missing._warnings.Add($"no such file: {path}");
-            return missing;
-        }
-
+        string origin = Path.GetFileName(path);
         var src = new FixtureFeedSource(origin, "snapshot");
-        string json = File.ReadAllText(resolved);
+
+        string text;
+        if (path.StartsWith("res://", StringComparison.Ordinal))
+        {
+            using var f = Godot.FileAccess.Open(path, Godot.FileAccess.ModeFlags.Read);
+            if (f == null)
+            {
+                src.Kind = "missing";
+                src._warnings.Add($"cannot open {path}: {Godot.FileAccess.GetOpenError()}");
+                return src;
+            }
+            text = f.GetAsText();
+        }
+        else
+        {
+            if (!File.Exists(path))
+            {
+                src.Kind = "missing";
+                src._warnings.Add($"no such file: {path}");
+                return src;
+            }
+            text = File.ReadAllText(path);
+        }
 
         JsonDocument doc;
         try
         {
-            doc = JsonDocument.Parse(json);
+            doc = JsonDocument.Parse(text);
         }
         catch (JsonException e)
         {
@@ -124,16 +146,16 @@ public sealed class FixtureFeedSource : IStateSource
                     src._warnings.Add($"{origin}: replay bundle has no frames[] array");
                     return src;
                 }
-                int i = 0;
+                // Labelled by position in the bundle, not by how many frames were accepted: if frame 0
+                // is rejected, counting successes shifts every later label and the Diagnostics panel
+                // then points the operator at the wrong frame.
+                int index = 0;
                 foreach (var frame in frames.EnumerateArray())
-                {
-                    if (Accept(src, frame.GetRawText(), $"{origin}#{i}"))
-                        i++;
-                }
+                    Accept(src, frame.GetRawText(), $"{origin}#{index++}");
                 return src;
             }
 
-            Accept(src, json, origin);
+            Accept(src, text, origin);
             return src;
         }
     }
