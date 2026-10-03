@@ -11,3 +11,13 @@ fixtures/** -text
 # conversion would make every re-extraction show as a whole-file diff and would change
 # the bytes Scenarios.cs must reproduce.
 migration-data/*.json -text
+
+# Godot project files are authored and consumed as LF by the Godot importer.
+# The repo has core.autocrlf=true but no rule covering the Godot tree, so .import
+# files report as modified on every checkout with no content change: git sees LF on
+# disk, normalises to LF for the index, and the stale stat cache still flags them.
+# Verified byte-identical to HEAD (hash-object --no-filters) on all 28 .import files.
+world-engine-godot/**/*.import text eol=lf
+world-engine-godot/**/*.cs     text eol=lf
+world-engine-godot/**/*.gd     text eol=lf
+world-engine-godot/**/*.tscn   text eol=lf
