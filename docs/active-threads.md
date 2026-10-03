@@ -2,7 +2,7 @@
 
 > This file tracks active work threads. Agents must read this at session start and update it during and at the end of each session.
 
-**Last updated:** 2026-10-02
+**Last updated:** 2026-10-03
 
 ---
 
@@ -50,6 +50,11 @@
 - **Named gaps the migration does not close** (unmet in UE too — own threads needed, not inherited): agent↔agent interaction, NPC population (no NPC system exists), realistic graphics.
   - **Realistic graphics → now owned by [`GRAPH-001`](#-graph-001--godot-art--asset-pipeline-realistic-graphics), opened 2026-10-02** (`RENDERER-PLAN.md` §0.3 requires each gap to get its own thread).
   - **NPC population and agent↔agent interaction still have no thread and no owner.** Note these are also in conflict internally: `RENDERER-PLAN.md` §9 lists agent↔agent interaction as **out of scope**, while §0.3 says it **needs its own thread**. Unresolved — Joshua's call.
+- **Phase C (interiors) started 2026-10-03.** `RENDERER-PLAN.md` §5. **C.5 resolved** — `workplace_level.tscn` is canonical, `workplace.tscn` is orphaned and left in place (untracked, unrecoverable if deleted). **C.3 model delivered** — `world-engine-godot/TaskAnchor.cs` ports `NLTSmartObjectWorldSubsystem.h/.cpp`: affordance axes, reservation/occupancy, and `NeedMatching.Matches/Score/FindBest` with UE thresholds held byte-identical. `dotnet build` clean, 0 warnings.
+  - **Corrected a live contradiction:** §5 previously specified **five** needs and read `Privacy` as an agent need gating at a stricter threshold than `Rest`. That is wrong and contradicts contract §4.3, which establishes **four** needs and `privacy` as a *location affordance axis*. The UE `Privacy` branches (`.cpp:129-130`, `:152-153`) cannot fire and were deliberately not ported.
+  - **C.1, C.2, C.4 all blocked on B.2/B.3** — no residents are rendered (B.2, awaiting GRAPH-001 G1 decisions) and no interior scene is ever loaded (B.3 owns the building→interior wiring). C.3a (anchor *placement*) needs the imported FBX geometry read, which needs a Godot-capable session.
+  - **🔴 Fresh-clone blocker (raised 2026-10-03, escalated by B.1).** `addons/sky_3d/` is still **untracked** in git, and `WorldView.cs` loads it via `GD.Load<GDScript>` in `_Ready()`. `run/main_scene` (`Main.tscn`) therefore depends on files not in the repository — a fresh clone will not start, and `dotnet build` cannot catch it because the path is a runtime string. The plugin is now ratified and recorded in plan §0.1 with provenance, so the *reference* is legitimate; the *commit* is what is missing.
+- **⚠️ Concurrent-agent collision observed 2026-10-03.** A second agent session (codex + a live `Godot_v4.7.2-stable_mono_win64` editor) rewrote `world-engine-godot/WorldView.cs` at 01:23 and deleted `SkyBuilder.cs` / `Daylight.cs` to adopt Sky3D, landing concurrently with this Phase C work. The edits are disjoint — Phase C §5 versus B.1/§0.1 — and no peer work was overwritten, but the repo now has two agents mutating `RENDERER-PLAN.md` and the Godot tree at once. Per the multi-agent coordination protocol this warrants a check-in before further parallel work on either thread.
 - **Next action:** Phase 2 (`NltWorldEngine.Core` + Tier 1 xUnit gate), unblocked now that #69 and #70 exist — Tier 1 and 2-core were never blocked. Retirement of UE remains gated on 2-scenario, 2b, and a minimum viable RL policy before Phase 10 (see plan 10.1).
 
 ### 🎨 GRAPH-001 — Godot art & asset pipeline (realistic graphics)
@@ -67,6 +72,25 @@
 - **⚠️ Constraint conflict (G2.4):** `RENDERER-PLAN.md` D.4 mandates *reduced motion*; animated walk cycles and the unconditional wind shader in `VegetationBuilder.cs` run against it. Must resolve when animation lands, not after.
 - **Inherited constraints:** Godot is a renderer, not a simulation (§1) · no determinism required (§1.3) · third-party plugins reserved to Joshua (§0.1) · **no asset committed blind — provenance manifest row required first** (§0.2) · accessibility is a renderer constraint (§6 D.4) · PR ≤100 files.
 - **Next action:** Joshua to answer G1.1–G1.5 (asset source & redistribution, character count + LOD budget, animation source, hero-prop policy, budget authorisation). G2 pipeline work is blocked until G1.1 and G1.5 land.
+
+### 📐 RENDERER-001 — Godot renderer plan (Phase A state feed)
+- **Status:** Phase A complete · Phase B–D open
+- **Owner:** Kiro · **Plan:** [`world-engine-godot/RENDERER-PLAN.md`](../world-engine-godot/RENDERER-PLAN.md)
+- **Started:** 2026-10-03 · **Last updated:** 2026-10-03
+- **Scope:** Implement the Godot renderer per `RENDERER-PLAN.md`: state feed, open world residents, interior scenes, observer panels.
+- **Delivered (2026-10-03):**
+  - **Phase A complete (A.1–A.5).** Contract doc `docs/contracts/state-feed-v1.md` published (A.1); envelope with velocity (A.2); burnout episodes (A.3); self-recognition (A.4); all present in `fixtures/state-feed.sample.json`.
+  - **A.5 — `world-engine-godot/StateFeedLoader.cs`** (491 lines): loads `fixtures/state-feed.sample.json` at startup, validates schema version, all required keys, four canonical need keys + range, warns on unknown need keys, warns on empty agent list. Wired into `WorldView._Ready()`. Build: 0 errors, 0 warnings.
+  - **B.1 sky swap complete (2026-10-03).** Sky3D (`addons/sky_3d/`) adopted; `WorldView.cs` instantiates Sky3D, disables its internal clock, and drives `current_time` from sim time. `SkyBuilder.cs` and `Daylight.cs` are **deleted**. Reduced-motion (D.4) pauses the sim-time write via `SkyPaused`.
+  - **C.1 collision enabled (2026-10-03).** All four level FBX `.import` files set `meshes/create_shapes=3` (trimesh). Reimport pending next editor open / `--headless --import`.
+  - **Fixed pre-existing `TerrainBuilderPhysics.cs`** — file was a copy of `TerrainBuilder.cs` with the same class name, causing a duplicate-class compile error. Replaced with a placeholder stub reserving the class for Phase C.1 (interior collision).
+- **Blockers / human-owned:**
+  - **Phase B.2 (residents / walk cycles)** is blocked on GRAPH-001 G1 decisions (character asset source, LOD budget, animation source).
+  - **§8 item 0.1 `addons/godot_ai/`** — still unratified (provenance unverified, C#/mono compatibility unconfirmed, `mcp-config.yaml` entry missing). Joshua's decision.
+  - ~~Sky3D ratification~~ — resolved 2026-10-03. B.1 implementation (swap `SkyBuilder.cs` → Sky3D) is now unblocked.
+  - **Phase C** (interior collision, entry points, task anchors) has no scheduled date.
+  - **Phase D** (observer panels) depends on state feed being live from Fusion, which depends on the Python bridge (not yet built; transport for A.5 is undecided per contract §10).
+- **Next action:** B.1 swap (`SkyBuilder.cs` → Sky3D) is **complete**; C.5 resolved — the `<Name>_level.tscn` convention wins; `workplace.tscn` is superseded (early-iteration wrapper with a stray offset). B.3 (building→interior mapping) and B.4 (Label3D name labels) remain unblocked.
 
 ### 🧪 DET-001 — Deterministic state verification and headless build foundation
 - **Status:** open

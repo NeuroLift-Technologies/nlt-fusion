@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://bpskavjmmns14"]
+
+[ext_resource type="PackedScene" uid="uid://ck0tvj5qxe0vy" path="res://assets/levels/Social_Level.fbx" id="1_nq48v"]
+
+[node name="Social_Level" unique_id=2087548871 instance=ExtResource("1_nq48v")]
+
+[node name="DirectionalLight" parent="." index="1" unique_id=1871141340]
+transform = Transform3D(0.760133, 0.11919438, -0.6387414, 0.6004043, 0.2469868, 0.7605999, 0.24841991, -0.9616602, 0.116178006, 0, 4, 1.1368684e-15)
+sky_mode = 2
+
+[node name="SM_SkySphere" parent="." index="7" unique_id=1899276334]
+visible = false

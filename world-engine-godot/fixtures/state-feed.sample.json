@@ -112,7 +112,7 @@
       "severity": 0.22,
       "peakBelow": 0.21,
       "recoveredTick": 934,
-      "recoveryMode": "rt"
+      "recoveryMode": "rrt"
     }
   ],
 

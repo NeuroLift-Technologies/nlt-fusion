@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://sbr4apbsyp33"]
+
+[ext_resource type="PackedScene" uid="uid://bwgorccg34rb6" path="res://assets/levels/Workplace_Level.fbx" id="1_n4o62"]
+
+[node name="Node3D" type="Node3D" unique_id=128324140]
+
+[node name="Workplace_Level" parent="." unique_id=1121421424 instance=ExtResource("1_n4o62")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.51375747, -0.6690116, 0.13579822)

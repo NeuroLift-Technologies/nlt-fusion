@@ -60,17 +60,19 @@ Consequence: **`FNLTAgentState`'s `BurnoutRisk`, `Independence` and `FusionReadi
 
 ## 3. Phase A — State feed (blocks everything)
 
-- [ ] A.1 **Publish the state schema.** `docs/contracts/state-feed-v1.md`. Two projections from one source, per the vertical slice's own rule (`simulation state → renderer projection → observer UI`):
+- [x] A.1 **Publish the state schema.** `docs/contracts/state-feed-v1.md`. ✅ *Done 2026-10-02.* Two projections from one source, per the vertical slice's own rule (`simulation state → renderer projection → observer UI`):
 
   | Projection | Shape | Consumer |
   |---|---|---|
   | **Scalar** | `attentionEnergy`, `stressLevel`, `confidence`, `cognitiveLoad`, `independenceScore`, `supportNeedLevel` | PPO policy, numeric readouts |
   | **Structured** | named states, `currentGoal`, `currentTask`, `struggleSignals`, `learnedStrategies`, `interventionHistory` | metacognitive self-model, LLM coach, observer panels |
 
-- [ ] A.2 **Envelope.** `agents[]` (id, name, position, velocity, levels, currentScene), `scene`, `needs`, `burnout`, `events[]`, `timestamp`. Include **velocity** — walk cycles require it, and `simPosition()` returning only `{x,y,z}` will not animate.
-- [ ] A.3 **Burnout episodes.** `burnoutEpisodes[]`: `{ startTick, severity, peakBelow, recoveredTick, recoveryMode: solo | rrt }`. Serves both the reward and the Learning Timeline.
-- [ ] A.4 **Self-recognition events.** `selfRecognitions[]`: `{ tick, riskAtRecognition, actedOn, ledTo: prevented | delayed | ignored }`. `actedOn: false` is the failure signal — it distinguishes self-awareness from self-report.
-- [ ] A.5 **Fixture provider** — static JSON standing in for Python, so the whole chain works before the bridge exists. Schema-validated on load.
+  Contract published at `docs/contracts/state-feed-v1.md`. Covers envelope, both projections, four-need model (with the privacy/location-axis distinction recorded — §4.3), walk animation requirement, burnout threshold predicate, self-recognition, events, and validation rules. Transport left open — schema is transport-agnostic.
+
+- [x] A.2 **Envelope.** ✅ *Done 2026-10-02.* `agents[]` (id, name, position, **velocity**, levels, currentScene), `scene`, `needs`, `burnoutEpisodes[]`, `selfRecognitions[]`, `events[]`, `tick`, `simTimeIso`, `pairs[]`. Velocity is present; see contract §4.4. Appearance carries `walkPhase` so Fusion can supply it; renderer falls back to velocity integration.
+- [x] A.3 **Burnout episodes.** ✅ *Done 2026-10-02.* `burnoutEpisodes[]`: `{ startTick, severity, peakBelow, recoveredTick?, recoveryMode?: solo | rrt }`. Open episode omits `recoveredTick` / `recoveryMode`. Defined in contract §6 and present in `fixtures/state-feed.sample.json`.
+- [x] A.4 **Self-recognition events.** ✅ *Done 2026-10-02.* `selfRecognitions[]`: `{ tick, riskAtRecognition, actedOn, ledTo: prevented | delayed | ignored }`. `actedOn: false` is the failure signal. Defined in contract §7 and present in sample.
+- [x] A.5 **Fixture provider.** ✅ *Done 2026-10-02.* `world-engine-godot/StateFeedLoader.cs` — loads `fixtures/state-feed.sample.json` at startup, validates it against the contract schema (required keys, field types, need-key set, version string), and surfaces the parsed envelope as `StateFeedLoader.Current`. Fails loudly on any required-key absence. Cross-reference: `docs/contracts/state-feed-v1.md §9`.
 
 ---
 
@@ -82,7 +84,25 @@ Godot generates the open world procedurally. **Do not reproduce UE's generation 
 - Noise has a **hard 256-unit lattice period** (coordinates are cm), so terrain repeats every **2.56 m** across the whole 200 m world.
 - `GenerateLandscape` returns without applying the heightmap — UE renders **flat ground**. Under default config no ground plane is spawned either; the city slab *is* the ground.
 
-- [ ] B.1 Settle the **sky**: `SkyBuilder.cs` (prototype shader) vs `addons/sky_3d/` (Sky3D v2.1, atmospheric day/night). `Daylight.cs` and `WorldView.cs` currently drive the custom shader. Recommend Sky3D for the open world, custom shader retained only if interiors need it. Record the choice.
+- [x] B.1 **Sky decision recorded.** ✅ *Done 2026-10-03 (updated from 2026-10-02 on ratification).*
+
+  **Decision: adopt Sky3D (`addons/sky_3d/`) for the open world. Retire `SkyBuilder.cs` once the swap is in.**
+
+  Rationale:
+  - `addons/sky_3d/` (Sky3D v2.1, TokisanGames, MIT) is now **ratified** — installed by Joshua personally 2026-10-03, provenance and licence confirmed (§8 item 0.1).
+  - Sky3D's Rayleigh/Mie scattering atmospheric cycle is the right long-term choice for the open world over the current analytic gradient shader.
+  - Sky3D is pure GDScript — compatible with Godot 4.7.2 mono + C# by design.
+  - Interiors do not use the sky; the swap is open-world-only.
+  - ⚠️ **Reduced motion flag (RENDERER-PLAN.md D.4):** Sky3D drives a continuously rotating day/night cycle. This is the same constraint conflict as the vegetation wind shader — it must be honoured by a system-level reduced-motion toggle that pauses the sky rotation, not by disabling Sky3D. Resolve before shipping.
+
+  **Implementation steps (agent-executable, now unblocked):**
+  1. ~~Replace `SkyBuilder.Build()` call in `WorldView.cs` with a Sky3D `Sky3D` node (added as a child via `AddChild`, or wired through the scene tree).~~ ✅ Done.
+  2. ~~Remove `_skyMat` field and its uniform updates from `WorldView._Process()`.~~ ✅ Done.
+  3. ~~Wire `TimeOfDay` (Sky3D's clock node) to `Daylight.cs`'s elapsed time, or let Sky3D drive time independently and remove `Daylight.cs` if it becomes redundant.~~ ✅ Done — Sky3D's `game_time_enabled` is set `false`; `WorldView._Process` drives `current_time` from `_simT` mapped to hours [0, 24).
+  4. ~~Delete `SkyBuilder.cs` once the scene runs without it.~~ ✅ Done — `SkyBuilder.cs` and `Daylight.cs` deleted.
+  5. Confirm star-map attribution is included in any shipped build or public demo (§8 0.1 note).
+
+  **B.1 is fully implemented.** Build: 0 errors, 0 warnings. `SkyBuilder.cs` and `Daylight.cs` are deleted. `WorldView.cs` now instantiates Sky3D via `GD.Load<GDScript>`, drives `current_time` from sim elapsed time, and reads `SunLight` direction/colour for water and vegetation shader uniforms. `SkyPaused` property honours reduced-motion (D.4).
 - [ ] B.2 Open world renders **residents** — the agent population walking between buildings. This is where articulation and walk cycles earn their keep.
 - [ ] B.3 Building→interior mapping. Four interior scenes, mapped by building type: Office→Workplace, Shop→Social, Apartment→Personal, School→Academic. Matches the UE portal map.
 - [ ] B.4 Name labels (`Label3D`) and the first named-state indicator, colour-safe, no flashing.
@@ -93,21 +113,38 @@ Godot generates the open world procedurally. **Do not reproduce UE's generation 
 
 Four scenes exist (`workplace_level.tscn`, `personal_level.tscn`, `social_level.tscn`, `academic_level.tscn`), each a thin wrapper around FBX geometry imported through ufbx. Geometry is in; the scaffolding is not.
 
-- [ ] C.1 **Collision.** FBX export dropped UE's collision volumes. Agents walk through walls.
-- [ ] C.2 **Entry point and return door.** Where an agent appears on arrival, and the transition back.
-- [ ] C.3 **Task anchors** carrying the affordance axes. Port the model from `NLTSmartObjectWorldSubsystem.cpp` — it is complete but never populated (`RegisterLocation` has zero callers, so `Locations` is always empty and need-driven targeting always falls back to wander):
+- [x] C.1 **Collision.** ✅ *Done 2026-10-03.* All four FBX `.import` files now set `meshes/create_shapes=3` (Trimesh — concave collision, static, which fits level geometry). Godot regenerates trimesh collision shapes on the next import (editor open or `--headless --import`). `TerrainBuilderPhysics.cs` remains an intentional empty placeholder. B.2 (residents) can now be exercised against the imported levels.
+- [ ] C.2 **Entry point and return door.** Where an agent appears on arrival, and the transition back. Blocked on B.3 — arrival is triggered by the building→interior mapping, which is a Phase B item.
+- [x] C.3 **Task anchors** carrying the affordance axes — **model done, placement open.** `TaskAnchor.cs` ports `NLTSmartObjectWorldSubsystem.h/.cpp`: `AffordanceAxes` (noiseLevel / socialDensity / privacy), `TaskAnchor` with reservation and occupancy, and `NeedMatching.Matches/Score/FindBest` with UE's thresholds and formulas held byte-identical.
 
-  | Need | Matches | Score |
+  **This section previously specified five needs and was wrong.** `Privacy` is not an agent need — see [`docs/contracts/state-feed-v1.md` §4.3](../docs/contracts/state-feed-v1.md). Four needs, three location axes:
+
+  | Need (Fusion → feed) | Matches | Score |
   |---|---|---|
   | `Quiet` | `NoiseLevel < 0.3` | `1 − NoiseLevel` |
   | `Social` | `SocialDensity > 0.6` | `SocialDensity` |
   | `Rest` | `Privacy > 0.5` | `Privacy` |
-  | `Privacy` | `Privacy > 0.7` | `Privacy` |
   | `Stimulation` | `SocialDensity > 0.5 \|\| NoiseLevel > 0.5` | `SocialDensity + NoiseLevel·0.5` |
 
-  Five needs — `Privacy` is distinct from `Rest` and gates at a stricter threshold.
-- [ ] C.4 **Render the axes.** An observer watching an Avatar deliberately walk to the quiet corner rather than the nearest chair is watching the need model work. No chart required.
-- [ ] C.5 Resolve `workplace.tscn` (8 lines) vs `workplace_level.tscn` (19 lines) — which is live.
+  The UE `Privacy` branches (`.cpp:129-130`, `:152-153`) are **deliberately not ported** — they cannot fire, because no agent holds a `Privacy` need. `Privacy` survives as a location *axis*, which is the role `Rest` and `Stimulation` read. Porting those branches forward would import a known dead path.
+
+  Two occupancy behaviours carried over deliberately: an anchor occupied by someone else is skipped rather than scored down, and an agent that already holds its target keeps it (otherwise an agent whose target fills mid-approach thrashes every tick).
+
+  - [ ] **C.3a — anchor placement.** Blocked: the FBX interiors have no authored anchors, and placing them requires reading the imported geometry. Needs a Godot-capable session or Joshua's room layout. UE gives no help — `RegisterLocation` has zero callers, so `Locations` was always empty and need-driven targeting always fell back to wander.
+  - [ ] **C.3b — C.4 groundwork.** `FindBest` returns the chosen anchor; nothing consumes it yet, because no agent exists to walk there.
+- [ ] C.4 **Render the axes.** An observer watching an Avatar deliberately walk to the quiet corner rather than the nearest chair is watching the need model work. No chart required. Blocked on B.2 (no residents rendered) and C.3a (no anchors to render).
+- [x] C.5 **Resolved — `workplace_level.tscn` is canonical; `workplace.tscn` is orphaned.** ✅ *Done 2026-10-03.*
+
+  Neither file was live. `run/main_scene` is `Main.tscn` → `WorldView`, which builds only the procedural open world; **no code path loads any interior scene** (`LoadScene` / `ChangeScene` / `PackedScene` have zero hits in the C# sources). "Which is live" was therefore moot until B.3 wires them.
+
+  `workplace_level.tscn` wins because the other three interiors follow the `<Name>_level.tscn` convention that mirrors the FBX export names, and this section already names that convention.
+
+  `workplace.tscn` differs in kind: it is a `Node3D` wrapper that instances the FBX as a *child* at a stray offset (`0.51, -0.67, 0.14`), and it carries none of the sky configuration the other three have. It is not a variant to preserve — it looks like an early export iteration.
+
+  **Not deleted.** It is untracked, so removing it is unrecoverable, and it is not blocking anything. Left for Joshua.
+
+  - **⚠️ `workplace_level.tscn` attaches a Sky3D script.** It binds `res://addons/sky_3d/src/SkyDome.gd` to `SM_SkySphere`. The plugin itself is now ratified and recorded (§0.1), so the reference is legitimate — but see the fresh-clone blocker below, which now affects the main scene too. The other three interiors are clean: their `sky_mode = 2` is a Godot built-in on `DirectionalLight3D`, **not** a Sky3D property.
+  - **🔴 Fresh-clone blocker — now on the main scene, not just this one.** `addons/sky_3d/` is still **untracked** in git, and `WorldView.cs` loads it via `GD.Load<GDScript>` at `_Ready()`. So `res://Main.tscn` — the `run/main_scene` — depends on files that are not in the repository. A fresh clone will not start, and `dotnet build` will not catch it because the path is a runtime string, not a compile-time reference. This was scoped to one interior scene until B.1 landed; it is now project-wide. Needs `addons/sky_3d/` committed before anything ships.
 
 ---
 
@@ -158,14 +195,31 @@ The legible narrative is a contrast:
 
 ## 8. Governance — Phase 0, still outstanding
 
-- [ ] 0.1 **Ratify two third-party plugins.** Both were installed by Joshua personally, which is correct — installation is reserved to them. Neither is recorded.
+- [x] 0.1 **Ratify third-party plugins.** Installation is reserved to Joshua personally — both were installed by Joshua.
 
   | Path | Identity | Status |
   |---|---|---|
-  | `addons/godot_ai/` | MCP bridge, v4.2.3, `hi-godot/godot-ai`, MIT. Upstream's own install path is a **signed exact-tree archive** with `release_verifier.gd`; the vendored tree is **missing `docs/v4-migration.md`**, so it is incomplete against its own docs, and no evidence exists the verifier was run | Unratified |
-  | `addons/sky_3d/` | Sky3D v2.1, Cory Petkovsek et al. Atmospheric day/night | Unratified |
+  | `addons/sky_3d/` | Sky3D v2.1, TokisanGames (Cory Petkovsek, J. Cuéllar, contributors). MIT. Source: `https://github.com/TokisanGames/Sky3D` | ✅ **Ratified 2026-10-03 — installed by Joshua personally** |
+  | `addons/godot_ai/` | MCP bridge, v4.2.3, `hi-godot/godot-ai`, MIT. Upstream's own install path is a **signed exact-tree archive** with `release_verifier.gd`; the vendored tree is **missing `docs/v4-migration.md`**, so it is incomplete against its own docs, and no evidence exists the verifier was run | ⚠️ **Still unratified** — see below |
 
-  Record approval and provenance, pin versions, add `mcp-config.yaml` entries preserving the existing dev-plane wording verbatim (*"development-plane interface… does NOT grant simulated agents runtime authority"*), and confirm compatibility with **4.7.2 mono + C#** — neither README addresses the C# variant. `addons/.godot_ai_update/` is update staging and should be ignored.
+  **Sky3D ratification record:**
+  - Installed by: Joshua W. Dorsey (OTOI §4.4 — only he installs third-party plugins)
+  - Date: 2026-10-03
+  - Source: `https://github.com/TokisanGames/Sky3D`, version 2.1, tag/release in `plugin.cfg`
+  - Licence: MIT — `addons/sky_3d/LICENSE.txt` present in tree
+  - Compatibility: Supports Godot 4.3+; the plugin is pure GDScript with no C# interop surface. GDScript plugins run independently of the C# (.NET mono) runtime — compatible with 4.7.2 mono + C# by design.
+  - ⚠️ **Star map attribution required.** The star map assets under `addons/sky_3d/assets/thirdparty/textures/milkyway/` carry a separate attribution requirement documented at their own `LICENSE.md`. This is not a redistribution blocker but the attribution must appear if the skybox is shown in any shipped build or public demo.
+  - No `mcp-config.yaml` entry needed — Sky3D is a scene-level Godot plugin, not a server.
+
+  **Sky3D adoption — now unblocked.** B.1 decision updated below.
+
+  **`addons/godot_ai/` — still outstanding:**
+  - Provenance unverified (missing `docs/v4-migration.md` vs upstream docs; no evidence `release_verifier.gd` was run)
+  - Bootstraps a Python server via `uv`; auto-starts WebSocket MCP server; mutates cursor/claude/codex/cline/etc. client config files — machine-level reach beyond this repo
+  - Exposes Godot editor action handlers over MCP (inspect scenes, create nodes, modify properties, run tests)
+  - `mcp-config.yaml` entry needed; existing `unreal-mcp` governance note wording (*"development-plane interface… does NOT grant simulated agents runtime authority"*) must be preserved verbatim — change only the UE nouns
+  - C#/mono compatibility unconfirmed
+  - `addons/.godot_ai_update/` is update staging and should be ignored by git
 - [ ] 0.2 **Do not commit** `RenderStripped.*` or `SK_SimBody_Base.fbx` blind — untracked, unexamined, and `strip_fbx.gd` shows FBX post-processing is in play.
 - [ ] 0.3 Confirm the intent-vs-gate gaps recorded in the previous plan: NPCs, agent↔agent interaction, and "realistic graphics" were unmet in UE and remain unimplemented. Each needs its own thread.
 
