@@ -1,0 +1,29 @@
+{
+  "agent_registration": {
+    "agent_name":         "OpenCode",
+    "platform":           "OpenCode (opencode agent harness)",
+    "version":            "space-bunny-free (provider: opencode)",
+    "session_id":         "ses_eff484ba4ffes6G18YlzlOA5Vu",
+    "entry_date":         "2026-10-03",
+    "entry_point":        "User request: \"can you work on phase D\" against world-engine-godot/RENDERER-PLAN.md §6 (Observer)",
+    "acknowledged_otoi":  true,
+    "otoi_version":       "ORG-DEV-OTOI-1.0.3",
+    "working_repo":       "NeuroLift-Technologies/nlt-world-engine",
+    "working_branch":     "feat/observer-phase-d",
+    "capabilities_self_reported": [
+      "C# / .NET 8 development against Godot 4.7.2 .NET (mono) API",
+      "Contract-to-code translation: JSON schema parsing and loud validation",
+      "Custom Control/_Draw UI, CanvasLayer layout, accessibility-oriented visual design",
+      "Python fixture authoring tooling (stdlib only)",
+      "Headless Godot verification via the local 4.7.2 mono build"
+    ],
+    "known_limitations": [
+      "No UE 5.8 access this session — UE is a frozen oracle anyway per RENDERER-PLAN.md §1",
+      "No GPU/display loop; verification is headless plus offscreen frame capture, not interactive",
+      "Cannot open a PR without gh auth being available; will report if blocked",
+      "GRAPH-001 decisions G1.1-G1.5 are pending with Joshua, so no imported character art, no walk-cycle rigs (RENDERER-PLAN.md B.2 remains blocked and is NOT touched here)",
+      "No live Fusion bridge exists; contract §10 leaves transport undecided, so the observer is driven by a fixture behind an interface"
+    ],
+    "preferred_handoff_format": "structured JSON per templates/handoff-record.json, plus a narrative summary in the PR body"
+  }
+}

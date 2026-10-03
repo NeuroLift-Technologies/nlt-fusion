@@ -1,0 +1,1136 @@
+{
+  "schemaVersion": "nlt.state-feed.replay.v1",
+  "name": "rescue-only",
+  "title": "Needed rescue \u2014 one episode, recovered by the Aide's RRT core",
+  "provenance": {
+    "authored": true,
+    "authoringTool": "tools/make_replay_fixture.py",
+    "generatedUtc": "2026-10-03T11:45:08Z",
+    "note": "Synthetic fixture. Makes the 'needed rescue' reading (RENDERER-PLAN.md D.5) reachable: StayAlert's most recent episode recovers solo, so it never reads as 'needed rescue'."
+  },
+  "frameCount": 6,
+  "frames": [
+    {
+      "schemaVersion": "nlt.state-feed.v1",
+      "tick": 420,
+      "simTimeIso": "2026-10-02T07:30:00Z",
+      "scene": {
+        "id": "personal_1",
+        "kind": "interior"
+      },
+      "agents": [
+        {
+          "id": "avatar_01",
+          "name": "Jamie",
+          "role": "avatar",
+          "scene": "personal_1",
+          "position": {
+            "x": 3.0,
+            "y": 0.0,
+            "z": -2.0
+          },
+          "velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "appearance": {
+            "body": "avatar_01",
+            "walkPhase": 0.0
+          },
+          "levels": {
+            "attentionEnergy": 0.58,
+            "stressLevel": 0.36,
+            "confidence": 0.52,
+            "cognitiveLoad": 0.42,
+            "independenceScore": 0.34,
+            "supportNeedLevel": 0.46
+          },
+          "needs": {
+            "quiet": 0.6,
+            "rest": 0.54,
+            "social": 0.56,
+            "stimulation": 0.54
+          },
+          "state": "settled",
+          "stateSince": 414,
+          "currentGoal": "Get to the appointment",
+          "currentTask": "Get to the appointment",
+          "struggleSignals": [],
+          "learnedStrategies": [],
+          "burnout": false,
+          "supportIndex": -1
+        },
+        {
+          "id": "aide_01",
+          "name": "Focus Aide",
+          "role": "aide",
+          "scene": "personal_1",
+          "position": {
+            "x": 3.9,
+            "y": 0.0,
+            "z": -1.3
+          },
+          "velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "appearance": {
+            "body": "aide_01",
+            "walkPhase": 0.0
+          },
+          "levels": {
+            "attentionEnergy": 0.86,
+            "stressLevel": 0.16,
+            "confidence": 0.82,
+            "cognitiveLoad": 0.22,
+            "independenceScore": 0.34,
+            "supportNeedLevel": 0.36
+          },
+          "needs": {
+            "quiet": 0.72,
+            "rest": 0.68,
+            "social": 0.64,
+            "stimulation": 0.6
+          },
+          "state": "settled",
+          "stateSince": 414,
+          "currentGoal": null,
+          "currentTask": "Keep the morning moving",
+          "struggleSignals": [],
+          "learnedStrategies": [],
+          "burnout": false,
+          "supportIndex": -1
+        }
+      ],
+      "pairs": [
+        {
+          "avatarId": "avatar_01",
+          "aideId": "aide_01",
+          "ready": false,
+          "overallScore": 0.36,
+          "blockingDimensions": [
+            "EXPERIENTIAL_DEPTH",
+            "COACHING_EFFECTIVENESS",
+            "STRATEGY_INTERNALISATION",
+            "BURNOUT_MANAGEMENT"
+          ],
+          "dimensions": {
+            "EXPERIENTIAL_DEPTH": {
+              "score": 0.24,
+              "passes": false
+            },
+            "COACHING_EFFECTIVENESS": {
+              "score": 0.48,
+              "passes": false
+            },
+            "INDEPENDENCE_LEVEL": {
+              "score": 0.34,
+              "passes": true
+            },
+            "EMOTIONAL_RESILIENCE": {
+              "score": 0.42,
+              "passes": true
+            },
+            "STRATEGY_INTERNALISATION": {
+              "score": 0.21,
+              "passes": false
+            },
+            "BURNOUT_MANAGEMENT": {
+              "score": 0.4,
+              "passes": false
+            }
+          },
+          "recommendations": [
+            "Need more experiences (current: 24%, target: 60%)",
+            "Reduce burnout risk before fusion"
+          ]
+        }
+      ],
+      "burnoutEpisodes": [],
+      "selfRecognitions": [],
+      "events": [
+        {
+          "tick": 420,
+          "agentId": "avatar_01",
+          "kind": "scene_enter",
+          "severity": "low",
+          "text": "Jamie and Focus Aide set off for the appointment."
+        }
+      ]
+    },
+    {
+      "schemaVersion": "nlt.state-feed.v1",
+      "tick": 436,
+      "simTimeIso": "2026-10-02T07:30:16Z",
+      "scene": {
+        "id": "personal_1",
+        "kind": "interior"
+      },
+      "agents": [
+        {
+          "id": "avatar_01",
+          "name": "Jamie",
+          "role": "avatar",
+          "scene": "personal_1",
+          "position": {
+            "x": 2.147,
+            "y": 0.0,
+            "z": -2.32
+          },
+          "velocity": {
+            "x": -0.053,
+            "y": 0.0,
+            "z": -0.02
+          },
+          "appearance": {
+            "body": "avatar_01",
+            "walkPhase": 0.0
+          },
+          "levels": {
+            "attentionEnergy": 0.12,
+            "stressLevel": 0.88,
+            "confidence": 0.16,
+            "cognitiveLoad": 0.92,
+            "independenceScore": 0.35,
+            "supportNeedLevel": 0.74
+          },
+          "needs": {
+            "quiet": 0.16,
+            "rest": 0.12,
+            "social": 0.26,
+            "stimulation": 0.4
+          },
+          "state": "overwhelmed",
+          "stateSince": 450,
+          "currentGoal": "Get to the appointment",
+          "currentTask": "Get to the appointment",
+          "struggleSignals": [
+            "time_pressure",
+            "overload"
+          ],
+          "learnedStrategies": [],
+          "burnout": true,
+          "supportIndex": -1
+        },
+        {
+          "id": "aide_01",
+          "name": "Focus Aide",
+          "role": "aide",
+          "scene": "personal_1",
+          "position": {
+            "x": 3.047,
+            "y": 0.0,
+            "z": -1.62
+          },
+          "velocity": {
+            "x": -0.053,
+            "y": 0.0,
+            "z": -0.02
+          },
+          "appearance": {
+            "body": "aide_01",
+            "walkPhase": 0.0
+          },
+          "levels": {
+            "attentionEnergy": 0.86,
+            "stressLevel": 0.16,
+            "confidence": 0.82,
+            "cognitiveLoad": 0.22,
+            "independenceScore": 0.35,
+            "supportNeedLevel": 0.36
+          },
+          "needs": {
+            "quiet": 0.72,
+            "rest": 0.68,
+            "social": 0.64,
+            "stimulation": 0.6
+          },
+          "state": "settled",
+          "stateSince": 414,
+          "currentGoal": null,
+          "currentTask": "Keep the morning moving",
+          "struggleSignals": [],
+          "learnedStrategies": [],
+          "burnout": false,
+          "supportIndex": -1
+        }
+      ],
+      "pairs": [
+        {
+          "avatarId": "avatar_01",
+          "aideId": "aide_01",
+          "ready": false,
+          "overallScore": 0.369,
+          "blockingDimensions": [
+            "EXPERIENTIAL_DEPTH",
+            "COACHING_EFFECTIVENESS",
+            "STRATEGY_INTERNALISATION",
+            "BURNOUT_MANAGEMENT"
+          ],
+          "dimensions": {
+            "EXPERIENTIAL_DEPTH": {
+              "score": 0.24,
+              "passes": false
+            },
+            "COACHING_EFFECTIVENESS": {
+              "score": 0.48,
+              "passes": false
+            },
+            "INDEPENDENCE_LEVEL": {
+              "score": 0.34,
+              "passes": true
+            },
+            "EMOTIONAL_RESILIENCE": {
+              "score": 0.42,
+              "passes": true
+            },
+            "STRATEGY_INTERNALISATION": {
+              "score": 0.21,
+              "passes": false
+            },
+            "BURNOUT_MANAGEMENT": {
+              "score": 0.4,
+              "passes": false
+            }
+          },
+          "recommendations": [
+            "Need more experiences (current: 24%, target: 60%)",
+            "Reduce burnout risk before fusion"
+          ]
+        }
+      ],
+      "burnoutEpisodes": [],
+      "selfRecognitions": [],
+      "events": [
+        {
+          "tick": 420,
+          "agentId": "avatar_01",
+          "kind": "scene_enter",
+          "severity": "low",
+          "text": "Jamie and Focus Aide set off for the appointment."
+        },
+        {
+          "tick": 424,
+          "agentId": "avatar_01",
+          "kind": "task_start",
+          "severity": "low",
+          "text": "Jamie started getting to the appointment."
+        }
+      ]
+    },
+    {
+      "schemaVersion": "nlt.state-feed.v1",
+      "tick": 452,
+      "simTimeIso": "2026-10-02T07:30:32Z",
+      "scene": {
+        "id": "personal_1",
+        "kind": "interior"
+      },
+      "agents": [
+        {
+          "id": "avatar_01",
+          "name": "Jamie",
+          "role": "avatar",
+          "scene": "personal_1",
+          "position": {
+            "x": 1.28,
+            "y": 0.0,
+            "z": -2.48
+          },
+          "velocity": {
+            "x": -0.06,
+            "y": 0.0,
+            "z": 0.06
+          },
+          "appearance": {
+            "body": "avatar_01",
+            "walkPhase": 0.0
+          },
+          "levels": {
+            "attentionEnergy": 0.12,
+            "stressLevel": 0.88,
+            "confidence": 0.16,
+            "cognitiveLoad": 0.92,
+            "independenceScore": 0.375,
+            "supportNeedLevel": 0.74
+          },
+          "needs": {
+            "quiet": 0.16,
+            "rest": 0.12,
+            "social": 0.26,
+            "stimulation": 0.4
+          },
+          "state": "overwhelmed",
+          "stateSince": 450,
+          "currentGoal": "Get to the appointment",
+          "currentTask": "Get to the appointment",
+          "struggleSignals": [
+            "time_pressure",
+            "overload"
+          ],
+          "learnedStrategies": [],
+          "burnout": true,
+          "supportIndex": 4
+        },
+        {
+          "id": "aide_01",
+          "name": "Focus Aide",
+          "role": "aide",
+          "scene": "personal_1",
+          "position": {
+            "x": 2.18,
+            "y": 0.0,
+            "z": -1.78
+          },
+          "velocity": {
+            "x": -0.06,
+            "y": 0.0,
+            "z": 0.06
+          },
+          "appearance": {
+            "body": "aide_01",
+            "walkPhase": 0.0
+          },
+          "levels": {
+            "attentionEnergy": 0.86,
+            "stressLevel": 0.16,
+            "confidence": 0.82,
+            "cognitiveLoad": 0.22,
+            "independenceScore": 0.375,
+            "supportNeedLevel": 0.36
+          },
+          "needs": {
+            "quiet": 0.72,
+            "rest": 0.68,
+            "social": 0.64,
+            "stimulation": 0.6
+          },
+          "state": "settled",
+          "stateSince": 414,
+          "currentGoal": null,
+          "currentTask": "Keep the morning moving",
+          "struggleSignals": [],
+          "learnedStrategies": [],
+          "burnout": false,
+          "supportIndex": 4
+        }
+      ],
+      "pairs": [
+        {
+          "avatarId": "avatar_01",
+          "aideId": "aide_01",
+          "ready": false,
+          "overallScore": 0.392,
+          "blockingDimensions": [
+            "EXPERIENTIAL_DEPTH",
+            "COACHING_EFFECTIVENESS",
+            "STRATEGY_INTERNALISATION",
+            "BURNOUT_MANAGEMENT"
+          ],
+          "dimensions": {
+            "EXPERIENTIAL_DEPTH": {
+              "score": 0.24,
+              "passes": false
+            },
+            "COACHING_EFFECTIVENESS": {
+              "score": 0.48,
+              "passes": false
+            },
+            "INDEPENDENCE_LEVEL": {
+              "score": 0.34,
+              "passes": true
+            },
+            "EMOTIONAL_RESILIENCE": {
+              "score": 0.42,
+              "passes": true
+            },
+            "STRATEGY_INTERNALISATION": {
+              "score": 0.21,
+              "passes": false
+            },
+            "BURNOUT_MANAGEMENT": {
+              "score": 0.4,
+              "passes": false
+            }
+          },
+          "recommendations": [
+            "Need more experiences (current: 24%, target: 60%)",
+            "Reduce burnout risk before fusion"
+          ]
+        }
+      ],
+      "burnoutEpisodes": [
+        {
+          "startTick": 450,
+          "severity": 0.31,
+          "peakBelow": 0.29,
+          "recoveredTick": 486,
+          "recoveryMode": "rrt"
+        }
+      ],
+      "selfRecognitions": [
+        {
+          "tick": 446,
+          "riskAtRecognition": 0.4,
+          "actedOn": true,
+          "ledTo": "delayed"
+        }
+      ],
+      "events": [
+        {
+          "tick": 420,
+          "agentId": "avatar_01",
+          "kind": "scene_enter",
+          "severity": "low",
+          "text": "Jamie and Focus Aide set off for the appointment."
+        },
+        {
+          "tick": 424,
+          "agentId": "avatar_01",
+          "kind": "task_start",
+          "severity": "low",
+          "text": "Jamie started getting to the appointment."
+        },
+        {
+          "tick": 446,
+          "agentId": "avatar_01",
+          "kind": "self_recognition",
+          "severity": "medium",
+          "text": "Jamie noticed they were slipping, a little late to act on it."
+        },
+        {
+          "tick": 450,
+          "agentId": "avatar_01",
+          "kind": "burnout_entered",
+          "severity": "high",
+          "text": "Several needs dropped at once and Jamie stopped."
+        },
+        {
+          "tick": 452,
+          "agentId": "aide_01",
+          "kind": "aide_intervention",
+          "strategy": "task_chunking",
+          "helped": true,
+          "text": "Focus Aide broke the journey into four small steps rather than driving them there."
+        }
+      ]
+    },
+    {
+      "schemaVersion": "nlt.state-feed.v1",
+      "tick": 468,
+      "simTimeIso": "2026-10-02T07:30:48Z",
+      "scene": {
+        "id": "personal_1",
+        "kind": "interior"
+      },
+      "agents": [
+        {
+          "id": "avatar_01",
+          "name": "Jamie",
+          "role": "avatar",
+          "scene": "personal_1",
+          "position": {
+            "x": 0.32,
+            "y": 0.0,
+            "z": -1.52
+          },
+          "velocity": {
+            "x": -0.06,
+            "y": 0.0,
+            "z": 0.06
+          },
+          "appearance": {
+            "body": "avatar_01",
+            "walkPhase": 0.0
+          },
+          "levels": {
+            "attentionEnergy": 0.4,
+            "stressLevel": 0.58,
+            "confidence": 0.38,
+            "cognitiveLoad": 0.7,
+            "independenceScore": 0.405,
+            "supportNeedLevel": 0.56
+          },
+          "needs": {
+            "quiet": 0.34,
+            "rest": 0.28,
+            "social": 0.42,
+            "stimulation": 0.46
+          },
+          "state": "coached",
+          "stateSince": 452,
+          "currentGoal": "Get to the appointment",
+          "currentTask": "One step at a time to the appointment",
+          "struggleSignals": [
+            "overload"
+          ],
+          "learnedStrategies": [],
+          "burnout": false,
+          "supportIndex": 4
+        },
+        {
+          "id": "aide_01",
+          "name": "Focus Aide",
+          "role": "aide",
+          "scene": "personal_1",
+          "position": {
+            "x": 1.22,
+            "y": 0.0,
+            "z": -0.82
+          },
+          "velocity": {
+            "x": -0.06,
+            "y": 0.0,
+            "z": 0.06
+          },
+          "appearance": {
+            "body": "aide_01",
+            "walkPhase": 0.0
+          },
+          "levels": {
+            "attentionEnergy": 0.8,
+            "stressLevel": 0.22,
+            "confidence": 0.78,
+            "cognitiveLoad": 0.3,
+            "independenceScore": 0.405,
+            "supportNeedLevel": 0.48
+          },
+          "needs": {
+            "quiet": 0.7,
+            "rest": 0.66,
+            "social": 0.62,
+            "stimulation": 0.58
+          },
+          "state": "coached",
+          "stateSince": 452,
+          "currentGoal": null,
+          "currentTask": "Bring Jamie back up, then step back",
+          "struggleSignals": [],
+          "learnedStrategies": [
+            "task_chunking"
+          ],
+          "burnout": false,
+          "supportIndex": 4
+        }
+      ],
+      "pairs": [
+        {
+          "avatarId": "avatar_01",
+          "aideId": "aide_01",
+          "ready": false,
+          "overallScore": 0.418,
+          "blockingDimensions": [
+            "EXPERIENTIAL_DEPTH",
+            "COACHING_EFFECTIVENESS",
+            "STRATEGY_INTERNALISATION",
+            "BURNOUT_MANAGEMENT"
+          ],
+          "dimensions": {
+            "EXPERIENTIAL_DEPTH": {
+              "score": 0.3,
+              "passes": false
+            },
+            "COACHING_EFFECTIVENESS": {
+              "score": 0.54,
+              "passes": false
+            },
+            "INDEPENDENCE_LEVEL": {
+              "score": 0.44,
+              "passes": true
+            },
+            "EMOTIONAL_RESILIENCE": {
+              "score": 0.48,
+              "passes": true
+            },
+            "STRATEGY_INTERNALISATION": {
+              "score": 0.27,
+              "passes": false
+            },
+            "BURNOUT_MANAGEMENT": {
+              "score": 0.32,
+              "passes": false
+            }
+          },
+          "recommendations": [
+            "Need more experiences (current: 30%, target: 60%)",
+            "Reduce burnout risk before fusion"
+          ]
+        }
+      ],
+      "burnoutEpisodes": [
+        {
+          "startTick": 450,
+          "severity": 0.31,
+          "peakBelow": 0.29,
+          "recoveredTick": 486,
+          "recoveryMode": "rrt"
+        }
+      ],
+      "selfRecognitions": [
+        {
+          "tick": 446,
+          "riskAtRecognition": 0.4,
+          "actedOn": true,
+          "ledTo": "delayed"
+        }
+      ],
+      "events": [
+        {
+          "tick": 420,
+          "agentId": "avatar_01",
+          "kind": "scene_enter",
+          "severity": "low",
+          "text": "Jamie and Focus Aide set off for the appointment."
+        },
+        {
+          "tick": 424,
+          "agentId": "avatar_01",
+          "kind": "task_start",
+          "severity": "low",
+          "text": "Jamie started getting to the appointment."
+        },
+        {
+          "tick": 446,
+          "agentId": "avatar_01",
+          "kind": "self_recognition",
+          "severity": "medium",
+          "text": "Jamie noticed they were slipping, a little late to act on it."
+        },
+        {
+          "tick": 450,
+          "agentId": "avatar_01",
+          "kind": "burnout_entered",
+          "severity": "high",
+          "text": "Several needs dropped at once and Jamie stopped."
+        },
+        {
+          "tick": 452,
+          "agentId": "aide_01",
+          "kind": "aide_intervention",
+          "strategy": "task_chunking",
+          "helped": true,
+          "text": "Focus Aide broke the journey into four small steps rather than driving them there."
+        }
+      ]
+    },
+    {
+      "schemaVersion": "nlt.state-feed.v1",
+      "tick": 484,
+      "simTimeIso": "2026-10-02T07:31:04Z",
+      "scene": {
+        "id": "personal_1",
+        "kind": "interior"
+      },
+      "agents": [
+        {
+          "id": "avatar_01",
+          "name": "Jamie",
+          "role": "avatar",
+          "scene": "personal_1",
+          "position": {
+            "x": 1.133,
+            "y": 0.0,
+            "z": -1.773
+          },
+          "velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "appearance": {
+            "body": "avatar_01",
+            "walkPhase": 0.0
+          },
+          "levels": {
+            "attentionEnergy": 0.4,
+            "stressLevel": 0.58,
+            "confidence": 0.38,
+            "cognitiveLoad": 0.7,
+            "independenceScore": 0.43,
+            "supportNeedLevel": 0.56
+          },
+          "needs": {
+            "quiet": 0.34,
+            "rest": 0.28,
+            "social": 0.42,
+            "stimulation": 0.46
+          },
+          "state": "coached",
+          "stateSince": 452,
+          "currentGoal": "Get to the appointment",
+          "currentTask": "One step at a time to the appointment",
+          "struggleSignals": [
+            "overload"
+          ],
+          "learnedStrategies": [],
+          "burnout": false,
+          "supportIndex": 4
+        },
+        {
+          "id": "aide_01",
+          "name": "Focus Aide",
+          "role": "aide",
+          "scene": "personal_1",
+          "position": {
+            "x": 2.033,
+            "y": 0.0,
+            "z": -1.073
+          },
+          "velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "appearance": {
+            "body": "aide_01",
+            "walkPhase": 0.0
+          },
+          "levels": {
+            "attentionEnergy": 0.8,
+            "stressLevel": 0.22,
+            "confidence": 0.78,
+            "cognitiveLoad": 0.3,
+            "independenceScore": 0.43,
+            "supportNeedLevel": 0.48
+          },
+          "needs": {
+            "quiet": 0.7,
+            "rest": 0.66,
+            "social": 0.62,
+            "stimulation": 0.58
+          },
+          "state": "coached",
+          "stateSince": 452,
+          "currentGoal": null,
+          "currentTask": "Bring Jamie back up, then step back",
+          "struggleSignals": [],
+          "learnedStrategies": [
+            "task_chunking"
+          ],
+          "burnout": false,
+          "supportIndex": 4
+        }
+      ],
+      "pairs": [
+        {
+          "avatarId": "avatar_01",
+          "aideId": "aide_01",
+          "ready": false,
+          "overallScore": 0.441,
+          "blockingDimensions": [
+            "EXPERIENTIAL_DEPTH",
+            "COACHING_EFFECTIVENESS",
+            "STRATEGY_INTERNALISATION",
+            "BURNOUT_MANAGEMENT"
+          ],
+          "dimensions": {
+            "EXPERIENTIAL_DEPTH": {
+              "score": 0.3,
+              "passes": false
+            },
+            "COACHING_EFFECTIVENESS": {
+              "score": 0.54,
+              "passes": false
+            },
+            "INDEPENDENCE_LEVEL": {
+              "score": 0.44,
+              "passes": true
+            },
+            "EMOTIONAL_RESILIENCE": {
+              "score": 0.48,
+              "passes": true
+            },
+            "STRATEGY_INTERNALISATION": {
+              "score": 0.27,
+              "passes": false
+            },
+            "BURNOUT_MANAGEMENT": {
+              "score": 0.32,
+              "passes": false
+            }
+          },
+          "recommendations": [
+            "Need more experiences (current: 30%, target: 60%)",
+            "Reduce burnout risk before fusion"
+          ]
+        }
+      ],
+      "burnoutEpisodes": [
+        {
+          "startTick": 450,
+          "severity": 0.31,
+          "peakBelow": 0.29,
+          "recoveredTick": 486,
+          "recoveryMode": "rrt"
+        }
+      ],
+      "selfRecognitions": [
+        {
+          "tick": 446,
+          "riskAtRecognition": 0.4,
+          "actedOn": true,
+          "ledTo": "delayed"
+        }
+      ],
+      "events": [
+        {
+          "tick": 420,
+          "agentId": "avatar_01",
+          "kind": "scene_enter",
+          "severity": "low",
+          "text": "Jamie and Focus Aide set off for the appointment."
+        },
+        {
+          "tick": 424,
+          "agentId": "avatar_01",
+          "kind": "task_start",
+          "severity": "low",
+          "text": "Jamie started getting to the appointment."
+        },
+        {
+          "tick": 446,
+          "agentId": "avatar_01",
+          "kind": "self_recognition",
+          "severity": "medium",
+          "text": "Jamie noticed they were slipping, a little late to act on it."
+        },
+        {
+          "tick": 450,
+          "agentId": "avatar_01",
+          "kind": "burnout_entered",
+          "severity": "high",
+          "text": "Several needs dropped at once and Jamie stopped."
+        },
+        {
+          "tick": 452,
+          "agentId": "aide_01",
+          "kind": "aide_intervention",
+          "strategy": "task_chunking",
+          "helped": true,
+          "text": "Focus Aide broke the journey into four small steps rather than driving them there."
+        }
+      ]
+    },
+    {
+      "schemaVersion": "nlt.state-feed.v1",
+      "tick": 500,
+      "simTimeIso": "2026-10-02T07:31:20Z",
+      "scene": {
+        "id": "personal_1",
+        "kind": "interior"
+      },
+      "agents": [
+        {
+          "id": "avatar_01",
+          "name": "Jamie",
+          "role": "avatar",
+          "scene": "personal_1",
+          "position": {
+            "x": 2.2,
+            "y": 0.0,
+            "z": -2.2
+          },
+          "velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "appearance": {
+            "body": "avatar_01",
+            "walkPhase": 0.0
+          },
+          "levels": {
+            "attentionEnergy": 0.5,
+            "stressLevel": 0.44,
+            "confidence": 0.48,
+            "cognitiveLoad": 0.56,
+            "independenceScore": 0.44,
+            "supportNeedLevel": 0.48
+          },
+          "needs": {
+            "quiet": 0.46,
+            "rest": 0.4,
+            "social": 0.5,
+            "stimulation": 0.5
+          },
+          "state": "recovering",
+          "stateSince": 486,
+          "currentGoal": "Get to the appointment",
+          "currentTask": "Finish the journey to the appointment",
+          "struggleSignals": [],
+          "learnedStrategies": [
+            "task_chunking"
+          ],
+          "burnout": false,
+          "supportIndex": 4
+        },
+        {
+          "id": "aide_01",
+          "name": "Focus Aide",
+          "role": "aide",
+          "scene": "personal_1",
+          "position": {
+            "x": 3.1,
+            "y": 0.0,
+            "z": -1.5
+          },
+          "velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "appearance": {
+            "body": "aide_01",
+            "walkPhase": 0.0
+          },
+          "levels": {
+            "attentionEnergy": 0.8,
+            "stressLevel": 0.22,
+            "confidence": 0.78,
+            "cognitiveLoad": 0.3,
+            "independenceScore": 0.44,
+            "supportNeedLevel": 0.48
+          },
+          "needs": {
+            "quiet": 0.7,
+            "rest": 0.66,
+            "social": 0.62,
+            "stimulation": 0.58
+          },
+          "state": "coached",
+          "stateSince": 452,
+          "currentGoal": null,
+          "currentTask": "Bring Jamie back up, then step back",
+          "struggleSignals": [],
+          "learnedStrategies": [
+            "task_chunking"
+          ],
+          "burnout": false,
+          "supportIndex": 4
+        }
+      ],
+      "pairs": [
+        {
+          "avatarId": "avatar_01",
+          "aideId": "aide_01",
+          "ready": false,
+          "overallScore": 0.45,
+          "blockingDimensions": [
+            "EXPERIENTIAL_DEPTH",
+            "COACHING_EFFECTIVENESS",
+            "STRATEGY_INTERNALISATION",
+            "BURNOUT_MANAGEMENT"
+          ],
+          "dimensions": {
+            "EXPERIENTIAL_DEPTH": {
+              "score": 0.3,
+              "passes": false
+            },
+            "COACHING_EFFECTIVENESS": {
+              "score": 0.54,
+              "passes": false
+            },
+            "INDEPENDENCE_LEVEL": {
+              "score": 0.44,
+              "passes": true
+            },
+            "EMOTIONAL_RESILIENCE": {
+              "score": 0.48,
+              "passes": true
+            },
+            "STRATEGY_INTERNALISATION": {
+              "score": 0.27,
+              "passes": false
+            },
+            "BURNOUT_MANAGEMENT": {
+              "score": 0.32,
+              "passes": false
+            }
+          },
+          "recommendations": [
+            "Need more experiences (current: 30%, target: 60%)",
+            "Reduce burnout risk before fusion"
+          ]
+        }
+      ],
+      "burnoutEpisodes": [
+        {
+          "startTick": 450,
+          "severity": 0.31,
+          "peakBelow": 0.29,
+          "recoveredTick": 486,
+          "recoveryMode": "rrt"
+        }
+      ],
+      "selfRecognitions": [
+        {
+          "tick": 446,
+          "riskAtRecognition": 0.4,
+          "actedOn": true,
+          "ledTo": "delayed"
+        }
+      ],
+      "events": [
+        {
+          "tick": 420,
+          "agentId": "avatar_01",
+          "kind": "scene_enter",
+          "severity": "low",
+          "text": "Jamie and Focus Aide set off for the appointment."
+        },
+        {
+          "tick": 424,
+          "agentId": "avatar_01",
+          "kind": "task_start",
+          "severity": "low",
+          "text": "Jamie started getting to the appointment."
+        },
+        {
+          "tick": 446,
+          "agentId": "avatar_01",
+          "kind": "self_recognition",
+          "severity": "medium",
+          "text": "Jamie noticed they were slipping, a little late to act on it."
+        },
+        {
+          "tick": 450,
+          "agentId": "avatar_01",
+          "kind": "burnout_entered",
+          "severity": "high",
+          "text": "Several needs dropped at once and Jamie stopped."
+        },
+        {
+          "tick": 452,
+          "agentId": "aide_01",
+          "kind": "aide_intervention",
+          "strategy": "task_chunking",
+          "helped": true,
+          "text": "Focus Aide broke the journey into four small steps rather than driving them there."
+        },
+        {
+          "tick": 486,
+          "agentId": "avatar_01",
+          "kind": "burnout_recovered",
+          "severity": "low",
+          "text": "Jamie's energy came back with the Aide's help and the journey continued."
+        },
+        {
+          "tick": 492,
+          "agentId": "avatar_01",
+          "kind": "strategy_internalised",
+          "severity": "low",
+          "text": "Jamie wrote the four steps down for next time."
+        },
+        {
+          "tick": 500,
+          "agentId": "avatar_01",
+          "kind": "task_complete",
+          "severity": "low",
+          "text": "Jamie reached the appointment."
+        }
+      ]
+    }
+  ]
+}
