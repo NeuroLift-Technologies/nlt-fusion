@@ -65,4 +65,11 @@ protected:
 
 	/** Interact input handler. */
 	void OnInteract();
+
+	/**
+	 * Quit input handler (Escape / console Start).
+	 * Uses QuitGame rather than FPlatformMisc::RequestExit so the engine still
+	 * runs its normal shutdown path and flushes logs on Windows.
+	 */
+	void OnQuit();
 };
