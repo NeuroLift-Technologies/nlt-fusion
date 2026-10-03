@@ -7,6 +7,7 @@ namespace NltWorldEngine;
 public static class VegetationBuilder
 {
     private sealed record Spot(float X, float Z, float Y, float Scale, float Rot, float Tint);
+    public static readonly List<ShaderMaterial> WindMats = new();
 
     private static List<Spot> SeededPlacement(int count, Func<float, float, SimulationRng, bool> test)
     {
@@ -27,7 +28,7 @@ public static class VegetationBuilder
         return out_;
     }
 
-    private static MultiMeshInstance3D Instanced(Mesh mesh, StandardMaterial3D mat, List<Spot> spots, Func<Spot, Transform3D> makeT)
+    private static MultiMeshInstance3D Instanced(Mesh mesh, Material mat, List<Spot> spots, Func<Spot, Transform3D> makeT, bool customData = false)
     {
         var mm = new MultiMesh
         {
@@ -35,9 +36,48 @@ public static class VegetationBuilder
             Mesh = mesh,
             InstanceCount = spots.Count,
         };
+        if (customData) mm.UseCustomData = true;
         for (int i = 0; i < spots.Count; i++)
+        {
             mm.SetInstanceTransform(i, makeT(spots[i]));
+            if (customData)
+            {
+                float v = 0.82f + spots[i].Tint * 0.36f;
+                var tint = new Color(v * (0.94f + spots[i].Scale * 0.12f), v, v * (0.94f + spots[i].Scale * 0.10f));
+                mm.SetInstanceCustomData(i, tint);
+            }
+        }
         return new MultiMeshInstance3D { Multimesh = mm, MaterialOverride = mat };
+    }
+
+    private static ShaderMaterial WindMat(Color albedo, float sway)
+    {
+        var shader = new Shader
+        {
+            Code = @"
+shader_type spatial;
+uniform vec3 u_albedo : source_color;
+uniform float u_sway;
+uniform float u_time;
+void vertex() {
+    vec3 ip = INSTANCE_TRANSFORM[3].xyz;
+    float ph = ip.x * 0.35 + ip.z * 0.41;
+    float w = sin(u_time * 1.6 + ph) + 0.6 * sin(u_time * 2.7 + ph * 1.7);
+    float h = clamp(VERTEX.y, 0.0, 4.0) / 4.0;
+    VERTEX += vec3(w, 0.0, w * 0.6) * u_sway * h;
+}
+void fragment() {
+    ALBEDO = u_albedo * INSTANCE_CUSTOM.rgb;
+    ROUGHNESS = 1.0;
+}
+"
+        };
+        var m = new ShaderMaterial { Shader = shader };
+        m.SetShaderParameter("u_albedo", albedo);
+        m.SetShaderParameter("u_sway", sway);
+        m.SetShaderParameter("u_time", 0f);
+        WindMats.Add(m);
+        return m;
     }
 
     private static bool ClearOfSettlement(float x, float z, List<SettlementBuilder.Plan> plans, float pad = 0f)
@@ -60,18 +100,16 @@ public static class VegetationBuilder
         });
 
         var trunkMesh = new CylinderMesh { Height = 2.6f, TopRadius = 0.16f, BottomRadius = 0.30f, RadialSegments = 6 };
-        var trunkMat = new StandardMaterial3D { AlbedoColor = new Color(0x5a4534), Roughness = 0.92f };
-        root.AddChild(Instanced(trunkMesh, trunkMat, treeSpots, t =>
+        root.AddChild(Instanced(trunkMesh, WindMat(new Color(0x5a4534), 0.03f), treeSpots, t =>
         {
             float sc = 0.72f + t.Scale * 0.85f;
             return new Transform3D(new Basis(Quaternion.FromEuler(new Vector3(0, t.Rot * Mathf.Pi * 2f, 0))).Scaled(new Vector3(sc, sc * (0.85f + t.Tint * 0.4f), sc)),
                 new Vector3(t.X, t.Y - 0.2f + 1.3f * sc, t.Z));
-        }));
+        }, true));
 
-        StandardMaterial3D leaf(Color c) => new() { AlbedoColor = c, Roughness = 0.92f };
-        root.AddChild(Instanced(Cone(1.35f, 2.9f, 8), leaf(new(0x3d5c36)), treeSpots, t => T(t, 3.2f, 0.72f, 0.85f)));
-        root.AddChild(Instanced(Cone(1.05f, 2.4f, 8), leaf(new(0x4a7038)), treeSpots, t => T(t, 4.5f, 0.72f, 0.85f)));
-        root.AddChild(Instanced(Cone(0.68f, 1.8f, 8), leaf(new(0x5c8440)), treeSpots, t => T(t, 5.7f, 0.72f, 0.85f)));
+        root.AddChild(Instanced(Cone(1.35f, 2.9f, 8), WindMat(new Color(0x3d5c36), 0.10f), treeSpots, t => T(t, 3.2f, 0.72f, 0.85f), true));
+        root.AddChild(Instanced(Cone(1.05f, 2.4f, 8), WindMat(new Color(0x4a7038), 0.13f), treeSpots, t => T(t, 4.5f, 0.72f, 0.85f), true));
+        root.AddChild(Instanced(Cone(0.68f, 1.8f, 8), WindMat(new Color(0x5c8440), 0.16f), treeSpots, t => T(t, 5.7f, 0.72f, 0.85f), true));
 
         // rocks
         var rockSpots = SeededPlacement(190, (x, z, r) =>
@@ -89,7 +127,7 @@ public static class VegetationBuilder
         }));
 
         // grass
-        var grassSpots = SeededPlacement(1200, (x, z, r) =>
+        var grassSpots = SeededPlacement(3400, (x, z, r) =>
         {
             float h = WorldGeometry.HeightAt(x, z);
             float dPlaza = MathF.Sqrt((x - WorldConstants.SettleX) * (x - WorldConstants.SettleX) + (z - WorldConstants.SettleZ) * (z - WorldConstants.SettleZ));
@@ -97,13 +135,12 @@ public static class VegetationBuilder
             return h > WorldConstants.Water + 0.9f && WorldGeometry.SlopeAt(x, z) < 0.45f;
         });
         var grassCone = Cone(0.075f, 0.62f, 3);
-        var grassMat = new StandardMaterial3D { AlbedoColor = new Color(0x7d9c4e), Roughness = 1f };
-        root.AddChild(Instanced(grassCone, grassMat, grassSpots, t =>
+        root.AddChild(Instanced(grassCone, WindMat(new Color(0x7d9c4e), 0.22f), grassSpots, t =>
         {
             float sc = 0.7f + t.Scale * 0.9f;
             return new Transform3D(new Basis(Quaternion.FromEuler(new Vector3(0, t.Rot * Mathf.Pi * 2f, 0))).Scaled(new Vector3(sc, sc * (0.7f + t.Tint * 0.8f), sc)),
                 new Vector3(t.X, t.Y - 0.05f, t.Z));
-        }));
+        }, true));
 
         return root;
     }
