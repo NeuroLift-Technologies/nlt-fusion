@@ -21,85 +21,85 @@ namespace NltWorldEngine;
 public partial class WorldView : Node3D
 {
 	// Sim elapsed time, used to drive Sky3D's current_time
-    private double _simT;
+	private double _simT;
 
-    // Sky3D node (WorldEnvironment subclass, GDScript)
-    private WorldEnvironment _sky3d = null!;
-    // Sun light — child of _sky3d, created automatically by Sky3D._initialize()
-    private DirectionalLight3D _sun = null!;
+	// Sky3D node (WorldEnvironment subclass, GDScript)
+	private WorldEnvironment _sky3d = null!;
+	// Sun light — child of _sky3d, created automatically by Sky3D._initialize()
+	private DirectionalLight3D _sun = null!;
 
-    // Water and vegetation shader materials — still need sun uniforms each frame
-    private ShaderMaterial _waterMat = null!;
+	// Water and vegetation shader materials — still need sun uniforms each frame
+	private ShaderMaterial _waterMat = null!;
 
-    private Camera3D _cam = null!;
+	private Camera3D _cam = null!;
 
-    private Vector3 _target = new(WorldConstants.SettleX, WorldConstants.SettleY + 2f, WorldConstants.SettleZ);
-    private float _yaw = 0.6f, _pitch = 0.42f, _dist = 78f;
-    private bool _dragging;
-    private Vector2 _last;
+	private Vector3 _target = new(WorldConstants.SettleX, WorldConstants.SettleY + 2f, WorldConstants.SettleZ);
+	private float _yaw = 0.6f, _pitch = 0.42f, _dist = 78f;
+	private bool _dragging;
+	private Vector2 _last;
 
-    // Reduced-motion toggle (RENDERER-PLAN.md D.4)
-    // When true, sky rotation is paused; water/vegetation animation continues.
-    private bool _skyPaused;
-    public bool SkyPaused
-    {
-        get => _skyPaused;
-        set
-        {
-            _skyPaused = value;
-        }
-    }
+	// Reduced-motion toggle (RENDERER-PLAN.md D.4)
+	// When true, sky rotation is paused; water/vegetation animation continues.
+	private bool _skyPaused;
+	public bool SkyPaused
+	{
+		get => _skyPaused;
+		set
+		{
+			_skyPaused = value;
+		}
+	}
 
-    /// <summary>
-    /// The world camera. Exposed so the observer's World View HUD can project agent positions onto
-    /// the screen. Read-only: the observer may look through this camera, never move it.
-    /// </summary>
-    public Camera3D Camera => _cam;
+	/// <summary>
+	/// The world camera. Exposed so the observer's World View HUD can project agent positions onto
+	/// the screen. Read-only: the observer may look through this camera, never move it.
+	/// </summary>
+	public Camera3D Camera => _cam;
 
-    /// <summary>Initializes the state feed, camera, Sky3D sky, terrain, water, settlement and vegetation builders.</summary>
-    public override void _Ready()
-    {
-        // Phase A.5 — fixture provider (schema-validated on load)
-        StateFeedLoader.Load();
+	/// <summary>Initializes the state feed, camera, Sky3D sky, terrain, water, settlement and vegetation builders.</summary>
+	public override void _Ready()
+	{
+		// Phase A.5 — fixture provider (schema-validated on load)
+		StateFeedLoader.Load();
 
-        // --- Camera ---
-        _cam = new Camera3D { Fov = 52f, Near = 0.5f, Far = 2400f };
-        AddChild(_cam);
-        UpdateCamera();
+		// --- Camera ---
+		_cam = new Camera3D { Fov = 52f, Near = 0.5f, Far = 2400f };
+		AddChild(_cam);
+		UpdateCamera();
 
-        // --- Sky3D (replaces SkyBuilder.cs + Daylight.cs + manual WorldEnvironment + manual sun) ---
-        // Sky3D is a GDScript @tool node extending WorldEnvironment.
+		// --- Sky3D (replaces SkyBuilder.cs + Daylight.cs + manual WorldEnvironment + manual sun) ---
+		// Sky3D is a GDScript @tool node extending WorldEnvironment.
 		// Instantiate via GD.Load<GDScript> so C# doesn't need a generated wrapper.
 		var sky3dScript = GD.Load<GDScript>("res://addons/sky_3d/src/Sky3D.gd");
 		_sky3d = (WorldEnvironment)sky3dScript.New().AsGodotObject();
 		_sky3d.Name = "Sky3D";
 
 		// Simulation clock owns the sky: Sky3D's own time timer stays off.
-        AddChild(_sky3d);
+		AddChild(_sky3d);
 
-        // Sky3D forwards these to TimeOfDay/SunLight, which only exist after
-        // AddChild has run _initialize(). Set them here so the values are not lost.
-        _sky3d.Set("game_time_enabled", false);
-        _sky3d.Set("current_time", 12.0f);
-        _sky3d.Set("sun_shadow_opacity", 1.0f);
+		// Sky3D forwards these to TimeOfDay/SunLight, which only exist after
+		// AddChild has run _initialize(). Set them here so the values are not lost.
+		_sky3d.Set("game_time_enabled", false);
+		_sky3d.Set("current_time", 12.0f);
+		_sky3d.Set("sun_shadow_opacity", 1.0f);
 
-        // After AddChild, Sky3D._initialize() has run and created SunLight/MoonLight/SkyDome/TimeOfDay.
-        // Grab the SunLight so water/vegetation shaders can read direction & colour each frame.
-        var sunNode = _sky3d.GetNodeOrNull<DirectionalLight3D>("SunLight");
-        if (sunNode != null)
-        {
-            _sun = sunNode;
-            // Match shadow max distance from the previous manual sun
-            _sun.DirectionalShadowMaxDistance = 320f;
-            _sun.DirectionalShadowBlendSplits = true;
-        }
-        else
-        {
+		// After AddChild, Sky3D._initialize() has run and created SunLight/MoonLight/SkyDome/TimeOfDay.
+		// Grab the SunLight so water/vegetation shaders can read direction & colour each frame.
+		var sunNode = _sky3d.GetNodeOrNull<DirectionalLight3D>("SunLight");
+		if (sunNode != null)
+		{
+			_sun = sunNode;
+			// Match shadow max distance from the previous manual sun
+			_sun.DirectionalShadowMaxDistance = 320f;
+			_sun.DirectionalShadowBlendSplits = true;
+		}
+		else
+		{
 			// Sky3D didn't create SunLight yet (can happen in editor context) — create a fallback
 			GD.PushWarning("WorldView: Sky3D/SunLight not found after AddChild. Falling back to manual sun.");
 			_sun = new DirectionalLight3D
 			{
-				LightColor = new Color(0xfff0d8),
+				LightColor = new Color(0xfff0d8FF),
 				LightEnergy = 2.3f,
 				ShadowEnabled = true,
 				DirectionalShadowMaxDistance = 320f,
@@ -147,7 +147,7 @@ public partial class WorldView : Node3D
 		// Sky3D manages the Environment directly, so we only update the water shader uniforms).
 		float elevation = sunDir.Dot(Vector3.Up);                   // -1 (nadir) to 1 (zenith)
 		float t = Mathx.Clamp01(elevation * 0.5f + 0.5f);          // 0 = midnight, 1 = noon
-		Color fog = new Color(0x9fb6c4).Lerp(new Color(0xffd0a0), t * 0.35f);
+		Color fog = new Color(0x9fb6c4FF).Lerp(new Color(0xffd0a0FF), t * 0.35f);
 
 		_waterMat.SetShaderParameter("u_time", (float)_simT);
 		_waterMat.SetShaderParameter("u_sky", fog);
@@ -171,20 +171,98 @@ public partial class WorldView : Node3D
 	}
 
 	/// <summary>Handles spectator input such as camera control.</summary>
-	public override void _UnhandledInput(InputEvent @event)
+	public override void _Input(InputEvent @event)
 	{
 		if (@event is InputEventMouseButton mb)
 		{
-			if (mb.ButtonIndex == MouseButton.Left) _dragging = mb.Pressed;
-			if (mb.ButtonIndex == MouseButton.WheelUp) _dist = MathF.Max(8f, _dist - 6f);
-			if (mb.ButtonIndex == MouseButton.WheelDown) _dist = MathF.Min(340f, _dist + 6f);
-			UpdateCamera();
+			if (mb.ButtonIndex == MouseButton.WheelUp)
+			{
+				if (!CameraOwnsPointer(CameraIntent.Zoom))
+					return;
+				_dist = MathF.Max(8f, _dist - 6f);
+				UpdateCamera();
+			}
+			else if (mb.ButtonIndex == MouseButton.WheelDown)
+			{
+				if (!CameraOwnsPointer(CameraIntent.Zoom))
+					return;
+				_dist = MathF.Min(340f, _dist + 6f);
+				UpdateCamera();
+			}
+			else if (mb.ButtonIndex == MouseButton.Left)
+			{
+				// A press that lands on a control owns the whole gesture. Clearing the flag here is
+				// what stops a drag begun over the world from continuing once the pointer crosses a
+				// button — and, more importantly, stops the button press from becoming an orbit.
+				if (mb.Pressed && !CameraOwnsPointer(CameraIntent.Orbit))
+				{
+					_dragging = false;
+					return;
+				}
+				_dragging = mb.Pressed;
+			}
 		}
 		else if (@event is InputEventMouseMotion mm && _dragging)
 		{
+			if (!CameraOwnsPointer(CameraIntent.Orbit))
+				return;
 			_yaw -= mm.Relative.X * 0.005f;
 			_pitch = Mathx.Clamp(_pitch + mm.Relative.Y * 0.004f, 0.05f, Mathf.Pi * 0.487f);
 			UpdateCamera();
 		}
+	}
+
+	private enum CameraIntent
+	{
+		/// <summary>Left-drag to orbit.</summary>
+		Orbit,
+
+		/// <summary>Wheel to change distance.</summary>
+		Zoom,
+	}
+
+	/// <summary>
+	/// Whether the camera may act on a pointer event where it currently sits.
+	///
+	/// <para>
+	/// This reads <c>_Input</c> rather than <c>_UnhandledInput</c>, and that is the whole reason the
+	/// camera works at all. The observer covers the window with a full-rect Control tree, and its
+	/// split containers default to <c>MOUSE_FILTER_STOP</c>, so the GUI consumes every mouse event
+	/// over the middle of the screen before an unhandled-input handler could ever see it. The
+	/// click-through spacer is <c>Ignore</c>, but hit-testing stops at the first ancestor that claims
+	/// the event, so setting that spacer alone was never enough.
+	/// </para>
+	///
+	/// <para>
+	/// The containers cannot simply be made click-through either: a <c>SplitContainer</c> needs
+	/// <c>STOP</c> to drag its divider, so ignoring them would break rail resizing. <c>_Input</c>
+	/// runs ahead of GUI processing, which sidesteps the conflict instead of trading one bug for
+	/// another.
+	/// </para>
+	///
+	/// <para>
+	/// The trade is that the camera now sees clicks the GUI also sees, so this has to decide which
+	/// wins. Layout containers answer <c>STOP</c> by default and would otherwise veto every click
+	/// anywhere, so the test walks up from the hovered control and looks for one that genuinely acts
+	/// on the mouse — buttons and sliders for the orbit, plus scroll containers for the wheel, since
+	/// a wheel over a panel should scroll that panel rather than push the camera away.
+	/// </para>
+	/// </summary>
+	private bool CameraOwnsPointer(CameraIntent intent)
+	{
+		var hovered = GetViewport().GuiGetHoveredControl();
+		if (hovered == null)
+			return true;
+
+		for (Control? c = hovered; c != null; c = c.GetParent() as Control)
+		{
+			// Godot.Range covers ScrollBar, HSlider, VSlider and SpinBox. It must be qualified:
+			// System.Range is a real type and WorldView has `using System`, so bare `Range` is CS0104.
+			if (c is BaseButton or Godot.Range or LineEdit or TextEdit or ItemList or Tree or TabBar)
+				return false;
+			if (intent == CameraIntent.Zoom && c is ScrollContainer)
+				return false;
+		}
+		return true;
 	}
 }
