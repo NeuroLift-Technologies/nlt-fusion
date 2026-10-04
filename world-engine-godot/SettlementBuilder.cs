@@ -36,12 +36,12 @@ public static class SettlementBuilder
         var root = new Node3D();
         var wallMat = new StandardMaterial3D { Roughness = 0.85f };
         var roofMat = new StandardMaterial3D { Roughness = 0.78f };
-        var glassMat = new StandardMaterial3D { AlbedoColor = new Color(0xffe0b0), EmissionEnabled = true, Emission = new Color(0xffc478), EmissionEnergyMultiplier = 0.85f, Roughness = 0.3f };
-        var pathMat = new StandardMaterial3D { AlbedoColor = new Color(0x8a8377), Roughness = 0.98f };
-        var doorMat = new StandardMaterial3D { AlbedoColor = new Color(0x54402f), Roughness = 0.8f };
+        var glassMat = new StandardMaterial3D { AlbedoColor = new Color(0xffe0b0FF), EmissionEnabled = true, Emission = new Color(0xffc478FF), EmissionEnergyMultiplier = 0.85f, Roughness = 0.3f };
+        var pathMat = new StandardMaterial3D { AlbedoColor = new Color(0x8a8377FF), Roughness = 0.98f };
+        var doorMat = new StandardMaterial3D { AlbedoColor = new Color(0x54402fFF), Roughness = 0.8f };
 
-        Color[] wallCols = { new(0xd9cdb8), new(0xc9bfa9), new(0xe0d4c0), new(0xbfae96), new(0xcfc4ae), new(0xc4b49c) };
-        Color[] roofCols = { new(0x7a4a3c), new(0x6b5340), new(0x8a5a44), new(0x5f4a3e), new(0x74503f) };
+        Color[] wallCols = { new(0xd9cdb8FF), new(0xc9bfa9FF), new(0xe0d4c0FF), new(0xbfae96FF), new(0xcfc4aeFF), new(0xc4b49cFF) };
+        Color[] roofCols = { new(0x7a4a3cFF), new(0x6b5340FF), new(0x8a5a44FF), new(0x5f4a3eFF), new(0x74503fFF) };
 
         int i = 0;
         foreach (var plan in plans)
@@ -125,8 +125,8 @@ public static class SettlementBuilder
         // well at plaza edge
         float wy = WorldConstants.SettleY;
         var wellPos = new Vector3(WorldConstants.SettleX + 8f, wy, WorldConstants.SettleZ + 3f);
-        root.AddChild(new MeshInstance3D { Mesh = new CylinderMesh { Height = 1.1f, TopRadius = 1.3f, BottomRadius = 1.45f, RadialSegments = 12 }, MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0x8a8078), Roughness = 0.95f }, Position = wellPos + new Vector3(0, 0.55f, 0) });
-        root.AddChild(new MeshInstance3D { Mesh = new CylinderMesh { Height = 0.1f, TopRadius = 1.05f, BottomRadius = 1.05f, RadialSegments = 12 }, MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0x2f6f74), Roughness = 0.3f }, Position = wellPos + new Vector3(0, 1.05f, 0) });
+        root.AddChild(new MeshInstance3D { Mesh = new CylinderMesh { Height = 1.1f, TopRadius = 1.3f, BottomRadius = 1.45f, RadialSegments = 12 }, MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0x8a8078FF), Roughness = 0.95f }, Position = wellPos + new Vector3(0, 0.55f, 0) });
+        root.AddChild(new MeshInstance3D { Mesh = new CylinderMesh { Height = 0.1f, TopRadius = 1.05f, BottomRadius = 1.05f, RadialSegments = 12 }, MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0x2f6f74FF), Roughness = 0.3f }, Position = wellPos + new Vector3(0, 1.05f, 0) });
         root.AddChild(new MeshInstance3D { Mesh = new CylinderMesh { Height = 2.0f, TopRadius = 0f, BottomRadius = 1.7f, RadialSegments = 4 }, MaterialOverride = roofMat, Position = wellPos + new Vector3(0, 2.4f, 0), Rotation = new Vector3(0, Mathf.Pi / 4f, 0) });
 
         // benches around plaza

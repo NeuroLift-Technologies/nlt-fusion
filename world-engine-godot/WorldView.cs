@@ -133,8 +133,13 @@ public partial class WorldView : Node3D
 		// current_time is hours [0, 24).
 		if (!_skyPaused)
 		{
-			float hours = (float)((_simT % WorldConstants.DayLen) / WorldConstants.DayLen * 24.0);
-			_sky3d.Set("current_time", hours);
+			// +12h offset: sim time 0 opens at noon, matching the current_time set in _Ready.
+			// Without it the first _Process frame reset the clock to hour 0, so the world
+			// launched into midnight — 18:00-06:00 has no directional light at all
+			// (SunLight and MoonLight both sit at energy 0), leaving only Sky3D's blue
+			// atm_night_tint ambient (0.24, 0.28, 0.35) to light everything.
+			double hours = ((_simT + WorldConstants.DayLen * 0.5) % WorldConstants.DayLen) / WorldConstants.DayLen * 24.0;
+			_sky3d.Set("current_time", (float)hours);
 		}
 
 		// Update water and vegetation shaders from the live sun state.

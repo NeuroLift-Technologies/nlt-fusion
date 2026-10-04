@@ -23,8 +23,10 @@ public static class TerrainBuilder
             float slope = WorldGeometry.SlopeAt(x, z);
             float grain = SimulationRng.Fbm(x * 0.06f, z * 0.06f, 3, WorldConstants.Seed + 991);
 
-            Color sand = new(0xc9b48c), grass = new(0x5c7444), grass2 = new(0x48603a),
-                  rock = new(0x7b7468), dark = new(0x4c4740);
+            // NOTE: Godot C#'s Color(uint) reads the value as 0xRRGGBBAA, so every literal
+            // carries an explicit FF alpha byte — without it R is 0x00 and the world turns blue/green.
+            Color sand = new(0xc9b48cFF), grass = new(0x5c7444FF), grass2 = new(0x48603aFF),
+                  rock = new(0x7b7468FF), dark = new(0x4c4740FF);
 
             Color c;
             if (h < WorldConstants.Water - 2.6f) c = dark;
