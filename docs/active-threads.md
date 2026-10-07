@@ -232,6 +232,37 @@ Also uncommitted and unrelated to the observer: the `MIGRATE-PLAN.md` / `RENDERE
 
 ---
 
+
+### 🛠 AGENT-HARNESS-001 — Agent action-interface harness committed in world-engine-godot
+
+- **Agent:** Solar Mini4 · **Opened:** 2026-10-07
+- **Status:** ✅ COMPLETE (merged in PR-equivalent local commit `9735006`)
+- **Plan:** option B of the 2026-10-07 plan-mode discussion — commit the
+  out-of-engine action-interface harness inside `world-engine-godot/` instead
+  of leaving it thrown away or moving it to neurolift-ai-fusion.
+- **Delivered:**
+  - `world-engine-godot/AgentHarness/AgentHarness.csproj` — standalone
+    `Microsoft.NET.Sdk` console project referencing the Godot build's
+    `GodotSharp.dll` + `NLT World Engine (Godot).dll` (relative HintPaths).
+  - `world-engine-godot/AgentHarness/Program.cs` — drives
+    `ActionAssertions.RunAll()`; exits 0 on all-pass.
+  - `world-engine-godot/world-engine-godot.csproj` — one-line glob exclusion
+    `<Compile Remove="AgentHarness/**/*.cs" />` so the harness sources are
+    never compiled into the Godot assembly.
+  - `world-engine-godot/AGENT-SYSTEM.md` — §5.2 rewritten: in-repo `dotnet
+    build` + `dotnet run --project AgentHarness/AgentHarness.csproj`
+    instructions replacing the "keep outside the project" note.
+- **Verification:**
+  - `dotnet build world-engine-godot.csproj` → 0 errors (2 pre-existing
+    CS8601 warnings in WorldView.cs, untouched).
+  - `dotnet build AgentHarness/AgentHarness.csproj` → 0 errors, 0 warnings.
+  - `dotnet run --project AgentHarness/AgentHarness.csproj` →
+    **12 passed, 0 failed — RESULT: all assertions passed**.
+- **Note:** the Godot assembly's existing `.gitignore` (`*.dll`, `.godot/`)
+  plus root `.gitignore` (`world-engine-godot/**/obj/`) cover the harness
+  build output, so only the four source files were committed under
+  `world-engine-godot/`. The harness still depends on the Godot build's DLLs
+  being produced first (relative HintPaths), same as before.
 ### 🌋 ENV-TEX-001 — Procedural Terrain Heightfield Port (ESC-001 Phase 2)
 - **Agent:** Pool (Poolside) · **Opened:** 2026-09-20 · **Branch:** `fix/win64-asfdk-stubs`
 - **Scope:** Port `openworld-engine/src/world/terrain.js` heightfield (`createHeightField`/`baseHeight`) + biome classification (`buildTerrain` bands) into WorldEngine C++, additive on `NLTNoiseLibrary`, deterministic, NO Landscape mesh (headless).
