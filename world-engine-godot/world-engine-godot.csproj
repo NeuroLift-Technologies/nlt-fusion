@@ -6,4 +6,13 @@
     <RootNamespace>NltWorldEngine</RootNamespace>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <!--
+    AgentHarness/ is a standalone out-of-engine test runner with its own csproj. Exclude it from
+    the Godot project's default **/*.cs glob so its sources (and Main entry point) are never
+    compiled into the Godot assembly. Build/run it via: dotnet run -Project AgentHarness/AgentHarness.csproj
+  -->
+  <ItemGroup>
+    <Compile Remove="AgentHarness/**/*.cs" />
+  </ItemGroup>
 </Project>

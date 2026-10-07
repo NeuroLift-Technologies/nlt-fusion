@@ -145,38 +145,33 @@ godot --headless --path . --script res://Agents/ActionSelfTest.cs
 Exits `0` when all pass, `1` otherwise.
 
 **Out of engine** — the assertions are a plain static class precisely so they *can* run without
-launching Godot. Reference the built assembly from a throwaway project:
+launching Godot. The project at **`AgentHarness/`** references the built assembly and drives
+`ActionAssertions.RunAll()` from a plain console `Main` (see below).
 
-```xml
-<!-- AgentHarness.csproj — put this OUTSIDE the Godot project folder -->
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-  </PropertyGroup>
-  <ItemGroup><Compile Include="Program.cs" /></ItemGroup>
-  <ItemGroup>
-    <Reference Include="GodotSharp">
-      <HintPath>...\world-engine-godot\.godot\mono\temp\bin\Debug\GodotSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="NltWorldEngine">
-      <HintPath>...\world-engine-godot\.godot\mono\temp\bin\Debug\NLT World Engine (Godot).dll</HintPath>
-    </Reference>
-  </ItemGroup>
-</Project>
+```powershell
+cd C:\Users\joshd\nlt-repos\nlt-world-engine\world-engine-godot
+dotnet build world-engine-godot.csproj                 # produces the referenced DLLs
+dotnet run --project AgentHarness/AgentHarness.csproj  # exits 0 = 12/12, 1 = failures
 ```
 
-```csharp
-// Program.cs
-using NltWorldEngine.Agents;
-var ok = ActionAssertions.RunAll();
-return ok ? 0 : 1;
-```
+`AgentHarness/Program.cs` is four lines — call `ActionAssertions.RunAll()`, print `RESULT`, return
+`0`/`1` — so it is CI-shaped: any job that can `dotnet build` the Godot project can run the
+assertions without a Godot binary on `PATH`.
 
-> Keep this harness **outside** `world-engine-godot/`. `world-engine-godot.csproj` globs `**/*.cs`,
-> so a harness folder inside the project gets compiled into the Godot assembly, and a second
-> `.csproj` in the tree confuses the Godot build. Put it beside the repo, not in it.
+How the two projects coexist in one folder:
+
+- `world-engine-godot.csproj` carries `<Compile Remove="AgentHarness/**/*.cs" />`, so the harness
+  sources (including their `Main`) are **never** compiled into the Godot assembly.
+- `AgentHarness.csproj` sets `EnableDefaultCompileItems=false` and includes only `Program.cs`, so
+  it never sweeps the engine's sources either.
+- The two DLL references use paths relative to `AgentHarness/` and point at
+  `.godot/mono/temp/bin/Debug/` — **gitignored**, so a clean clone must build
+  `world-engine-godot.csproj` once before `AgentHarness` can resolve them. That ordering is the
+  only setup step.
+
+> **`dotnet build` with no arguments fails (MSB1011)** — the folder holds several `.csproj`/`.sln`
+> files (including the stray `NLT World Engine (Godot).csproj`/`.sln`). Always name the project:
+> `dotnet build world-engine-godot.csproj` or `dotnet run --project AgentHarness/AgentHarness.csproj`.
 
 ### 5.3 Wire an agent up
 
