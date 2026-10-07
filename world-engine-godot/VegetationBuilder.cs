@@ -102,16 +102,16 @@ void fragment() {
         });
 
         var trunkMesh = new CylinderMesh { Height = 2.6f, TopRadius = 0.16f, BottomRadius = 0.30f, RadialSegments = 6 };
-        root.AddChild(Instanced(trunkMesh, WindMat(new Color(0x5a4534), 0.03f), treeSpots, t =>
+        root.AddChild(Instanced(trunkMesh, WindMat(new Color(0x5a4534FF), 0.03f), treeSpots, t =>
         {
             float sc = 0.72f + t.Scale * 0.85f;
             return new Transform3D(new Basis(Quaternion.FromEuler(new Vector3(0, t.Rot * Mathf.Pi * 2f, 0))).Scaled(new Vector3(sc, sc * (0.85f + t.Tint * 0.4f), sc)),
                 new Vector3(t.X, t.Y - 0.2f + 1.3f * sc, t.Z));
         }, true));
 
-        root.AddChild(Instanced(Cone(1.35f, 2.9f, 8), WindMat(new Color(0x3d5c36), 0.10f), treeSpots, t => T(t, 3.2f, 0.72f, 0.85f), true));
-        root.AddChild(Instanced(Cone(1.05f, 2.4f, 8), WindMat(new Color(0x4a7038), 0.13f), treeSpots, t => T(t, 4.5f, 0.72f, 0.85f), true));
-        root.AddChild(Instanced(Cone(0.68f, 1.8f, 8), WindMat(new Color(0x5c8440), 0.16f), treeSpots, t => T(t, 5.7f, 0.72f, 0.85f), true));
+        root.AddChild(Instanced(Cone(1.35f, 2.9f, 8), WindMat(new Color(0x3d5c36FF), 0.10f), treeSpots, t => T(t, 3.2f, 0.72f, 0.85f), true));
+        root.AddChild(Instanced(Cone(1.05f, 2.4f, 8), WindMat(new Color(0x4a7038FF), 0.13f), treeSpots, t => T(t, 4.5f, 0.72f, 0.85f), true));
+        root.AddChild(Instanced(Cone(0.68f, 1.8f, 8), WindMat(new Color(0x5c8440FF), 0.16f), treeSpots, t => T(t, 5.7f, 0.72f, 0.85f), true));
 
         // rocks
         var rockSpots = SeededPlacement(190, (x, z, r) =>
@@ -120,7 +120,7 @@ void fragment() {
             return h > WorldConstants.Water + 0.6f && WorldGeometry.SlopeAt(x, z) > 0.16f && ClearOfSettlement(x, z, plans, 0.5f);
         });
         var rockMesh = new SphereMesh { Radius = 1f, RadialSegments = 6, Rings = 3 };
-        var rockMat = new StandardMaterial3D { AlbedoColor = new Color(0x7d776c), Roughness = 0.98f, ShadingMode = BaseMaterial3D.ShadingModeEnum.PerVertex };
+        var rockMat = new StandardMaterial3D { AlbedoColor = new Color(0x7d776cFF), Roughness = 0.98f, ShadingMode = BaseMaterial3D.ShadingModeEnum.PerVertex };
         root.AddChild(Instanced(rockMesh, rockMat, rockSpots, t =>
         {
             float sc = 0.5f + t.Scale * 1.5f;
@@ -137,7 +137,7 @@ void fragment() {
             return h > WorldConstants.Water + 0.9f && WorldGeometry.SlopeAt(x, z) < 0.45f;
         });
         var grassCone = Cone(0.075f, 0.62f, 3);
-        root.AddChild(Instanced(grassCone, WindMat(new Color(0x7d9c4e), 0.22f), grassSpots, t =>
+        root.AddChild(Instanced(grassCone, WindMat(new Color(0x7d9c4eFF), 0.22f), grassSpots, t =>
         {
             float sc = 0.7f + t.Scale * 0.9f;
             return new Transform3D(new Basis(Quaternion.FromEuler(new Vector3(0, t.Rot * Mathf.Pi * 2f, 0))).Scaled(new Vector3(sc, sc * (0.7f + t.Tint * 0.8f), sc)),

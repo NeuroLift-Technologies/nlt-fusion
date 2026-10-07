@@ -34,7 +34,9 @@ public partial class LearningTimelinePanel : ObserverPanel
     {
         if (Doc == null)
             return "no document yet";
-        string where = Feed.ShowingHistory ? $"tick {Doc.Tick} (history)" : $"tick {Doc.Tick} (live)";
+        // Paired with the fixture badge, which says LIVE to mean "a real simulation, not a replay".
+        // "latest" and "earlier" say where the cursor is without borrowing that word.
+        string where = Feed.ShowingHistory ? $"tick {Doc.Tick} (earlier)" : $"tick {Doc.Tick} (latest)";
         // The "one tick is about a second" note lives here rather than drawn under the plot: at
         // narrow window widths a note beside the axis collides with the last tick label.
         return $"{Doc.BurnoutEpisodes.Count} episode(s) · {Doc.SelfRecognitions.Count} self-recognition(s)"

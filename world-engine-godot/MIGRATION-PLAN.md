@@ -99,12 +99,12 @@ All verified against the working tree.
 
 ```
 Fusion Runtime (neurolift-ai-fusion)          ── unchanged consumer ──┐
-                                                                   │ nlt.fusion-unreal 1.0
-                                                                   │ nlt.world-engine.v1
+																   │ nlt.fusion-unreal 1.0
+																   │ nlt.world-engine.v1
 ┌──────────────────────────────────────────────────────────────────▼─────────────┐
 │ sidecar/  (Python)  — owns 8765 HTTP + 8766 WS, loopback enforcement, ASFDK-C#  │
 └───────────────┬──────────────────────────────────────────────────────────────────┘
-                │ internal IPC (stdin/stdout framed JSON; single-writer ordering)
+				│ internal IPC (stdin/stdout framed JSON; single-writer ordering)
 ┌───────────────▼──────────────────────────────────────────────────────────────────┐
 │ world-engine-godot/  (this directory — Godot 4.7.2, C#)                         │
 │                                                                                 │
@@ -129,8 +129,8 @@ The vision (`../README.md:5`) is *"machine learning models inhabit a persistent 
 ```csharp
 public interface IAgentController
 {
-    AgentObservation Observe(int agentId);
-    AgentAction     Act(int agentId, in AgentObservation observation);
+	AgentObservation Observe(int agentId);
+	AgentAction     Act(int agentId, in AgentObservation observation);
 }
 ```
 
@@ -476,3 +476,12 @@ Each should get its own thread in `../docs/active-threads.md` rather than being 
 ### The Fusion seam
 
 `README.md:9` states intelligence *"lives in `neurolift-ai-fusion` and connects through **the agent interface**"* — a **cross-repo** contract, distinct from the in-process `IAgentController` of §3. The migration does not redefine it. It is served by: contract-v1 snapshots over `/api/snapshot`, the versioned `nlt.fusion-unreal` 1.0 action envelope, and `/api/control` for pace and scenario assignment. Pin all three as the Fusion-facing surface and add a Tier 3 conformance case per route so a Fusion upgrade cannot silently break.
+
+**The human role in that loop is specified separately.** [`docs/Human-Role-in-Supervised-Simulation.md`](../docs/Human-Role-in-Supervised-Simulation.md) (`NLT-SIM-HUMAN-ROLE-1.0.0`, *Draft / Proposed Architectural Standard*) defines six human roles — Supervisor, Observer, Evaluator, Scenario Designer, Instructor/Guide, Governance Authority — and four interaction modes. Its `Scope` field reads `NLT World Engine | AI-Fusion Framework`, so it binds **both** repos and this migration must be read against it.
+
+The migration's obligations under it are narrow today, and three of them constrain work already planned here:
+
+- **The world engine is the physical substrate, so it implements the Observer role plus the transport half of Supervisor.** Both are read-only. See `RENDERER-PLAN.md` §6 for what is and is not delivered.
+- **Human guidance must enter as `nlt.fusion-unreal` 1.0 semantic actions**, not a side channel — otherwise it escapes the 6.3b replay-recording requirement and supervised runs become the one class of run that cannot be reproduced.
+- **`Evaluate` reads Fusion's metrics; it does not compute them.** `state-feed-v1.md` §Fusion-owned still holds, so no scoring may move into the world engine to satisfy the standard.
+- **Governance Authority maps to the ASFDK reference in Decision 6** — the one element of the standard with an existing UE implementation (`NLTGovernanceSubsystem`) to port, and therefore the one with prior art rather than a blank design.

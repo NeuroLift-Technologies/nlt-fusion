@@ -8,6 +8,48 @@ public static class SettlementBuilder
 {
     public sealed record Plan(float X, float Z, float Rad, float R, float Rot, float Kind);
 
+    public enum BuildingKind { Apartment, Office, Shop, School }
+
+    // Deterministic spread across 19 buildings — all four kinds present, homes the most common.
+    private static readonly BuildingKind[] KindPattern =
+    {
+        BuildingKind.Apartment, BuildingKind.Office, BuildingKind.Shop, BuildingKind.School,
+        BuildingKind.Apartment, BuildingKind.Apartment, BuildingKind.Office, BuildingKind.Shop,
+        BuildingKind.Apartment, BuildingKind.School, BuildingKind.Apartment, BuildingKind.Office,
+        BuildingKind.Apartment, BuildingKind.Shop, BuildingKind.Apartment, BuildingKind.Office,
+        BuildingKind.Apartment, BuildingKind.School, BuildingKind.Apartment,
+    };
+
+    /// <summary>Plain word for the doorway label.</summary>
+    public static string KindLabel(BuildingKind k) => k switch
+    {
+        BuildingKind.Apartment => "Home",
+        BuildingKind.Office => "Office",
+        BuildingKind.Shop => "Shop",
+        BuildingKind.School => "School",
+        _ => "Building",
+    };
+
+    /// <summary>Feed-style scene id; the prefix is what <c>WorldView.ShowScene</c> maps to a level.</summary>
+    public static string SceneIdFor(BuildingKind k) => k switch
+    {
+        BuildingKind.Apartment => "personal_1",
+        BuildingKind.Office => "workplace_1",
+        BuildingKind.Shop => "social_1",
+        BuildingKind.School => "academic_1",
+        _ => "personal_1",
+    };
+
+    /// <summary>Okabe–Ito hues, one per kind; the label carries the meaning and colour reinforces it.</summary>
+    public static Color KindColour(BuildingKind k) => k switch
+    {
+        BuildingKind.Apartment => new Color("56b4e9"),
+        BuildingKind.Office => new Color("009e73"),
+        BuildingKind.Shop => new Color("e69f00"),
+        BuildingKind.School => new Color("cc79a7"),
+        _ => Colors.White,
+    };
+
     public static List<Plan> BuildPlans(SimulationRng rng)
     {
         var placed = new List<Plan>();
@@ -31,21 +73,23 @@ public static class SettlementBuilder
         return placed;
     }
 
-    public static Node3D Build(List<Plan> plans)
+    public static Node3D Build(List<Plan> plans, out List<Portal> portals)
     {
+        portals = new List<Portal>();
         var root = new Node3D();
         var wallMat = new StandardMaterial3D { Roughness = 0.85f };
         var roofMat = new StandardMaterial3D { Roughness = 0.78f };
-        var glassMat = new StandardMaterial3D { AlbedoColor = new Color(0xffe0b0), EmissionEnabled = true, Emission = new Color(0xffc478), EmissionEnergyMultiplier = 0.85f, Roughness = 0.3f };
-        var pathMat = new StandardMaterial3D { AlbedoColor = new Color(0x8a8377), Roughness = 0.98f };
-        var doorMat = new StandardMaterial3D { AlbedoColor = new Color(0x54402f), Roughness = 0.8f };
+        var glassMat = new StandardMaterial3D { AlbedoColor = new Color(0xffe0b0FF), EmissionEnabled = true, Emission = new Color(0xffc478FF), EmissionEnergyMultiplier = 0.85f, Roughness = 0.3f };
+        var pathMat = new StandardMaterial3D { AlbedoColor = new Color(0x8a8377FF), Roughness = 0.98f };
+        var doorMat = new StandardMaterial3D { AlbedoColor = new Color(0x54402fFF), Roughness = 0.8f };
 
-        Color[] wallCols = { new(0xd9cdb8), new(0xc9bfa9), new(0xe0d4c0), new(0xbfae96), new(0xcfc4ae), new(0xc4b49c) };
-        Color[] roofCols = { new(0x7a4a3c), new(0x6b5340), new(0x8a5a44), new(0x5f4a3e), new(0x74503f) };
+        Color[] wallCols = { new(0xd9cdb8FF), new(0xc9bfa9FF), new(0xe0d4c0FF), new(0xbfae96FF), new(0xcfc4aeFF), new(0xc4b49cFF) };
+        Color[] roofCols = { new(0x7a4a3cFF), new(0x6b5340FF), new(0x8a5a44FF), new(0x5f4a3eFF), new(0x74503fFF) };
 
         int i = 0;
         foreach (var plan in plans)
         {
+            BuildingKind kind = KindPattern[i % KindPattern.Length];
             float y = WorldGeometry.HeightAt(plan.X, plan.Z);
             var g = new Node3D();
             float w = plan.Rad * 1.5f, d = plan.Rad * 1.25f;
@@ -77,12 +121,18 @@ public static class SettlementBuilder
                 Position = new Vector3(w * 0.22f, wallH + roofH * 0.55f, -d * 0.2f),
             });
 
+            var doorLocal = new Vector3(0, 1.05f, d / 2f + 0.02f);
             g.AddChild(new MeshInstance3D
             {
                 Mesh = new BoxMesh { Size = new Vector3(1.15f, 2.1f, 0.14f) },
                 MaterialOverride = doorMat,
-                Position = new Vector3(0, 1.05f, d / 2f + 0.02f),
+                Position = doorLocal,
             });
+
+            // The doorway affordance: the observer clicks this arch (or presses E) to enter the level.
+            var marker = PortalMarker.Build(KindLabel(kind), KindColour(kind));
+            marker.Position = new Vector3(0, 0, d / 2f + 0.09f);
+            g.AddChild(marker);
 
             for (int s = 0; s < 2; s++)
             for (int f = 0; f < 2; f++)
@@ -96,6 +146,9 @@ public static class SettlementBuilder
             g.Position = new Vector3(plan.X, y, plan.Z);
             g.Rotation = new Vector3(0, plan.Rot, 0);
             root.AddChild(g);
+
+            portals.Add(new Portal(KindLabel(kind), KindLabel(kind), SceneIdFor(kind),
+                g.Transform * doorLocal, g.Basis.Z.Normalized()));
             i++;
         }
 
@@ -125,8 +178,8 @@ public static class SettlementBuilder
         // well at plaza edge
         float wy = WorldConstants.SettleY;
         var wellPos = new Vector3(WorldConstants.SettleX + 8f, wy, WorldConstants.SettleZ + 3f);
-        root.AddChild(new MeshInstance3D { Mesh = new CylinderMesh { Height = 1.1f, TopRadius = 1.3f, BottomRadius = 1.45f, RadialSegments = 12 }, MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0x8a8078), Roughness = 0.95f }, Position = wellPos + new Vector3(0, 0.55f, 0) });
-        root.AddChild(new MeshInstance3D { Mesh = new CylinderMesh { Height = 0.1f, TopRadius = 1.05f, BottomRadius = 1.05f, RadialSegments = 12 }, MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0x2f6f74), Roughness = 0.3f }, Position = wellPos + new Vector3(0, 1.05f, 0) });
+        root.AddChild(new MeshInstance3D { Mesh = new CylinderMesh { Height = 1.1f, TopRadius = 1.3f, BottomRadius = 1.45f, RadialSegments = 12 }, MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0x8a8078FF), Roughness = 0.95f }, Position = wellPos + new Vector3(0, 0.55f, 0) });
+        root.AddChild(new MeshInstance3D { Mesh = new CylinderMesh { Height = 0.1f, TopRadius = 1.05f, BottomRadius = 1.05f, RadialSegments = 12 }, MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0x2f6f74FF), Roughness = 0.3f }, Position = wellPos + new Vector3(0, 1.05f, 0) });
         root.AddChild(new MeshInstance3D { Mesh = new CylinderMesh { Height = 2.0f, TopRadius = 0f, BottomRadius = 1.7f, RadialSegments = 4 }, MaterialOverride = roofMat, Position = wellPos + new Vector3(0, 2.4f, 0), Rotation = new Vector3(0, Mathf.Pi / 4f, 0) });
 
         // benches around plaza

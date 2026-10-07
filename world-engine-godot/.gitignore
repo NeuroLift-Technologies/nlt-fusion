@@ -1,0 +1,46 @@
+# Build artifacts
+bin/
+build/
+*.o
+*.so
+*.dll
+*.dylib
+*.exe
+*.a
+*.lib
+*.pdb
+*.exp
+compile_commands.json
+# C++ object files with platform/variant suffixes (not 3D mesh .obj files)
+*.windows.template_*.obj
+*.linux.template_*.obj
+*.macos.template_*.obj
+*.android.template_*.obj
+*.ios.template_*.obj
+*.uwp.template_*.obj
+*.web.template_*.obj
+
+# SCons
+.sconsign.dblite
+.sconsign
+site-packages/
+
+# IDE / Editor
+*.swp
+*.swo
+*~
+.project
+.cproject
+.vs/
+.vscode/
+.idea/
+
+# Godot
+.import/
+.godot/
+export.cfg
+export_presets.cfg
+
+# Generated
+src/gen/
+gen/

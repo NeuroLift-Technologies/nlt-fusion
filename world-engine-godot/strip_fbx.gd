@@ -9,10 +9,10 @@ func _init():
         if packed == null:
             push_error("failed to load %s" % path)
             continue
-        var root: Node = packed.instantiate()
-        var stripped := _strip_sky_sphere(root)
+        var level_root: Node = packed.instantiate()
+        var stripped := _strip_sky_sphere(level_root)
         var out := PackedScene.new()
-        out.pack(root)
+        out.pack(level_root)
         var dest := "res://assets/levels/%s_Level.tscn" % level
         ResourceSaver.save(out, dest)
         print("stripped %d sky sphere nodes -> %s" % [stripped, dest])

@@ -62,12 +62,13 @@ void fragment() {
 "
         };
         var mat = new ShaderMaterial { Shader = shader };
-        mat.SetShaderParameter("u_deep", new Color(0x16323d));
-        mat.SetShaderParameter("u_shallow", new Color(0x2f6f74));
-        mat.SetShaderParameter("u_sky", new Color(0xc3d4dd));
-        mat.SetShaderParameter("u_sun_color", new Color(0xfff2d6));
+        // FF alpha bytes: Color(uint) parses 0xRRGGBBAA — see TerrainBuilder.cs.
+        mat.SetShaderParameter("u_deep", new Color(0x16323dFF));
+        mat.SetShaderParameter("u_shallow", new Color(0x2f6f74FF));
+        mat.SetShaderParameter("u_sky", new Color(0xc3d4ddFF));
+        mat.SetShaderParameter("u_sun_color", new Color(0xfff2d6FF));
         mat.SetShaderParameter("u_sun_dir", new Vector3(0.5f, 0.7f, 0.4f));
-        mat.SetShaderParameter("u_fog_color", new Color(0x9fb6c4));
+        mat.SetShaderParameter("u_fog_color", new Color(0x9fb6c4FF));
         mat.SetShaderParameter("u_fog_density", 0.0016f);
 
         var mesh = new MeshInstance3D

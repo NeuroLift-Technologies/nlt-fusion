@@ -90,7 +90,11 @@ public partial class FeedTransport : Node
                 return _warnings[0];
             if (!HasData)
                 return "Waiting for state";
-            string where = Live ? "live" : $"stepped to {_cursor + 1} of {_frames.Count}";
+            // "latest", not "live": the badge in the top bar uses LIVE to mean the opposite — a real
+            // simulation rather than a fixture. One screen carrying both meanings read as a
+            // contradiction ("NOT A LIVE SIMULATION" beside "live"), which is the one thing an
+            // observer must never be left unsure about.
+            string where = Live ? "latest" : $"stepped to {_cursor + 1} of {_frames.Count}";
             string tail = AtEnd && Paused ? " · end of replay" : "";
             return $"{Origin} · {Kind} · {_frames.Count} document(s) · {where}{tail}";
         }

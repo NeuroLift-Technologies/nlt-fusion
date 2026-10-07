@@ -1,0 +1,15 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "mcp": {
+    "gda-mcp": {
+      "type": "local",
+      "command": ["gda-mcp"],
+      "environment": {
+        "GDA_PROJECT": "C:\\Users\\joshd\\nlt-repos\\nlt-world-engine\\world-engine-godot",
+        "GDA_GODOT": "C:\\Users\\joshd\\AppData\\Local\\Godot\\Godot_v4.7.2-stable_mono_win64\\Godot_v4.7.2-stable_mono_win64_console.exe"
+      },
+      "enabled": true,
+      "timeout": 360000
+    }
+  }
+}
