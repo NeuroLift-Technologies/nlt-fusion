@@ -272,7 +272,7 @@ _waterMat.SetShaderParameter("u_time", (float)_simT);
 
 // lines 153-154 — vegetation wind sway
 foreach (var m in VegetationBuilder.WindMats)
-    m.SetShaderParameter("u_time", (float)_simT);
+	m.SetShaderParameter("u_time", (float)_simT);
 ```
 
 `_simT += delta` (line 123) advances unconditionally, so both keep animating
@@ -333,4 +333,3 @@ names (`arm_L`, `crotch_L`, `torso`) that looked like an undeclared import.
 The UE-style naming is convention a prior agent adopted for rig compatibility.
 `ASSET-MANIFEST.md`'s `_pipeline_probe/*` row remains accurate. No licensing
 surface was introduced.
-

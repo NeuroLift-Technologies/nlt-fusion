@@ -44,6 +44,7 @@ public partial class ObserverRoot : Control
     private Label _position = null!;
     private Label _fixtureBadge = null!;
     private Button _playButton = null!;
+    private Button _focusButton = null!;
     private HBoxContainer _speedRow = null!;
     private HBoxContainer _levelRow = null!;
     private PanelContainer _settingsPanel = null!;
@@ -51,11 +52,50 @@ public partial class ObserverRoot : Control
     private VBoxContainer _diagnosticsList = null!;
     private Button _diagnosticsButton = null!;
 
+    // Held so the reading level can decide how much of the observer exists at once. The world view is
+    // the middle of the window (see the layout note above), so it is the only region that grows when
+    // panels step aside — which is the point of the arrangement.
+    private AvatarStatePanel _avatarState = null!;
+    private IndependenceMeterPanel _independence = null!;
+    private FusionGatePanel _fusionGate = null!;
+    private AideLogPanel _aideLog = null!;
+    private LearningTimelinePanel _timeline = null!;
+    private VBoxContainer _leftRail = null!;
+    private VBoxContainer _rightRail = null!;
+
+    // The three regions are split containers rather than fixed columns, so the observer can be
+    // resized by dragging an edge. Nested two-child splits because a SplitContainer only tracks one
+    // offset of its own; with three children the second divider would be pinned to the middle child's
+    // minimum size and could not be dragged independently.
+    private VSplitContainer _vSplit = null!;
+    private HSplitContainer _leftSplit = null!;
+    private HSplitContainer _rightSplit = null!;
+
+    // What the reading level asked for, kept apart from what the dividers currently are, so a resize
+    // and a level change are the same kind of operation.
+    private int _railTarget = 392;
+    private int _timelineTarget = 116;
+
+    // A floor, not a fixed width, is what makes the drag possible: the reading level picks a starting
+    // size and the observer is free to disagree with it. These are the limits a drag cannot pass.
+    private const float RailFloor = 224f;
+    private const int RailStep = 24;
+    private const float TimelineFloor = 72f;
+    private const float TimelineCeiling = 420f;
+    private const int TimelineStep = 16;
+
     /// <summary>Raised when the reading level changes, so panels can rebuild.</summary>
     public event System.Action? LevelChanged;
 
     /// <summary>Raised when reduced motion changes, so the world can honour it too.</summary>
     public event System.Action<bool>? ReducedMotionChanged;
+
+    /// <summary>
+    /// Raised when the observer asks the camera to focus/follow the agent on show. The observer reads
+    /// the world, it never drives it (see <see cref="WorldView.Camera"/>), so this only raises the
+    /// request; the composition root decides and reports back through <see cref="SetFocusActive"/>.
+    /// </summary>
+    public event System.Action? FocusRequested;
 
     public AccessibilitySettings A11y => _a11y;
 
@@ -89,7 +129,10 @@ public partial class ObserverRoot : Control
         // gave WorldView a SkyPaused seam for reduced motion; if the setting starts on, the sky has
         // to be paused before anything can toggle it.
         if (_world != null)
+        {
             _world.SkyPaused = _a11y.ReducedMotion;
+            _world.ReducedMotion = _a11y.ReducedMotion;
+        }
 
         RefreshAll();
         RefreshStatus();
@@ -126,34 +169,145 @@ public partial class ObserverRoot : Control
 
         column.AddChild(BuildTopBar());
 
-        var middle = Ui.Row(10);
-        middle.SizeFlagsVertical = ControlSizeFlags.ExpandFill;
-        middle.MouseFilter = ControlMouseFilter.Pass;
-        column.AddChild(middle);
-
         // Avatar State gets the larger share: it is the panel an observer reads first.
-        var left = Ui.Col(10);
-        left.CustomMinimumSize = new Vector2(392, 0);
-        left.AddChild(Wire(new AvatarStatePanel(), 368, 0, 1.8f));
-        left.AddChild(Wire(new IndependenceMeterPanel(), 368, 0, 1.0f));
-        middle.AddChild(left);
+        _avatarState = new AvatarStatePanel();
+        _independence = new IndependenceMeterPanel();
+        _leftRail = Ui.Col(10);
+        _leftRail.AddChild(Wire(_avatarState, 0, 0, 1.8f));
+        _leftRail.AddChild(Wire(_independence, 0, 0, 1.0f));
 
-        // The world shows through here. Click-through so the camera still works.
+        _fusionGate = new FusionGatePanel();
+        _aideLog = new AideLogPanel();
+        _rightRail = Ui.Col(10);
+        _rightRail.AddChild(Wire(_fusionGate, 0, 0, 1.15f));
+        _rightRail.AddChild(Wire(_aideLog, 0, 0, 1.0f));
+
+        // The world shows through the middle of this, so the camera still works. Click-through.
         var spacer = new Control { SizeFlagsHorizontal = ControlSizeFlags.ExpandFill, MouseFilter = ControlMouseFilter.Ignore };
-        middle.AddChild(spacer);
 
-        var right = Ui.Col(10);
-        right.CustomMinimumSize = new Vector2(408, 0);
-        right.AddChild(Wire(new FusionGatePanel(), 384, 0, 1.15f));
-        right.AddChild(Wire(new AideLogPanel(), 384, 0, 1.0f));
-        middle.AddChild(right);
+        _rightSplit = new HSplitContainer
+        {
+            SizeFlagsHorizontal = ControlSizeFlags.ExpandFill,
+            SizeFlagsVertical = ControlSizeFlags.ExpandFill,
+        };
+        _rightSplit.AddChild(spacer);
+        _rightSplit.AddChild(_rightRail);
 
-        column.AddChild(BuildTimeline());
+        _leftSplit = new HSplitContainer
+        {
+            SizeFlagsHorizontal = ControlSizeFlags.ExpandFill,
+            SizeFlagsVertical = ControlSizeFlags.ExpandFill,
+        };
+        _leftSplit.AddChild(_leftRail);
+        _leftSplit.AddChild(_rightSplit);
+
+        _vSplit = new VSplitContainer
+        {
+            SizeFlagsHorizontal = ControlSizeFlags.ExpandFill,
+            SizeFlagsVertical = ControlSizeFlags.ExpandFill,
+        };
+        _vSplit.AddChild(_leftSplit);
+        _vSplit.AddChild(BuildTimeline());
+
+        column.AddChild(_vSplit);
         column.AddChild(BuildTransport());
 
         _root.AddChild(BuildHud());
         _root.AddChild(BuildSettings());
         _root.AddChild(BuildDiagnostics());
+
+        ApplyDensity();
+    }
+
+    /// <summary>
+    /// Resize from the keyboard, because a drag handle is a small target and the mouse is not the only
+    /// way in — the same rule every shortcut in this observer already follows.
+    ///
+    /// <c>,</c> and <c>.</c> move the left rail; Up and Down move the timeline. The arrow keys for the
+    /// feed are Left and Right, so these two are free.
+    /// </summary>
+    public override void _UnhandledKeyInput(InputEvent @event)
+    {
+        if (_vSplit == null || @event is not InputEventKey { Pressed: true, Echo: false } k)
+            return;
+
+        switch (k.Keycode)
+        {
+            case Key.Comma:
+                SetRailWidth(_railTarget - RailStep);
+                break;
+            case Key.Period:
+                SetRailWidth(_railTarget + RailStep);
+                break;
+            case Key.Up:
+                SetTimelineHeight(_timelineTarget + TimelineStep);
+                break;
+            case Key.Down:
+                SetTimelineHeight(_timelineTarget - TimelineStep);
+                break;
+            default:
+                return;
+        }
+        AcceptEvent();
+    }
+
+    // Deferred passes left to converge the dividers (see RequestSplits).
+    private int _splitsSettle;
+
+    /// <summary>
+    /// Place a two-child split's divider so its first child is <paramref name="target"/> pixels along
+    /// the split axis.
+    ///
+    /// <para>
+    /// <c>SplitOffsets</c> is not an absolute divider position in this build, whatever the name
+    /// suggests: the first child moves 1:1 with the offset, but the offset is measured from the
+    /// container's middle (<c>first = size/2 − halfSeparation + offset</c>). Writing the raw target is
+    /// what put the Avatar State rail at 962px where 392 was asked for, leaving the world a 178px
+    /// sliver. Rather than bake that formula in, nudge the current offset by however far the child is
+    /// from where it should be; the 1:1 relationship lands it on the target whatever the container's
+    /// size, and it settles in a frame.
+    /// </para>
+    /// </summary>
+    private static void SetSplit(SplitContainer split, int target, bool horizontal)
+    {
+        var offsets = split.SplitOffsets;
+        if (offsets.Length == 0)
+            return;
+        var first = split.GetChild(0) as Control;
+        float current = first == null ? 0f : horizontal ? first.Size.X : first.Size.Y;
+        offsets[0] += (int)Math.Round(target - current);
+        split.SplitOffsets = offsets;
+    }
+
+    /// <summary>
+    /// Re-place the dividers over the next few frames.
+    ///
+    /// More than one pass because the first can run before the splits are laid out, when every first
+    /// child still reads zero and the delta is meaningless. Once the children reach their targets the
+    /// delta is zero, so the extra passes cost nothing.
+    /// </summary>
+    private void RequestSplits()
+    {
+        _splitsSettle = 6;
+        CallDeferred(nameof(ApplySplits));
+    }
+
+    /// <summary>Widen or narrow the left rail, holding the floor and the world view's share.</summary>
+    private void SetRailWidth(int width)
+    {
+        int ceiling = (int)Mathf.Max(RailFloor, Size.X * 0.5f);
+        _railTarget = (int)Mathf.Clamp(width, (int)RailFloor, ceiling);
+        RequestSplits();
+    }
+
+    /// <summary>
+    /// Grow or shrink the timeline. Up makes it taller, which is the direction the divider travels.
+    /// </summary>
+    private void SetTimelineHeight(int height)
+    {
+        int ceiling = (int)Mathf.Min(TimelineCeiling, Size.Y * 0.6f);
+        _timelineTarget = (int)Mathf.Clamp(height, (int)TimelineFloor, ceiling);
+        RequestSplits();
     }
 
     private Theme BuildTheme()
@@ -224,12 +378,12 @@ public partial class ObserverRoot : Control
     }
     private Control BuildTimeline()
     {
-        var panel = new LearningTimelinePanel();
-        panel.Bind(_feed, _a11y, _level);
-        _panels.Add(panel);
-        panel.CustomMinimumSize = new Vector2(0, 240);
-        panel.SizeFlagsHorizontal = ControlSizeFlags.ExpandFill;
-        return panel;
+        _timeline = new LearningTimelinePanel();
+        _timeline.Bind(_feed, _a11y, _level);
+        _panels.Add(_timeline);
+        _timeline.CustomMinimumSize = new Vector2(0, 240);
+        _timeline.SizeFlagsHorizontal = ControlSizeFlags.ExpandFill;
+        return _timeline;
     }
 
     private Control BuildTransport()
@@ -259,7 +413,9 @@ public partial class ObserverRoot : Control
             _feed.StepForward();
             RefreshStatus();
         }, Key.Right);
-        AddTransportButton(row, "Live", "Follow the newest document (End)", () =>
+        // "Latest", not "Live": the badge beside it uses LIVE to mean a real simulation rather than a
+        // replay, so a button called "Live" sat next to the words "NOT A LIVE SIMULATION".
+        AddTransportButton(row, "Latest", "Jump to the newest document (End)", () =>
         {
             _feed.GoLive();
             RefreshStatus();
@@ -269,6 +425,16 @@ public partial class ObserverRoot : Control
             _feed.Restart();
             RefreshStatus();
         }, Key.R);
+
+        // Focus: keep the camera on the agent the feed is showing. The World View is otherwise pinned
+        // on the settlement and the agent walks off-frame, so the region that should answer "where is
+        // the agent" shows none of it. A toggle, so the pressed state and the wording both say whether
+        // following is on — colour is never the only channel.
+        _focusButton = Ui.Toggle("◎  Focus", false, _a11y.Font(Ui.SmallFont), _a11y.Palette.Text);
+        _focusButton.TooltipText = "Keep the camera on the agent the feed is showing (F)";
+        _focusButton.WithShortcut(Key.F);
+        _focusButton.Pressed += () => FocusRequested?.Invoke();
+        row.AddChild(_focusButton);
 
         row.AddChild(Ui.Heading("speed", _a11y.Palette.TextMuted));
         _speedRow = Ui.InlineRow(2);
@@ -349,6 +515,8 @@ public partial class ObserverRoot : Control
         col.AddChild(Ui.Inline("Motion, contrast and text size.",
             _a11y.Font(Ui.TinyFont), _a11y.Palette.TextDim));
         col.AddChild(Ui.Inline("Shapes and plain words are always on.",
+            _a11y.Font(Ui.TinyFont), _a11y.Palette.TextMuted));
+        col.AddChild(Ui.Inline("Panels resize: drag an edge, or use , . and Up Down.",
             _a11y.Font(Ui.TinyFont), _a11y.Palette.TextMuted));
 
         var motion = Ui.Toggle("Reduced motion", _a11y.ReducedMotion, _a11y.Font(Ui.BodyFont), _a11y.Palette.Text);
@@ -447,7 +615,112 @@ public partial class ObserverRoot : Control
         // previous level.
         foreach (var p in _panels)
             p.Bind(_feed, _a11y, _level);
+        ApplyDensity();
         RefreshAll();
+    }
+
+    /// <summary>
+    /// Reading level decides how much of the observer is on screen at once, not only how deep the
+    /// wording goes.
+    ///
+    /// Every panel already re-renders its text per level. This decides which of them *exist*. Six
+    /// panels either side of the world view plus a four-lane timeline is a lot of simultaneous
+    /// information for the audience this is built for, and it left the world view — the only surface
+    /// showing *where* the agent is and *what* surrounds it — about a quarter of the window.
+    ///
+    /// Stepping panels aside as the level drops gives that region the room, and it is the largest
+    /// region at every level. Widths run the other way from depth on purpose: <c>Simple</c> keeps one
+    /// panel at full width, while <c>Technical</c> tightens the rails to fit everything, because the
+    /// level asking for everything is the one that has already accepted density.
+    /// </summary>
+    private void ApplyDensity()
+    {
+        if (_leftSplit == null)
+            return;
+
+        int leftWidth, timelineHeight;
+        bool full = _level > ReadingLevel.Simple;
+
+        // Widths run the other way from depth on purpose: Simple keeps one panel generously sized,
+        // while Technical tightens the rails to fit everything, because the level asking for
+        // everything is the one that has already accepted density.
+        if (_level == ReadingLevel.Simple)
+        {
+            leftWidth = 392;
+            timelineHeight = 116;
+        }
+        else if (_level == ReadingLevel.Coach)
+        {
+            leftWidth = 300;
+            timelineHeight = 208;
+        }
+        else
+        {
+            leftWidth = 336;
+            timelineHeight = 288;
+        }
+
+        _independence.Visible = full;
+        _fusionGate.Visible = full;
+        _aideLog.Visible = full;
+        _rightRail.Visible = full;
+
+        // Floors, not widths: the split offsets below are what actually size the regions, so a drag
+        // can move them freely. Setting a panel's minimum to its target width would pin the divider
+        // shut and make the whole arrangement unresizable.
+        int floor = full ? (int)RailFloor : (int)RailFloor + 144;
+        _avatarState.CustomMinimumSize = new Vector2(floor, 0);
+        _independence.CustomMinimumSize = new Vector2(floor, 0);
+        _fusionGate.CustomMinimumSize = new Vector2(RailFloor, 0);
+        _aideLog.CustomMinimumSize = new Vector2(RailFloor, 0);
+        _leftRail.CustomMinimumSize = new Vector2(floor + 24, 0);
+        _rightRail.CustomMinimumSize = new Vector2(RailFloor + 24, 0);
+
+        _railTarget = leftWidth;
+        _timelineTarget = timelineHeight;
+
+        // Deferred, not immediate: the reading level is set during Build, before the control has a
+        // laid-out size. Dividers are computed from Size, so asking for them here clamps everything
+        // against a zero rectangle and the layout collapses on the first frame.
+        RequestSplits();
+    }
+
+    /// <summary>
+    /// Place the three dividers from the control's current size.
+    ///
+    /// Runs deferred after Build and again whenever the window resizes, because both split offsets are
+    /// derived from <see cref="Control.Size"/>: the rails are a share of the width, and the world band
+    /// is whatever is left after the timeline takes its height.
+    /// </summary>
+    private void ApplySplits()
+    {
+        if (_leftSplit == null || Size.X < 1f || Size.Y < 1f)
+            return;
+
+        // Clamped and placed directly rather than through SetRailWidth: that setter calls back into
+        // here, and the two calling each other recursed until the stack overflowed.
+        int railCeiling = (int)Mathf.Max(RailFloor, Size.X * 0.5f);
+        SetSplit(_leftSplit, (int)Mathf.Clamp(_railTarget, (int)RailFloor, railCeiling), true);
+
+        SetSplit(_rightSplit, _level > ReadingLevel.Simple
+            ? Mathf.Max((int)RailFloor, (int)Size.X - _railTarget - (int)RailFloor - 72)
+            : Mathf.Max(200, (int)Size.X - _railTarget - 24), true);
+
+        // The world band is the *first* child of the vertical split, so its offset is the band itself.
+        // Asking for "timeline height" here would size the world view to that number instead.
+        SetSplit(_vSplit, (int)Size.Y - _timelineTarget, false);
+
+        // Re-run for a few frames until the children stop moving (see RequestSplits).
+        if (_splitsSettle-- > 0)
+            CallDeferred(nameof(ApplySplits));
+    }
+
+    public override void _Notification(int what)
+    {
+        // 34 is NOTIFICATION_RESIZED. Re-place the dividers when the window changes size, or the
+        // rails keep the width they had at the old size and the world view absorbs the difference.
+        if (what == 34 && _leftSplit != null)
+            RequestSplits();
     }
 
     private void ToggleSettings()
@@ -581,6 +854,18 @@ public partial class ObserverRoot : Control
             _diagnosticsButton.Text = warnings > 0 ? $"Diagnostics ({warnings})" : "Diagnostics";
     }
 
+    /// <summary>
+    /// Reflect the world's follow state on the Focus button. Called by the composition root once it has
+    /// acted on <see cref="FocusRequested"/> — the observer does not move the camera itself.
+    /// </summary>
+    public void SetFocusActive(bool on)
+    {
+        if (_focusButton == null)
+            return;
+        _focusButton.SetPressedNoSignal(on);
+        _focusButton.Text = on ? "◎  Following" : "◎  Focus";
+    }
+
     private void OnAccessibilityChanged()
     {
         _root.Theme = BuildTheme();
@@ -590,7 +875,10 @@ public partial class ObserverRoot : Control
         // The sky is the one thing in the world that animates on its own. PR #80 gave WorldView a
         // SkyPaused seam for exactly this, so reduced motion is honoured outside the observer too.
         if (_world != null)
+        {
             _world.SkyPaused = _a11y.ReducedMotion;
+            _world.ReducedMotion = _a11y.ReducedMotion;
+        }
 
         ReducedMotionChanged?.Invoke(_a11y.ReducedMotion);
         RefreshAll();

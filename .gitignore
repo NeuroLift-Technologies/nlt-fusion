@@ -102,3 +102,32 @@ export_presets.cfg
 world-engine-godot/**/bin/
 world-engine-godot/**/obj/
 
+# --- Epic Fab source assets: NOT redistributable ---
+# Fab Standard License (https://www.fab.com/eula) permits using the assets in any
+# tool, modifying them, and shipping a built Project that incorporates them. It
+# does NOT permit distributing the Content on a standalone basis; sharing with
+# collaborators is limited to a PRIVATE repository (EULA sec.5a).
+#
+# This repo is PUBLIC, so Fab source must never be tracked in it. See
+# world-engine-godot/ASSET-MANIFEST.md for the full provenance record.
+#
+# KNOWN LIMIT: gitignore has no effect on already-tracked files. ~745 files
+# (~804 MB) under the paths below are still tracked from commit f3cc818
+# (2026-09-25) and will keep being committed until someone runs
+# `git rm -r --cached` on them. History rewrite was considered and declined
+# 2026-10-03; the past exposure is recorded, not remediated.
+
+# Fab packs in Unreal native format.
+WorldEngine/Content/Fab/
+
+# Fab-derived city grid textures (seaworn_*, roofingtiles*, tree_*, zzaple*).
+WorldEngine/Content/City/Grid/CityGridTextured/
+
+# Staged imports: GLB splits, source FBX, TGA textures, split helper scripts.
+WorldEngine/Imports/FabCity/
+
+# Godot-side copies of the same art, staged for local scene building.
+world-engine-godot/assets/props/
+world-engine-godot/assets/props-cc0/
+
+

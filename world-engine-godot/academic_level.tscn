@@ -4,5 +4,5 @@
 
 [node name="Academic_Level" unique_id=326110528 instance=ExtResource("1_fqtkd")]
 
-[node name="DirectionalLight" parent="." index="1" unique_id=1016605998]
+[node name="DirectionalLight" parent="." index="1" unique_id=1891174019]
 sky_mode = 2

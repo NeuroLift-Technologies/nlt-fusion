@@ -8,6 +8,48 @@ public static class SettlementBuilder
 {
     public sealed record Plan(float X, float Z, float Rad, float R, float Rot, float Kind);
 
+    public enum BuildingKind { Apartment, Office, Shop, School }
+
+    // Deterministic spread across 19 buildings — all four kinds present, homes the most common.
+    private static readonly BuildingKind[] KindPattern =
+    {
+        BuildingKind.Apartment, BuildingKind.Office, BuildingKind.Shop, BuildingKind.School,
+        BuildingKind.Apartment, BuildingKind.Apartment, BuildingKind.Office, BuildingKind.Shop,
+        BuildingKind.Apartment, BuildingKind.School, BuildingKind.Apartment, BuildingKind.Office,
+        BuildingKind.Apartment, BuildingKind.Shop, BuildingKind.Apartment, BuildingKind.Office,
+        BuildingKind.Apartment, BuildingKind.School, BuildingKind.Apartment,
+    };
+
+    /// <summary>Plain word for the doorway label.</summary>
+    public static string KindLabel(BuildingKind k) => k switch
+    {
+        BuildingKind.Apartment => "Home",
+        BuildingKind.Office => "Office",
+        BuildingKind.Shop => "Shop",
+        BuildingKind.School => "School",
+        _ => "Building",
+    };
+
+    /// <summary>Feed-style scene id; the prefix is what <c>WorldView.ShowScene</c> maps to a level.</summary>
+    public static string SceneIdFor(BuildingKind k) => k switch
+    {
+        BuildingKind.Apartment => "personal_1",
+        BuildingKind.Office => "workplace_1",
+        BuildingKind.Shop => "social_1",
+        BuildingKind.School => "academic_1",
+        _ => "personal_1",
+    };
+
+    /// <summary>Okabe–Ito hues, one per kind; the label carries the meaning and colour reinforces it.</summary>
+    public static Color KindColour(BuildingKind k) => k switch
+    {
+        BuildingKind.Apartment => new Color("56b4e9"),
+        BuildingKind.Office => new Color("009e73"),
+        BuildingKind.Shop => new Color("e69f00"),
+        BuildingKind.School => new Color("cc79a7"),
+        _ => Colors.White,
+    };
+
     public static List<Plan> BuildPlans(SimulationRng rng)
     {
         var placed = new List<Plan>();
@@ -31,8 +73,9 @@ public static class SettlementBuilder
         return placed;
     }
 
-    public static Node3D Build(List<Plan> plans)
+    public static Node3D Build(List<Plan> plans, out List<Portal> portals)
     {
+        portals = new List<Portal>();
         var root = new Node3D();
         var wallMat = new StandardMaterial3D { Roughness = 0.85f };
         var roofMat = new StandardMaterial3D { Roughness = 0.78f };
@@ -46,6 +89,7 @@ public static class SettlementBuilder
         int i = 0;
         foreach (var plan in plans)
         {
+            BuildingKind kind = KindPattern[i % KindPattern.Length];
             float y = WorldGeometry.HeightAt(plan.X, plan.Z);
             var g = new Node3D();
             float w = plan.Rad * 1.5f, d = plan.Rad * 1.25f;
@@ -77,12 +121,18 @@ public static class SettlementBuilder
                 Position = new Vector3(w * 0.22f, wallH + roofH * 0.55f, -d * 0.2f),
             });
 
+            var doorLocal = new Vector3(0, 1.05f, d / 2f + 0.02f);
             g.AddChild(new MeshInstance3D
             {
                 Mesh = new BoxMesh { Size = new Vector3(1.15f, 2.1f, 0.14f) },
                 MaterialOverride = doorMat,
-                Position = new Vector3(0, 1.05f, d / 2f + 0.02f),
+                Position = doorLocal,
             });
+
+            // The doorway affordance: the observer clicks this arch (or presses E) to enter the level.
+            var marker = PortalMarker.Build(KindLabel(kind), KindColour(kind));
+            marker.Position = new Vector3(0, 0, d / 2f + 0.09f);
+            g.AddChild(marker);
 
             for (int s = 0; s < 2; s++)
             for (int f = 0; f < 2; f++)
@@ -96,6 +146,9 @@ public static class SettlementBuilder
             g.Position = new Vector3(plan.X, y, plan.Z);
             g.Rotation = new Vector3(0, plan.Rot, 0);
             root.AddChild(g);
+
+            portals.Add(new Portal(KindLabel(kind), KindLabel(kind), SceneIdFor(kind),
+                g.Transform * doorLocal, g.Basis.Z.Normalized()));
             i++;
         }
 

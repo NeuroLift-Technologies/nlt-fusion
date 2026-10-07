@@ -4,3 +4,7 @@
 
 [node name="Main" type="Node3D" unique_id=1322082817]
 script = ExtResource("1_main")
+
+[node name="NobodyWhoModel" type="NobodyWhoModel" parent="." unique_id=2079668261]
+model_path = "res://ml-MODELS/Qwen3-0.6B-Q8_0.gguf"
+projection_model_path = "res://ml-MODELS/Qwen3-0.6B-Q8_0.gguf"

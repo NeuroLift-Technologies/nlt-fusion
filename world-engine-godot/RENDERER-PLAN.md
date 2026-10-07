@@ -154,7 +154,22 @@ Four scenes exist (`workplace_level.tscn`, `personal_level.tscn`, `social_level.
 > accessibility settings and the four-way burnout reading. Verified by rendered capture at all three
 > levels and by a layout self-test. **Mouse input is not machine-verified — see §6.1.**
 
-The audience is **people with ADHD**. Per the vertical slice: they must *"watch and understand the simulation without needing to parse a dense analytics dashboard."* That makes accessibility a renderer constraint, not a later pass.
+The audience is **people with ADHD**: they must *"watch and understand the simulation without needing to parse a dense analytics dashboard."* That makes accessibility a renderer constraint, not a later pass. Stated as the cross-repo source of truth in [`../README.md`](../README.md) § *Human Role in the Supervised Simulation* — **Observer audience — a standing requirement**.
+
+**Scope relative to the human-role standard.** [`docs/Human-Role-in-Supervised-Simulation.md`](../docs/Human-Role-in-Supervised-Simulation.md) (`NLT-SIM-HUMAN-ROLE-1.0.0`, *Draft / Proposed Architectural Standard*) defines the human participation model for this system: six roles — Supervisor, Observer, Evaluator, Scenario Designer, Instructor/Guide, Governance Authority — and four interaction modes (Observation, Supervision, Intervention, Evaluation).
+
+**Phase D delivers the Observer role, and only the read half of Supervisor.** The six panels, three reading levels and transport controls cover it. What does **not** exist yet, and is out of this phase by design:
+
+| Standard element | State here |
+|---|---|
+| Observer | Delivered — D.1–D.5 |
+| Supervisor | **Partial** — transport only (pause/resume/step/replay/speed). Nothing that changes outcomes |
+| Instructor / Guide | **Absent** — no intervention channel exists |
+| Scenario Designer | **Absent** — no authoring surface (see `MIGRATION-PLAN.md` §7 gaps) |
+| Governance Authority | **Absent** in the Godot port — maps to the ASFDK reference in `MIGRATION-PLAN.md` Decision 6, not yet ported |
+| Interaction modes | **Absent** — mode is not a state anywhere, so nothing enforces *when* a human may act |
+
+Treat this section as the Observer slice of that standard, not the whole of it.
 
 **Behaviour is the primary channel; numbers are the third detail level.** Meters and charts belong at `Technical`.
 

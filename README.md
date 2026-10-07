@@ -14,6 +14,18 @@ NeuroLift Technologies Simulation Environment — the deterministic runtime wher
 >
 > **Architecture docs:** [`WorldEngine/docs/architecture/`](WorldEngine/docs/architecture/) documents the **UE reference implementation** — [`TECHNICAL_DIAGRAM.md`](WorldEngine/docs/architecture/TECHNICAL_DIAGRAM.md), [`unreal-simulation-architecture.md`](WorldEngine/docs/architecture/unreal-simulation-architecture.md), [`fusion-unreal-domain-mapping.md`](WorldEngine/docs/architecture/fusion-unreal-domain-mapping.md). Retained as the semantics the Godot port must reproduce.
 
+## Human Role in the Supervised Simulation
+
+Humans are not passive observers of AI development here. They are active participants providing oversight, context, evaluation and authorization. The governing principle is **AI capability ≠ AI authority** — the ability of an AI system to perform an action does not determine whether that action should be performed.
+
+[`docs/Human-Role-in-Supervised-Simulation.md`](docs/Human-Role-in-Supervised-Simulation.md) — `NLT-SIM-HUMAN-ROLE-1.0.0`, *Draft / Proposed Architectural Standard*, governance: Solidarity Framework | ASFDK — defines that participation model. Six human roles: **Supervisor, Observer, Evaluator, Scenario Designer, Instructor/Guide, Governance Authority**. Four interaction modes: **Observation, Supervision, Intervention, Evaluation**. Its `Scope` field reads `NLT World Engine | AI-Fusion Framework`, so it binds **both** repos.
+
+**What this repo implements today.** The world engine is the *physical* substrate, so its share is the **Observer** role plus the transport half of **Supervisor** (pause / resume / step / replay / speed) — all read-only, delivered under [`RENDERER-PLAN.md` §6](world-engine-godot/RENDERER-PLAN.md). **Instructor/Guide, Scenario Designer, Governance Authority, and the interaction-mode state machine do not exist yet.** Governance Authority is the one element with prior art — UE's `NLTGovernanceSubsystem` integrating ASFDK — and arrives via Decision 6 of the migration plan. Guidance injection must arrive as `nlt.fusion-unreal` 1.0 actions so it stays inside the replay contract.
+
+**Observer audience — a standing requirement.** People with ADHD must be able to **watch and understand the simulation without needing to parse a dense analytics dashboard.** This is a design constraint, not a later pass: it governs the observation surface, its accessibility settings, and its reading levels. It is stated here as the source of truth for both repos, and `RENDERER-PLAN.md` §6 is where it is implemented.
+
+> **Draft status.** This standard is *proposed*, so it does not yet bind implementation. It is mirrored in `neurolift-ai-fusion`; both copies were byte-identical when this section was written, but neither repo designates a source of truth or commits the file.
+
 ## Architecture
 
 ```text
@@ -223,6 +235,7 @@ Both previously lived at repository root and are now under `_archive/`. Neither 
 | Architecture Overview | `ARCHITECTURE.md` |
 | Deployment | `DEPLOYMENT.md` |
 | NLT OTOI | `NLT-DEV-OTOI.md` |
+| Human Role in Supervised Simulation | `docs/Human-Role-in-Supervised-Simulation.md` |
 | Onboarding | `ONBOARDING.md` |
 | Active Threads | `docs/active-threads.md` |
 
