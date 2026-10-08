@@ -28,9 +28,11 @@ The Vercel/static-site instructions later in this document targeted `world-engin
 
 ---
 
-## Deployment Architecture
+## Historical UE Deployment Architecture
 
-The primary deployment is a rendered Unreal runtime on the machine where the human watches the training world:
+The diagrams below document the former UE-based deployment concept only. They are historical
+reference material, not the current deployment architecture; Godot 4.7.2 is the authoritative
+runtime.
 
 ```text
                     ┌─────────────────────────────────┐
@@ -46,7 +48,8 @@ The primary deployment is a rendered Unreal runtime on the machine where the hum
                     └─────────────────────────────────┘
 ```
 
-The optional headless path uses a future `WorldEngineServer` target or a `-nullrhi` commandlet to run the same UE physical world without a rendered viewport:
+The historical optional headless path used a future `WorldEngineServer` target or a `-nullrhi`
+commandlet to run the same UE physical world without a rendered viewport:
 
 ```text
                     ┌─────────────────────────────────┐

@@ -323,6 +323,7 @@ public static class ActionAssertions
             "unknown or physical-write action is rejected");
         GovernanceExplainsDenials();
         GovernanceGateUnavailableIsAudited();
+        IntentControllerStopsAtTarget();
     }
 
     /// <summary>
@@ -334,7 +335,7 @@ public static class ActionAssertions
     {
         Console.WriteLine("\n[governance explains denials]");
 
-        var gate = new AsfdkGovernanceGate("avatar_1");
+        var gate = new AsfdkGovernanceGate();
         var injection = new SemanticIntent
         {
             MessageId = "gov-injection",
@@ -379,6 +380,24 @@ public static class ActionAssertions
         Check(decision.Allowed, "unavailable gate fails open");
         Check(!string.IsNullOrWhiteSpace(decision.Explanation),
             "and the bypass is explained in the audit trail");
+    }
+
+    private static void IntentControllerStopsAtTarget()
+    {
+        Console.WriteLine("\n[intent movement stops at target]");
+        var controller = new IntentMoveController(new Vector3(4f, 0f, 0f), "approach", 1f);
+        controller.Attach("avatar_1");
+
+        var approaching = new AgentObservation(
+            "avatar_1", Vector3.Zero, Vector3.Zero, Array.Empty<float>(), "scene", 1);
+        var arrived = new AgentObservation(
+            "avatar_1", new Vector3(3.5f, 0f, 0f), Vector3.Zero,
+            Array.Empty<float>(), "scene", 2);
+
+        Check(controller.Act(approaching).MoveDirection.X > 0f,
+            "intent controller moves toward the target");
+        Check(controller.Act(arrived).MoveDirection == Vector3.Zero,
+            "intent controller idles inside the arrival radius");
     }
 
     /// <summary>

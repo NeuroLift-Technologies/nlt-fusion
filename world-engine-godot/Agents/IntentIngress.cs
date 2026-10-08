@@ -6,7 +6,7 @@ using Godot;
 namespace NltWorldEngine.Agents;
 
 /// <summary>
-/// Engine-side intent ingress: the unwired path from a Fusion <see cref="SemanticIntent"/>
+/// Engine-side intent ingress: the path from a Fusion <see cref="SemanticIntent"/>
 /// to <see cref="AvatarCharacter.ApplyIntent"/>, in contract order:
 /// protocol validation → ASFDK governance (explains denials) → execution re-check → apply.
 /// The model moves around and interacts with the environment. It never writes the
@@ -18,19 +18,25 @@ public sealed class IntentIngress
     private readonly IGovernanceGate _gate;
     private readonly Func<string, Vector3?> _resolveTarget;
     private readonly Func<string, IReadOnlyList<TaskAnchor>> _anchorsFor;
+    private readonly Func<Func<IntentExecutionResult>, Task<IntentExecutionResult>> _runOnMainThread;
 
     /// <param name="gate">ASFDK-backed governance. Never null — pass
     /// <see cref="OpenGovernanceGate.Instance"/> only where the gate is unavailable.</param>
     /// <param name="resolveTarget">Engine scene lookup: target id → world position now.</param>
     /// <param name="anchorsFor">Task anchors in the agent's scene for affordance checks.</param>
+    /// <param name="runOnMainThread">Run scene-tree reads and avatar mutations on Godot's main thread.</param>
     public IntentIngress(
         IGovernanceGate gate,
         Func<string, Vector3?>? resolveTarget = null,
-        Func<string, IReadOnlyList<TaskAnchor>>? anchorsFor = null)
+        Func<string, IReadOnlyList<TaskAnchor>>? anchorsFor = null,
+        Func<Func<IntentExecutionResult>, Task<IntentExecutionResult>>? runOnMainThread = null)
     {
         _gate = gate;
         _resolveTarget = resolveTarget ?? (_ => null);
         _anchorsFor = anchorsFor ?? (_ => Array.Empty<TaskAnchor>());
+        _runOnMainThread = runOnMainThread
+            ?? throw new ArgumentNullException(nameof(runOnMainThread),
+                "Intent ingress requires a main-thread dispatcher for scene access.");
     }
 
     /// <summary>
@@ -70,12 +76,28 @@ public sealed class IntentIngress
         {
             decision = new GovernanceDecision
             {
-                Allowed = true,
+                Allowed = false,
                 Code = "gate-unavailable",
-                Explanation = $"Governance gate errored ({e.GetType().Name}): " +
-                    "intent allowed without ASFDK review. Physical validation still applies.",
+                Explanation = $"Governance gate errored ({e.GetType().Name}); intent rejected. " +
+                    "No physical action was applied.",
             };
         }
+
+        return await _runOnMainThread(() =>
+            ApplyDecisionOnMainThread(avatar, perception, intent, currentTick, decision, reject));
+    }
+
+    private IntentExecutionResult ApplyDecisionOnMainThread(
+        AvatarCharacter avatar,
+        AgentPerceptionSnapshot perception,
+        SemanticIntent intent,
+        int currentTick,
+        GovernanceDecision decision,
+        Func<string, IntentExecutionResult> reject)
+    {
+        if (!GodotObject.IsInstanceValid(avatar))
+            return reject("avatar is no longer in the scene");
+
         if (!decision.Allowed)
         {
             avatar.Attach(new IdleController());

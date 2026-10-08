@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System;
+using System.Threading.Tasks;
 using Godot;
 
 namespace NltWorldEngine.Agents;
@@ -32,9 +34,29 @@ public partial class AgentLoopDriver : Node
         _link = new FusionHttpLink { Name = "FusionHttpLink" };
         AddChild(_link);
         _ingress = new IntentIngress(
-            new AsfdkGovernanceGate("engine"),
+            new AsfdkGovernanceGate(),
             ResolveTarget,
-            _ => Anchors);
+            _ => Anchors,
+            RunOnMainThreadAsync);
+    }
+
+    private static Task<IntentExecutionResult> RunOnMainThreadAsync(
+        Func<IntentExecutionResult> action)
+    {
+        var completion = new TaskCompletionSource<IntentExecutionResult>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        Callable.From(() =>
+        {
+            try
+            {
+                completion.TrySetResult(action());
+            }
+            catch (Exception e)
+            {
+                completion.TrySetException(e);
+            }
+        }).CallDeferred();
+        return completion.Task;
     }
 
     public override void _Process(double delta)

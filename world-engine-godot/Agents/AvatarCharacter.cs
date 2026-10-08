@@ -76,21 +76,21 @@ public partial class AvatarCharacter : AgentBrain
         // Map semantic verbs to locomotion directions.
         // "approach" → move toward the resolved target.
         // "rest" / "wait" → hold still (Idle).
-        // "sit" / "use" → move to target then interact (simple: same as approach for now).
-        // "look_at" / "communicate" → face target, don't move.
+        // "sit" / "use" → move to target; interaction is not implemented yet.
+        // "look_at" / "communicate" → hold still; facing is not implemented yet.
         //
         // A richer implementation will swap in a GoToTarget controller; this is the minimal
         // wiring that proves the seam works before that layer is built.
 
-        if (resolvedTargetPosition.HasValue)
+        if (resolvedTargetPosition.HasValue && (verb is "approach" or "use" or "sit"))
         {
             var toTarget = (resolvedTargetPosition.Value - GlobalPosition);
             toTarget.Y = 0f;
-            if (toTarget.LengthSquared() > 0.01f)
+            const float ArrivalRadius = 1f;
+            if (toTarget.LengthSquared() > ArrivalRadius * ArrivalRadius)
             {
-                var dir = toTarget.Normalized();
-                // Inject a one-shot move command via a simple wrapper controller.
-                Attach(new IntentMoveController(dir, verb));
+                Attach(new IntentMoveController(
+                    resolvedTargetPosition.Value, verb, ArrivalRadius));
                 return;
             }
         }
@@ -101,24 +101,31 @@ public partial class AvatarCharacter : AgentBrain
 }
 
 /// <summary>
-/// Minimal controller that produces a fixed move direction for one decision interval,
-/// then returns to idle. Used by <see cref="AvatarCharacter.ApplyIntent"/> for targeted verbs.
+/// Controller that moves toward a resolved target and idles on arrival.
 /// </summary>
 internal sealed class IntentMoveController : IAgentController
 {
-    private readonly Vector3 _direction;
+    private readonly Vector3 _targetPosition;
     private readonly string _verb;
+    private readonly float _arrivalRadius;
 
-    public IntentMoveController(Vector3 direction, string verb)
+    public IntentMoveController(Vector3 targetPosition, string verb, float arrivalRadius)
     {
-        _direction = direction;
+        _targetPosition = targetPosition;
         _verb = verb;
+        _arrivalRadius = arrivalRadius;
     }
 
     public void Attach(string agentId) { }
 
     public AgentAction Act(AgentObservation observation)
-        => AgentAction.Move(_direction, 1f);
+    {
+        var toTarget = _targetPosition - observation.Position;
+        toTarget.Y = 0f;
+        if (toTarget.LengthSquared() <= _arrivalRadius * _arrivalRadius)
+            return AgentAction.Idle;
+        return AgentAction.Move(toTarget.Normalized(), 1f);
+    }
 
     public void OnActionRejected(in AgentObservation observation, in AgentAction action, string reason)
         => GD.PushWarning($"[IntentMoveController:{_verb}] rejected: {reason}");

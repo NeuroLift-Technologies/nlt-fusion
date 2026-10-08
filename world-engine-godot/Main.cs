@@ -85,9 +85,9 @@ public partial class Main : NltWorldEngine.WorldView
 
 	private void SelectFollowTarget(string targetId)
 	{
-		_followTargetId = targetId == "__none__" ? "" : targetId;
+		_followTargetId = targetId;
 		_observer.SetFollowTargets(_feed.Current?.Agents ?? System.Array.Empty<AgentState>(),
-			_followTargetId, true);
+			_followTargetId, EnableLiveAvatars);
 		if (_following)
 			Follow(CurrentFollowTargetPoint);
 	}
@@ -133,33 +133,43 @@ public partial class Main : NltWorldEngine.WorldView
 		Residents.Sync(doc, ReducedMotion);
 
 		SyncLiveAvatars(doc);
-		EnsureFollowableLocalAvatar(doc);
-		if (string.IsNullOrEmpty(_followTargetId))
-			_followTargetId = FeedTransport.PrimaryAvatar(doc)?.Id ?? "";
+		ReconcileFollowTarget(doc);
 		_observer.SetFollowTargets(doc.Agents, _followTargetId, EnableLiveAvatars);
 		if (_following)
 			Follow(CurrentFollowTargetPoint);
 	}
 
-	private void EnsureFollowableLocalAvatar(NltWorldEngine.StateFeed doc)
+	private void ReconcileFollowTarget(NltWorldEngine.StateFeed doc)
 	{
-		if (_avatars.TryGetValue(LocalAvatarTargetId, out AvatarCharacter? current) && IsInstanceValid(current))
+		if (_followTargetId == "__none__")
 			return;
 
-		_avatarScene ??= GD.Load<PackedScene>("res://Agents/avatar.tscn");
-		if (_avatarScene == null)
+		if (_followTargetId == LocalAvatarTargetId)
+		{
+			if (EnableLiveAvatars
+				&& _avatars.TryGetValue(LocalAvatarTargetId, out AvatarCharacter? selectedLocal)
+				&& IsInstanceValid(selectedLocal))
+				return;
+		}
+		else if (!string.IsNullOrEmpty(_followTargetId) && doc.Agent(_followTargetId) != null)
+		{
 			return;
-		EnsureAvatarGround();
-		AvatarCharacter local = _avatarScene.Instantiate<AvatarCharacter>();
-		local.Name = LocalAvatarTargetId;
-		local.DisplayName = "Local Model";
-		local.ReducedMotion = ReducedMotion;
-		AddChild(local);
-		AgentState? primary = FeedTransport.PrimaryAvatar(doc);
-		Vector3 spawn = primary?.Position3() ?? Vector3.Zero;
-		local.GlobalPosition = spawn + new Vector3(2f, 1f, 0f);
-		local.Observe(local.GlobalPosition, new[] { 0.5f, 0.5f, 0.5f, 0.5f }, doc.Scene.Id);
-		_avatars[LocalAvatarTargetId] = local;
+		}
+
+		_followTargetId = FeedTransport.PrimaryAvatar(doc)?.Id
+			?? FirstAgentId(doc)
+			?? (EnableLiveAvatars
+				&& _avatars.TryGetValue(LocalAvatarTargetId, out AvatarCharacter? fallbackLocal)
+				&& IsInstanceValid(fallbackLocal)
+					? LocalAvatarTargetId
+					: "__none__");
+	}
+
+	private static string? FirstAgentId(NltWorldEngine.StateFeed doc)
+	{
+		foreach (AgentState agent in doc.Agents)
+			return agent.Id;
+		return null;
 	}
 
 	/// <summary>

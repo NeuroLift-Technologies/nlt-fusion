@@ -46,8 +46,9 @@ public sealed class GovernanceDecision
 /// </summary>
 public interface IGovernanceGate
 {
-    /// <summary>Evaluate one intent. Never throws — an unavailable gate returns a
-    /// fail-open allow with an explanation, per the gate-unavailable policy.</summary>
+    /// <summary>Evaluate one intent. Unexpected failures are denied by
+    /// <see cref="IntentIngress"/>; fail-open behavior is available only through the
+    /// explicit, audited <see cref="OpenGovernanceGate"/> implementation.</summary>
     Task<GovernanceDecision> EvaluateAsync(SemanticIntent intent);
 }
 
@@ -57,14 +58,6 @@ public interface IGovernanceGate
 /// </summary>
 public sealed class AsfdkGovernanceGate : IGovernanceGate
 {
-    private readonly string _userId;
-
-    /// <param name="userId">TOI owner the intent is evaluated under (usually the agent id).</param>
-    public AsfdkGovernanceGate(string userId = "avatar_01")
-    {
-        _userId = userId;
-    }
-
     public async Task<GovernanceDecision> EvaluateAsync(SemanticIntent intent)
     {
         var text = Describe(intent);
@@ -89,7 +82,7 @@ public sealed class AsfdkGovernanceGate : IGovernanceGate
         }
 
         // 2. RRT — crisis explains its level and tells the agent what to do instead.
-        var crisis = await Rrt.Assess(_userId, text, Channel.ModelOutput);
+        var crisis = await Rrt.Assess(intent.AgentId, text, Channel.ModelOutput);
         if (crisis.CrisisLevel >= Asfdk.CrisisLevel.Orange)
         {
             var interventions = crisis.RecommendedInterventions.Count > 0
@@ -111,7 +104,23 @@ public sealed class AsfdkGovernanceGate : IGovernanceGate
 
         // 3. Sleepwalker — distress travels with the allow so the engine can prefer
         //    rest/wait and Fusion can coach, rather than a silent pass.
-        var emotional = Sleepwalker.DetectEmotionalState(text, null, Channel.ModelOutput, _userId);
+        var emotional = Sleepwalker.DetectEmotionalState(
+            text, null, Channel.ModelOutput, intent.AgentId);
+        if (emotional.Flagged == true)
+        {
+            return new GovernanceDecision
+            {
+                Allowed = false,
+                Code = "injection",
+                Explanation = $"Governance denied '{intent.Verb}': {emotional.FlagReason}. " +
+                    "Retry with a plain verb and a visible target id.",
+                RecommendedInterventions = new[]
+                {
+                    "Re-issue the intent with a canonical verb and a target from perception",
+                },
+            };
+        }
+
         if (Sleepwalker.RequiresRrtaHandoff(new EmotionalState
             {
                 State = emotional.State,
@@ -127,21 +136,6 @@ public sealed class AsfdkGovernanceGate : IGovernanceGate
                     $"confidence {emotional.Confidence:F2}): intent allowed but " +
                     "consider rest or a low-demand target.",
                 EmotionalState = emotional.State,
-            };
-        }
-
-        if (emotional.Flagged == true)
-        {
-            return new GovernanceDecision
-            {
-                Allowed = false,
-                Code = "injection",
-                Explanation = $"Governance denied '{intent.Verb}': {emotional.FlagReason}. " +
-                    "Retry with a plain verb and a visible target id.",
-                RecommendedInterventions = new[]
-                {
-                    "Re-issue the intent with a canonical verb and a target from perception",
-                },
             };
         }
 

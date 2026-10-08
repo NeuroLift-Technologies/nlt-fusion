@@ -144,7 +144,7 @@ This repo has **two runnable components**:
 
 The Babylon.js viewer (`world-engine-v2/`) and Python ECS engine (`world-engine/`) are **archived** under `_archive/`. Neither connected to the live simulation anyway — the viewer's logic layer contains no `fetch`, `WebSocket`, or `XMLHttpRequest` at all.
 
-All authoritative state lives in the Godot 4.7.2 simulation under `world-engine-godot/`, per thread `ENG-002`.
+All authoritative physical simulation state lives in the Godot 4.7.2 runtime under `world-engine-godot/`; Fusion remains authoritative for semantic reality, per thread `ENG-002`.
 
 ---
 

@@ -15,7 +15,7 @@ namespace NltWorldEngine.Agents;
 /// one in-flight request per avatar, enforced timeouts, stale ticks rejected,
 /// fail closed on transport errors. Model inference never touches the Godot
 /// physics/render thread: HTTP runs on background tasks, results marshal back
-/// through IntentIngress on the caller's context.
+/// through IntentIngress's explicit main-thread dispatcher.
 /// </summary>
 public partial class FusionHttpLink : Node
 {
@@ -76,14 +76,18 @@ public partial class FusionHttpLink : Node
                 return;
             if (intent.ObservedTick != perception.Tick)
                 return;
-            if (!IsInstanceValid(avatar))
-                return;
             await ingress.SubmitAsync(avatar, perception, intent, currentTick);
         }
         catch (Exception e) when (e is System.Net.Http.HttpRequestException
             or TaskCanceledException or OperationCanceledException or JsonException)
         {
-            GD.PushWarning($"[FusionHttpLink] transport failed closed for {perception.AgentId}: {e.GetType().Name}");
+            var message = $"[FusionHttpLink] transport failed closed for {perception.AgentId}: {e.GetType().Name}";
+            Callable.From(() => GD.PushWarning(message)).CallDeferred();
+        }
+        catch (Exception e)
+        {
+            var message = $"[FusionHttpLink] decision processing failed for {perception.AgentId}: {e.GetType().Name}";
+            Callable.From(() => GD.PushError(message)).CallDeferred();
         }
         finally
         {

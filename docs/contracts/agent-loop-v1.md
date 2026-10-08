@@ -28,12 +28,14 @@ Fusion must not send coordinates, velocity, teleport requests, or object-state w
 a request, not authority: the engine may reject it based on current physical state and reports the
 reason rather than silently dropping it.
 
-The runtime design places an in-process ASFDK-C# governance boundary at intent ingress, before
-physical execution. This is an implementation-level check, not a message or authority transfer in
-this protocol. ASFDK governance does not replace the engine's physical validation. Its current C#
-API does not directly authorize `SemanticIntent`; an engine-side adapter and explicit policy mapping
-are still required. Until that gate is implemented, the protocol validators alone do not constitute
-an ASFDK governance decision.
+The runtime places an in-process ASFDK-C# governance boundary at intent ingress, before physical
+execution. `AsfdkGovernanceGate` is implemented and wired into `IntentIngress`; its current policy
+mapping applies prompt defense, RRT crisis assessment, and Sleepwalker distress assessment.
+Intent-specific TOI policy mapping remains pending, and assessments must not be treated as TOI
+authorization. This is an implementation-level check, not a message or authority transfer in this
+protocol. ASFDK governance does not replace the engine's physical validation. The current
+gate-unavailable fallback is fail-open with an audit explanation and must be reviewed before
+production use.
 
 ## 2. Perception snapshot
 
@@ -121,9 +123,9 @@ time; a target's prior visibility does not guarantee that it is still available.
   actually occurred. Fusion must not infer physical success from issuing an intent.
 - Validation and execution are separate: validate schema/correlation/target, then re-check current
   engine-side range, visibility, collision, and affordance state at execution.
-- The planned ASFDK-C# governance check is also separate from physical validation. A governance
-  denial must prevent execution and be reported as a rejection; this contract does not define the
-  internal ASFDK policy or adapter API.
+- The ASFDK-C# governance check is separate from physical validation. A governance denial must
+  prevent execution and be reported as a rejection; this contract does not define the internal
+  ASFDK policy or adapter API.
 
 ## 5. Transport and observer
 
