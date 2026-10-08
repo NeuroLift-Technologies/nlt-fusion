@@ -31,6 +31,7 @@ public static class ActionAssertions
         SemanticOnly();
         AgentLoopContract();
         ControlConditionMoves();
+        DecisionHeldBetweenPolls();
 
         Console.WriteLine($"\n=== {_passed} passed, {_failed} failed ===");
         return _failed == 0;
@@ -380,6 +381,50 @@ public static class ActionAssertions
         Check(decision.Allowed, "unavailable gate fails open");
         Check(!string.IsNullOrWhiteSpace(decision.Explanation),
             "and the bypass is explained in the audit trail");
+    }
+
+    /// <summary>
+    /// Regression: an accepted decision must persist across the ticks between polls.
+    /// </summary>
+    /// <remarks>
+    /// <c>AgentBrain._PhysicsProcess</c> polls the controller every <c>DecisionInterval</c> but
+    /// calls <c>LocomotionController.Step</c> on every physics tick. When the tick skipped a poll
+    /// it reset the action to Idle, so the agent accelerated for exactly one frame and the
+    /// deceleration cap then cancelled that velocity on the next frame. Net displacement was about
+    /// <c>acceleration * dt * dt</c> metres per poll — roughly 0.007 m every 0.5 s — which reads on
+    /// screen as an avatar that barely moves. This drives the same poll cadence through
+    /// <see cref="DecisionHold"/> and <see cref="LocomotionController"/> so the behaviour is
+    /// pinned by the harness path that already runs out-of-engine.
+    /// </remarks>
+    private static void DecisionHeldBetweenPolls()
+    {
+        Console.WriteLine("\n[decision persists between polls]");
+
+        var hold = new DecisionHold();
+        var loco = new LocomotionController { MaxSpeed = 1.4f, Acceleration = 6f };
+        const float dt = 1f / 60f;
+        const int pollIntervalTicks = 30; // 0.5 s at 60 Hz
+        var start = loco.Position;
+        var polls = 0;
+
+        // 2 s of physics with a 0.5 s poll interval: 4 polls, 120 ticks.
+        for (var tick = 0; tick < 120; tick++)
+        {
+            if (tick % pollIntervalTicks == 0)
+            {
+                polls++;
+                hold.Accept(AgentAction.Move(new Vector3(1f, 0f, 0f), 1f));
+            }
+
+            loco.Step(hold.Current, dt);
+        }
+
+        var moved = loco.Position - start;
+
+        Check(polls == 4, $"controller polled {polls} times in 2 s at a 0.5 s interval");
+        // Unfixed, the same loop displaces ~0.007 m and fails this bound.
+        Check(moved.Length() > 1f,
+            $"held decision produces real displacement over 2 s ({moved.Length():F3} m)");
     }
 
     private static void IntentControllerStopsAtTarget()

@@ -26,6 +26,7 @@ public partial class AgentBrain : CharacterBody3D
     private IAgentController? _controller;
     private LocomotionController _locomotion = null!;
     private AgentObservation _observation;
+    private DecisionHold _decision;
     private float _sinceDecision;
     private int _tick;
 
@@ -47,7 +48,8 @@ public partial class AgentBrain : CharacterBody3D
 
     /// <summary>
     /// Seconds between decisions. Inference is far slower than a tick, so the last accepted
-    /// decision is held and re-applied between decisions (motor-latency technique).
+    /// decision is held and re-applied between decisions (motor-latency technique). The hold lives
+    /// in <see cref="DecisionHold"/>; this interval only governs how often the controller is polled.
     /// </summary>
     [Export] public float DecisionInterval { get; set; } = 0.5f;
 
@@ -97,8 +99,11 @@ public partial class AgentBrain : CharacterBody3D
             _observation.SceneId,
             _tick);
 
-        // 2. Decision phase — only at the configured interval.
-        var action = AgentAction.Idle;
+        // 2. Decision phase — poll only at the configured interval, and hold the accepted
+        //    decision in between. Both inference and this interval are slower than a physics tick,
+        //    so the ticks that skip a poll must keep executing the previous decision. Resetting to
+        //    Idle here instead would give one frame of acceleration per poll and cancel it on the
+        //    next frame, leaving the agent creeping rather than walking.
         _sinceDecision += dt;
         if (_sinceDecision >= DecisionInterval)
         {
@@ -108,7 +113,7 @@ public partial class AgentBrain : CharacterBody3D
                 var proposed = _controller.Act(_observation);
                 var problem = Validate(proposed);
                 if (problem == null)
-                    action = proposed;
+                    _decision.Accept(proposed);
                 else
                 {
                     _controller.OnActionRejected(_observation, proposed, problem);
@@ -116,6 +121,8 @@ public partial class AgentBrain : CharacterBody3D
                 }
             }
         }
+
+        var action = _decision.Current;
 
         // 3. Compute desired XZ velocity via LocomotionController ramps (accel/decel/turn).
         //    We pass the current physics velocity in so the ramp starts from the correct speed.
