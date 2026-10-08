@@ -2,11 +2,20 @@
 
 > This file tracks active work threads. Agents must read this at session start and update it during and at the end of each session.
 
-**Last updated:** 2026-10-03
+**Last updated:** 2026-10-08
 
 ---
 
 ## Active Threads
+### 🔁 AGENT-LOOP-001 — Fusion semantic / Godot physical closed loop
+
+- **Status:** transport-neutral protocol and validators delivered; live runtime loop remains gated.
+- **Decision:** use a closed loop (engine-owned perception → Fusion semantic intent → engine-owned execution/result); transport selection remains deferred as requested.
+- **Ownership:** Fusion owns semantic decisions; the world engine owns physical facts, target/affordance validation, movement, collision, and consequences.
+- **Delivered:** `docs/contracts/agent-loop-v1.md` and its JSON Schema; `docs/agent-loop.md` feature overview; README summaries in both repos; strict Godot DTO parsing/validation; Fusion-side injectable decision/validation seam; focused contract tests.
+- **Open:** Fusion seam is not wired into `SessionOrchestrator`; Godot protocol is not wired into `AgentBrain`/`Main`; Jolt-backed collision and interaction execution are absent; no live observer-field composition or cross-process smoke test.
+- **Next gate:** approve/choose a transport before adding listeners, ports, or transport dependencies. Separately wire and verify engine-owned physical handlers before claiming semantic actions produce world effects.
+
 ### 🔭 OBS-001 — Phase D observer (Godot renderer + spectator)
 
 - **Status:** open — D.1–D.5 delivered; **claimed by Kilo 2026-10-04**; mouse input and layout still need a human click-through

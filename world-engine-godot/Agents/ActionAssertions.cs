@@ -29,6 +29,7 @@ public static class ActionAssertions
         SpeedCap();
         GarbageDegradesToIdle();
         SemanticOnly();
+        AgentLoopContract();
         ControlConditionMoves();
 
         Console.WriteLine($"\n=== {_passed} passed, {_failed} failed ===");
@@ -170,6 +171,156 @@ public static class ActionAssertions
             loco.Step(action, 1f / 60f);
 
         Check(loco.Position.Length() < 5f, "60 ticks of it still cannot leave the neighbourhood");
+    }
+
+    private static void AgentLoopContract()
+    {
+        Console.WriteLine("\n[physical perception -> semantic intent boundary]");
+
+        var observation = new AgentPerceptionSnapshot
+        {
+            MessageId = "obs-42-avatar-1",
+            AgentId = "avatar_1",
+            Tick = 42,
+            Scene = new AgentLoopScene { Id = "workplace_1", Kind = "interior" },
+            Self = new AgentPhysicalState
+            {
+                Position = new PhysicalVector3 { X = 1f, Y = 0f, Z = 2f },
+                Velocity = new PhysicalVector3 { X = 0f, Y = 0f, Z = 0f },
+            },
+            VisibleEntities = new[]
+            {
+                new VisibleEntity
+                {
+                    Id = "desk_1",
+                    Kind = "object",
+                    Position = new PhysicalVector3 { X = 2f, Y = 0f, Z = 2f },
+                    Affordances = new[] { "use", "sit" },
+                },
+            },
+        };
+        var intent = new SemanticIntent
+        {
+            MessageId = "intent-42-avatar-1",
+            AgentId = "avatar_1",
+            ObservedTick = 42,
+            Verb = "approach",
+            TargetId = "desk_1",
+        };
+
+        Check(AgentLoopProtocol.ValidatePerception(observation) == null,
+            "engine perception snapshot is valid");
+        Check(AgentLoopProtocol.ValidateIntent(observation, intent) == null,
+            "Fusion intent is correlated and targets a visible entity");
+        var observationJson = System.Text.Json.JsonSerializer.Serialize(observation);
+        Check(AgentLoopProtocol.TryParsePerception(observationJson, out var parsedObservation, out _)
+            && parsedObservation != null,
+            "perception DTO round-trips through JSON");
+        var intentJson = System.Text.Json.JsonSerializer.Serialize(intent);
+        Check(AgentLoopProtocol.TryParseIntent(intentJson, observation, out var parsedIntent, out _)
+            && parsedIntent?.TargetId == "desk_1",
+            "intent DTO round-trips through JSON");
+        var missingProtocolVersion = System.Text.Json.Nodes.JsonNode.Parse(observationJson)!.AsObject();
+        missingProtocolVersion.Remove("protocolVersion");
+        Check(!AgentLoopProtocol.TryParsePerception(missingProtocolVersion.ToJsonString(), out _, out _),
+            "perception with a missing required envelope field is rejected");
+        var missingOccupied = System.Text.Json.Nodes.JsonNode.Parse(observationJson)!.AsObject();
+        missingOccupied["visibleEntities"]![0]!.AsObject().Remove("occupied");
+        Check(!AgentLoopProtocol.TryParsePerception(missingOccupied.ToJsonString(), out _, out _),
+            "visible entity with a missing required field is rejected");
+        var missingObservedTick = System.Text.Json.Nodes.JsonNode.Parse(intentJson)!.AsObject();
+        missingObservedTick.Remove("observedTick");
+        Check(!AgentLoopProtocol.TryParseIntent(missingObservedTick.ToJsonString(), observation, out _, out _),
+            "intent with a missing observedTick is rejected");
+        var waitIntent = new SemanticIntent
+        {
+            MessageId = "intent-42-wait",
+            AgentId = "avatar_1",
+            ObservedTick = 42,
+            Verb = "wait",
+        };
+        var waitIntentJson = System.Text.Json.JsonSerializer.Serialize(waitIntent);
+        Check(AgentLoopProtocol.TryParseIntent(waitIntentJson, observation, out _, out _),
+            "wait intent may omit its optional target");
+        var nullTargetIntent = System.Text.Json.Nodes.JsonNode.Parse(waitIntentJson)!.AsObject();
+        nullTargetIntent["targetId"] = null;
+        Check(!AgentLoopProtocol.TryParseIntent(nullTargetIntent.ToJsonString(), observation, out _, out _),
+            "intent with an explicit null target is rejected");
+        var physicalWriteJson = intentJson[..^1] + ",\"position\":{\"x\":9,\"y\":0,\"z\":0}}";
+        Check(!AgentLoopProtocol.TryParseIntent(physicalWriteJson, observation, out _, out _),
+            "wire intent with an extra physical-write field is rejected");
+        Check(!AgentLoopProtocol.TryParseIntent(null!, observation, out _, out _),
+            "missing intent JSON is reported");
+        Check(AgentLoopProtocol.ValidateResult(new IntentExecutionResult
+            {
+                MessageId = "result-42-avatar-1",
+                IntentMessageId = intent.MessageId,
+                AgentId = intent.AgentId,
+                Tick = 42,
+                Status = "rejected",
+                Reason = "target is occupied",
+            }, intent) == null,
+            "explicit engine rejection result is valid and correlated");
+        Check(AgentLoopProtocol.ValidateResult(new IntentExecutionResult
+            {
+                MessageId = "result-42-avatar-1",
+                IntentMessageId = intent.MessageId,
+                AgentId = intent.AgentId,
+                Tick = 42,
+                Status = "rejected",
+            }, intent) != null,
+            "engine rejection without a reason is invalid");
+        Check(AgentLoopProtocol.ValidateResult(new IntentExecutionResult
+            {
+                MessageId = "result-42-avatar-1",
+                IntentMessageId = intent.MessageId,
+                AgentId = intent.AgentId,
+                Tick = 42,
+                Status = "accepted",
+            }, new SemanticIntent
+            {
+                ProtocolVersion = "nlt.agent-loop.v0",
+                MessageId = intent.MessageId,
+                AgentId = intent.AgentId,
+                ObservedTick = intent.ObservedTick,
+                Verb = intent.Verb,
+                TargetId = intent.TargetId,
+            }) != null,
+            "result cannot validate against an unsupported intent protocol");
+        Check(AgentLoopProtocol.ValidateIntent(observation, new SemanticIntent
+            {
+                MessageId = "stale",
+                AgentId = "avatar_1",
+                ObservedTick = 41,
+                Verb = "approach",
+                TargetId = "desk_1",
+            }) != null,
+            "stale intent is rejected");
+        Check(AgentLoopProtocol.ValidateIntent(observation, new SemanticIntent
+            {
+                MessageId = "hidden-target",
+                AgentId = "avatar_1",
+                ObservedTick = 42,
+                Verb = "use",
+                TargetId = "hidden_object",
+            }) != null,
+            "intent targeting an entity outside perception is rejected");
+        Check(AgentLoopProtocol.ValidateIntent(observation, new SemanticIntent
+            {
+                MessageId = "missing-target",
+                AgentId = "avatar_1",
+                ObservedTick = 42,
+                Verb = "communicate",
+            }) != null,
+            "targeted semantic action without a target is rejected");
+        Check(AgentLoopProtocol.ValidateIntent(observation, new SemanticIntent
+            {
+                MessageId = "physical-write",
+                AgentId = "avatar_1",
+                ObservedTick = 42,
+                Verb = "teleport",
+            }) != null,
+            "unknown or physical-write action is rejected");
     }
 
     /// <summary>

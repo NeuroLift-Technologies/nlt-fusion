@@ -1,0 +1,59 @@
+{
+  "handoff_record": {
+    "session_id": "92e7cf1a-7135-4f27-87d3-99e4826f528f",
+    "agent_name": "GitHub Copilot CLI",
+    "date": "2026-10-08",
+    "otoi_version": "ORG-DEV-OTOI-1.0.3",
+    "repo": "NeuroLift-Technologies/nlt-world-engine",
+    "branch": "feat/agent-loop-v1-20261008",
+    "work_completed": [
+      "Defined the transport-neutral nlt.agent-loop.v1 perception, intent, and execution-result contract and strict JSON Schema.",
+      "Added Godot C# DTO parsing and correlation/target validation, plus the Fusion injectable decision/validation seam.",
+      "Clarified that nlt.state-feed.v1 remains an observer/fixture projection, not the live control protocol.",
+      "Recorded the open runtime/transport gates in docs/active-threads.md and the session plan.",
+      "Added a physical-world agent-loop feature overview and linked/summarized it from both repository READMEs."
+    ],
+    "work_in_progress": [
+      "Complete runtime connection: SessionOrchestrator integration, Godot AgentBrain/Main adapter, engine-owned action execution, and observer-field composition."
+    ],
+    "blockers": [
+      "Live transport selection is intentionally deferred pending Joshua's approval.",
+      "Godot currently lacks the Jolt-backed collision and interaction handlers needed to safely claim physical effects."
+    ],
+    "decisions_made": [
+      "Use a closed loop from engine-owned physical perception through Fusion semantic decisions back to engine-owned execution.",
+      "Keep the observer state feed distinct from the control-loop protocol.",
+      "Do not give Fusion authority to write positions, velocities, collision state, or object state."
+    ],
+    "decisions_pending": [
+      "Choose/approve a live transport before adding listeners, ports, or transport dependencies."
+    ],
+    "escalations": [],
+    "next_agent_notes": "Continue from the transport/executor gate. Do not treat contract validators as a live bridge. Preserve unrelated inherited worktree changes. PRs are open: nlt-world-engine#87 and NeuroLift-Technologies/neurolift-ai-fusion#118.",
+    "files_modified": [
+      "docs/contracts/agent-loop-v1.md",
+      "docs/contracts/agent-loop-v1.schema.json",
+      "docs/contracts/state-feed-v1.md",
+      "world-engine-godot/Agents/AgentLoopProtocol.cs",
+      "world-engine-godot/Agents/ActionAssertions.cs",
+      "README.md",
+      "docs/agent-loop.md",
+      "docs/active-threads.md",
+      "C:/Users/joshd/nlt-repos/neurolift-ai-fusion/src/fusion/agent_loop.py",
+      "C:/Users/joshd/nlt-repos/neurolift-ai-fusion/src/fusion/__init__.py",
+      "C:/Users/joshd/nlt-repos/neurolift-ai-fusion/tests/test_fusion/test_agent_loop.py",
+      "C:/Users/joshd/nlt-repos/neurolift-ai-fusion/docs/architecture.md",
+      "C:/Users/joshd/nlt-repos/neurolift-ai-fusion/README.md"
+    ],
+    "tests_run": [
+      "Fusion focused pytest: test_agent_loop.py, test_state_feed.py, test_exports.py — 14 passed with --cov-fail-under=0.",
+      "Black --check for src/fusion/agent_loop.py and tests/test_fusion/test_agent_loop.py — passed.",
+      "dotnet build .\\world-engine-godot\\world-engine-godot.csproj --no-restore — succeeded, 0 errors; pre-existing WorldView nullable warnings and PDB-lock retry warnings from running Godot process.",
+      "dotnet run --project .\\world-engine-godot\\AgentHarness\\AgentHarness.csproj — 25 passed, 0 failed.",
+      "Documentation-only README and feature-overview edits; no additional tests required.",
+      "git diff --check — passed."
+    ],
+    "tests_passing": true,
+    "pr_url": "https://github.com/NeuroLift-Technologies/nlt-world-engine/pull/87"
+  }
+}

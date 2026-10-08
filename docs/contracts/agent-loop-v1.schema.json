@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neurolift.tech/contracts/agent-loop-v1.schema.json",
+  "title": "NLT Agent Loop v1",
+  "oneOf": [
+    { "$ref": "#/$defs/perception" },
+    { "$ref": "#/$defs/intent" },
+    { "$ref": "#/$defs/result" }
+  ],
+  "$defs": {
+    "vector3": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "z"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "z": { "type": "number" }
+      }
+    },
+    "perception": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocolVersion", "messageType", "messageId", "agentId", "tick", "scene", "self", "visibleEntities"],
+      "properties": {
+        "protocolVersion": { "const": "nlt.agent-loop.v1" },
+        "messageType": { "const": "perception" },
+        "messageId": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "agentId": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "tick": { "type": "integer", "minimum": 0 },
+        "scene": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "kind"],
+          "properties": {
+            "id": { "type": "string", "minLength": 1, "pattern": "\\S" },
+            "kind": { "enum": ["open_world", "interior"] }
+          }
+        },
+        "self": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["position", "velocity"],
+          "properties": {
+            "position": { "$ref": "#/$defs/vector3" },
+            "velocity": { "$ref": "#/$defs/vector3" }
+          }
+        },
+        "visibleEntities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "kind", "position", "affordances", "occupied"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1, "pattern": "\\S" },
+              "kind": { "enum": ["agent", "object", "place"] },
+              "position": { "$ref": "#/$defs/vector3" },
+              "affordances": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1, "pattern": "\\S" },
+                "uniqueItems": true
+              },
+              "occupied": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocolVersion", "messageType", "messageId", "agentId", "observedTick", "verb"],
+      "properties": {
+        "protocolVersion": { "const": "nlt.agent-loop.v1" },
+        "messageType": { "const": "intent" },
+        "messageId": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "agentId": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "observedTick": { "type": "integer", "minimum": 0 },
+        "verb": {
+          "enum": ["approach", "look_at", "use", "sit", "rest", "communicate", "wait"]
+        },
+        "targetId": { "type": "string", "minLength": 1, "pattern": "\\S" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "verb": { "enum": ["approach", "look_at", "use", "sit", "communicate"] }
+            },
+            "required": ["verb"]
+          },
+          "then": { "required": ["targetId"] }
+        }
+      ]
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocolVersion", "messageType", "messageId", "intentMessageId", "agentId", "tick", "status"],
+      "properties": {
+        "protocolVersion": { "const": "nlt.agent-loop.v1" },
+        "messageType": { "const": "result" },
+        "messageId": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "intentMessageId": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "agentId": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "tick": { "type": "integer", "minimum": 0 },
+        "status": { "enum": ["accepted", "rejected"] },
+        "reason": { "type": "string", "minLength": 1, "pattern": "\\S" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "status": { "const": "rejected" } },
+            "required": ["status"]
+          },
+          "then": { "required": ["reason"] }
+        }
+      ]
+    }
+  }
+}

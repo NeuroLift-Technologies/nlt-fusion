@@ -59,6 +59,21 @@ NLT World Engine (this repo)
           Python ECS engine (world-engine/), both superseded
 ```
 
+## Physical-World Agent Loop
+
+The `nlt.agent-loop.v1` contract defines how Fusion semantics and Godot's physical simulation are
+intended to work together: the engine reports what an agent can physically perceive, Fusion returns
+a semantic action intent, and the engine validates and executes it. The engine owns physical state
+and consequences; Fusion owns cognition and meaning. This is separate from `nlt.state-feed.v1`,
+which remains an observer/presentation feed.
+
+The contract, allowed verbs, message examples, validation rules, and current implementation status
+are described in the [agent-loop feature overview](docs/agent-loop.md) and
+[protocol specification](docs/contracts/agent-loop-v1.md). The protocol and validation seams exist,
+but this is **not yet a live Fusion ↔ Godot runtime connection**: transport is undecided, Fusion and
+Godot runtime dispatch are not wired, and physical interaction/collision execution is incomplete.
+No transport dependency, listener, or port is introduced by the contract.
+
 ## Quick Start — Godot 4.7.2 (target engine)
 
 **Prerequisites:** Godot **4.7.2 .NET (mono)** + .NET 8 SDK.
