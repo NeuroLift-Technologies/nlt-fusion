@@ -87,7 +87,7 @@ godot --path world-engine-godot
 # dotnet test world-engine-godot/NltWorldEngine.Core.Tests
 ```
 
-**Status:** rendering prototype with agent interfaces and transport-neutral protocol validation. The closed-loop runtime, physical interaction/collision execution, determinism, and governance are not yet wired end-to-end.
+**Status:** rendering only. Agents, determinism, protocol, and governance land in phases 2–7 of the migration plan.
 
 ## Quick Start — Unreal Engine 5.8 (frozen oracle)
 
