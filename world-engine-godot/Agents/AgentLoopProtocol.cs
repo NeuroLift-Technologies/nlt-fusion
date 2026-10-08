@@ -19,47 +19,59 @@ public static class AgentLoopVocabulary
         "approach", "look_at", "use", "sit", "communicate",
     };
 
+    /// <summary>Returns whether the protocol defines the supplied semantic action verb.</summary>
     public static bool IsSupportedVerb(string verb) => SupportedIntentVerbs.Contains(verb);
 
+    /// <summary>Returns whether the supplied action verb requires a visible target.</summary>
     public static bool RequiresTarget(string verb) => TargetRequiredVerbs.Contains(verb);
 }
 
 public sealed class PhysicalVector3
 {
     [JsonPropertyName("x")]
+    [JsonRequired]
     public float X { get; init; }
 
     [JsonPropertyName("y")]
+    [JsonRequired]
     public float Y { get; init; }
 
     [JsonPropertyName("z")]
+    [JsonRequired]
     public float Z { get; init; }
 }
 
 public sealed class AgentLoopScene
 {
     [JsonPropertyName("id")]
+    [JsonRequired]
     public string Id { get; init; } = "";
 
     [JsonPropertyName("kind")]
+    [JsonRequired]
     public string Kind { get; init; } = "";
 }
 
 public sealed class VisibleEntity
 {
     [JsonPropertyName("id")]
+    [JsonRequired]
     public string Id { get; init; } = "";
 
     [JsonPropertyName("kind")]
+    [JsonRequired]
     public string Kind { get; init; } = "";
 
     [JsonPropertyName("position")]
+    [JsonRequired]
     public PhysicalVector3 Position { get; init; } = new();
 
     [JsonPropertyName("affordances")]
+    [JsonRequired]
     public IReadOnlyList<string> Affordances { get; init; } = Array.Empty<string>();
 
     [JsonPropertyName("occupied")]
+    [JsonRequired]
     public bool Occupied { get; init; }
 }
 
@@ -67,36 +79,46 @@ public sealed class VisibleEntity
 public sealed class AgentPerceptionSnapshot
 {
     [JsonPropertyName("protocolVersion")]
+    [JsonRequired]
     public string ProtocolVersion { get; init; } = AgentLoopVocabulary.Version;
 
     [JsonPropertyName("messageType")]
+    [JsonRequired]
     public string MessageType { get; init; } = "perception";
 
     [JsonPropertyName("messageId")]
+    [JsonRequired]
     public string MessageId { get; init; } = "";
 
     [JsonPropertyName("agentId")]
+    [JsonRequired]
     public string AgentId { get; init; } = "";
 
     [JsonPropertyName("tick")]
+    [JsonRequired]
     public int Tick { get; init; }
 
     [JsonPropertyName("scene")]
+    [JsonRequired]
     public AgentLoopScene Scene { get; init; } = new();
 
     [JsonPropertyName("self")]
+    [JsonRequired]
     public AgentPhysicalState Self { get; init; } = new();
 
     [JsonPropertyName("visibleEntities")]
+    [JsonRequired]
     public IReadOnlyList<VisibleEntity> VisibleEntities { get; init; } = Array.Empty<VisibleEntity>();
 }
 
 public sealed class AgentPhysicalState
 {
     [JsonPropertyName("position")]
+    [JsonRequired]
     public PhysicalVector3 Position { get; init; } = new();
 
     [JsonPropertyName("velocity")]
+    [JsonRequired]
     public PhysicalVector3 Velocity { get; init; } = new();
 }
 
@@ -107,21 +129,27 @@ public sealed class AgentPhysicalState
 public sealed class SemanticIntent
 {
     [JsonPropertyName("protocolVersion")]
+    [JsonRequired]
     public string ProtocolVersion { get; init; } = AgentLoopVocabulary.Version;
 
     [JsonPropertyName("messageType")]
+    [JsonRequired]
     public string MessageType { get; init; } = "intent";
 
     [JsonPropertyName("messageId")]
+    [JsonRequired]
     public string MessageId { get; init; } = "";
 
     [JsonPropertyName("agentId")]
+    [JsonRequired]
     public string AgentId { get; init; } = "";
 
     [JsonPropertyName("observedTick")]
+    [JsonRequired]
     public int ObservedTick { get; init; }
 
     [JsonPropertyName("verb")]
+    [JsonRequired]
     public string Verb { get; init; } = "";
 
     [JsonPropertyName("targetId")]
@@ -158,6 +186,7 @@ public sealed class IntentExecutionResult
     public string? Reason { get; init; }
 }
 
+/// <summary>Deserialization and contract validation for the transport-neutral agent loop.</summary>
 public static class AgentLoopProtocol
 {
     private static readonly JsonSerializerOptions StrictJsonOptions = new()
@@ -165,6 +194,7 @@ public static class AgentLoopProtocol
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
     };
 
+    /// <summary>Deserializes and validates an engine-owned perception snapshot.</summary>
     public static bool TryParsePerception(
         string json,
         out AgentPerceptionSnapshot? observation,
@@ -191,6 +221,7 @@ public static class AgentLoopProtocol
         return error == null;
     }
 
+    /// <summary>Deserializes and validates a Fusion intent against its source observation.</summary>
     public static bool TryParseIntent(
         string json,
         AgentPerceptionSnapshot observation,
@@ -205,6 +236,15 @@ public static class AgentLoopProtocol
         }
         try
         {
+            using var document = JsonDocument.Parse(json);
+            if (document.RootElement.ValueKind == JsonValueKind.Object
+                && document.RootElement.TryGetProperty("targetId", out var targetId)
+                && targetId.ValueKind == JsonValueKind.Null)
+            {
+                intent = null;
+                error = "intent targetId cannot be null";
+                return false;
+            }
             intent = JsonSerializer.Deserialize<SemanticIntent>(json, StrictJsonOptions);
         }
         catch (JsonException exception)
@@ -218,6 +258,7 @@ public static class AgentLoopProtocol
         return error == null;
     }
 
+    /// <summary>Validates an execution result against the intent it acknowledges.</summary>
     public static string? ValidateResult(IntentExecutionResult result, SemanticIntent intent)
     {
         if (result == null)

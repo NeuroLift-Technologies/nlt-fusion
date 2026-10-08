@@ -220,6 +220,32 @@ public static class ActionAssertions
         Check(AgentLoopProtocol.TryParseIntent(intentJson, observation, out var parsedIntent, out _)
             && parsedIntent?.TargetId == "desk_1",
             "intent DTO round-trips through JSON");
+        var missingProtocolVersion = System.Text.Json.Nodes.JsonNode.Parse(observationJson)!.AsObject();
+        missingProtocolVersion.Remove("protocolVersion");
+        Check(!AgentLoopProtocol.TryParsePerception(missingProtocolVersion.ToJsonString(), out _, out _),
+            "perception with a missing required envelope field is rejected");
+        var missingOccupied = System.Text.Json.Nodes.JsonNode.Parse(observationJson)!.AsObject();
+        missingOccupied["visibleEntities"]![0]!.AsObject().Remove("occupied");
+        Check(!AgentLoopProtocol.TryParsePerception(missingOccupied.ToJsonString(), out _, out _),
+            "visible entity with a missing required field is rejected");
+        var missingObservedTick = System.Text.Json.Nodes.JsonNode.Parse(intentJson)!.AsObject();
+        missingObservedTick.Remove("observedTick");
+        Check(!AgentLoopProtocol.TryParseIntent(missingObservedTick.ToJsonString(), observation, out _, out _),
+            "intent with a missing observedTick is rejected");
+        var waitIntent = new SemanticIntent
+        {
+            MessageId = "intent-42-wait",
+            AgentId = "avatar_1",
+            ObservedTick = 42,
+            Verb = "wait",
+        };
+        var waitIntentJson = System.Text.Json.JsonSerializer.Serialize(waitIntent);
+        Check(AgentLoopProtocol.TryParseIntent(waitIntentJson, observation, out _, out _),
+            "wait intent may omit its optional target");
+        var nullTargetIntent = System.Text.Json.Nodes.JsonNode.Parse(waitIntentJson)!.AsObject();
+        nullTargetIntent["targetId"] = null;
+        Check(!AgentLoopProtocol.TryParseIntent(nullTargetIntent.ToJsonString(), observation, out _, out _),
+            "intent with an explicit null target is rejected");
         var physicalWriteJson = intentJson[..^1] + ",\"position\":{\"x\":9,\"y\":0,\"z\":0}}";
         Check(!AgentLoopProtocol.TryParseIntent(physicalWriteJson, observation, out _, out _),
             "wire intent with an extra physical-write field is rejected");

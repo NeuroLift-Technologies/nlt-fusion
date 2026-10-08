@@ -161,6 +161,10 @@ A pure projection of Fusion's `FusionReadiness.to_dict()`. The renderer computes
 
 Burnout is a threshold predicate, not an accumulator: it holds when **all** needs are below their floor. This record exists because the fusion gate scores resilience *post hoc* from history, while a spectator needs the *current* picture and its trend.
 
+`nlt.state-feed.v1` does not define numeric floors for the four needs. Until Fusion defines and
+records the authoritative per-need floor transitions, producers must not derive episode history
+from the aggregate burnout-risk score.
+
 ```jsonc
 {
   "startTick": 1102,
@@ -193,6 +197,8 @@ Plain-language by requirement: the audience must understand the simulation witho
 
 ```jsonc
 {
+  "eventId": "b9a72e65-6c74-4b96-b7a1-c14ef4c0a11d",
+  "occurredAt": "2026-10-02T21:29:03Z",
   "tick": 1183,
   "agentId": "avatar_01",
   "kind": "aide_intervention",
@@ -201,6 +207,12 @@ Plain-language by requirement: the audience must understand the simulation witho
   "helped": true
 }
 ```
+
+`eventId` and `occurredAt` are stable across feed snapshots when available; consumers should use
+`eventId` to deduplicate and `occurredAt` for event chronology. `tick` remains the feed tick at
+which the event is projected, not a substitute for the original event timestamp. Pending Aide
+interventions must not be reported as helped or emitted as completed events until an outcome is
+recorded.
 
 `kind` values: `scene_enter`, `scene_exit`, `task_start`, `task_complete`, `task_failed`, `struggle_detected`, `aide_intervention`, `strategy_internalised`, `self_recognition`, `burnout_entered`, `burnout_recovered`, `fusion_ready`.
 
