@@ -38,6 +38,27 @@
 - **Update 2026-10-08 (Cline):** `AgentBrain` is now `CharacterBody3D` with `MoveAndSlide()` per-physics-tick + `AvatarCharacter : AgentBrain` capsule scene (`Agents/avatar.tscn`) + `Main.SyncLiveAvatars` spawning live Jolt bodies behind `EnableLiveAvatars=false`. `TerrainBuilderPhysics` still an empty placeholder; `EnsureAvatarGround` flat StaticBody3D covers levels without collision. AGENT-SYSTEM.md §8.6 is now stale and needs a refresh pass.
 - **Next action:** when agent embodiment gains collision, verify against the Jolt server (not GodotPhysics) and note any `CharacterBody3D` behavioural differences.
 
+### 🧭 ENG-002 — Godot replaces UE
+
+- **Status:** decision recorded; current repository docs now aligned.
+- **Decision (2026-10-07, Joshua):** Godot replaces UE 5.8 in its entirety as the world engine's authoritative runtime. The UE tree remains frozen, non-authoritative historical reference material, not a conformance oracle.
+- **Implementation scope:** Godot owns the complete physical simulation runtime, not just rendering. Fusion continues to own semantic cognition and intents; the transport-neutral boundary is tracked by `AGENT-LOOP-001`.
+- **Historical plans:** `world-engine-godot/MIGRATION-PLAN.md` and `RENDERER-PLAN.md` describe superseded decisions and must not be used as current implementation instructions.
+
+### 🧭 DIV-001 — Simulation ownership boundary (SUPERSEDED 2026-10-07)
+
+- **Status:** superseded by Joshua's clarification the same day — the original principle stands: **Fusion owns semantics; `nlt-world-engine` owns the physical.** No joint-ownership rewrite is happening.
+- **New requirement (2026-10-07, Joshua):** the AI must **"see" and interact with the physical world.** Concretely: agents need a perception surface (what they can see: nearby people, objects, places) and semantic actions (approach / look_at / use / sit / rest / communicate) whose physical effects — movement, collision, object state — are executed and owned by the world engine. This is the missing layer flagged in AGENT-SYSTEM.md gaps 1, 5, 6 and extends `AgentObservation` beyond its current self-state-only fields.
+
+### 🧭 PHYS-001 — Jolt Physics as the engine's 3D physics backend
+
+- **Status:** open — decision recorded; collision wiring still pending
+- **Owner:** **Joshua** (decision), survey by Fledge (2026-10-07)
+- **Decision (2026-10-07, Joshua):** the world engine's 3D physics engine is **Jolt**.
+- **Survey result:** `world-engine-godot/project.godot` already declares `[physics] 3d/physics_engine="Jolt Physics"` (line ~41). No Jolt addon under `world-engine-godot/addons/` — Joshua confirms Jolt is built into the Godot build in use. Consistent.
+- **Known gap this gates:** `AgentBrain` has no `CharacterBody3D`/physics body (AGENT-SYSTEM.md §8.6), `TerrainBuilderPhysics` is an empty placeholder — so movement still has no collision resolution. Wiring that up should target Jolt via `CharacterBody3D` + `move_and_slide()` and static level collision.
+- **Next action:** when agent embodiment gains collision, verify against the Jolt server (not GodotPhysics) and note any `CharacterBody3D` behavioural differences.
+
 ### 🔭 OBS-001 — Phase D observer (Godot renderer + spectator)
 
 - **Status:** open — D.1–D.5 delivered; **claimed by Kilo 2026-10-04**; mouse input and layout still need a human click-through
