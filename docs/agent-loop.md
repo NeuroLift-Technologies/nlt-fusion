@@ -2,8 +2,8 @@
 
 **Protocol:** [`nlt.agent-loop.v1`](contracts/agent-loop-v1.md)
 **Status:** protocol, engine governance/intent ingress, async loopback HTTP, and an opt-in
-single-avatar scene path are implemented. The local-GGUF end-to-end physical run still requires
-runtime verification on the test workstation.
+single-avatar scene path are implemented. A GDA headless run reached the local-GGUF Fusion endpoint
+and received HTTP 200; visible Jolt movement and arrival still require runtime verification.
 
 ## Purpose
 
@@ -114,8 +114,10 @@ Implemented:
   unauthorized actions, results, and rejection reasons.
 - Build and harness verification: `dotnet build world-engine-godot/world-engine-godot.csproj`
   succeeded; `dotnet run --project world-engine-godot/AgentHarness/AgentHarness.csproj` passed
-  38/38. A cross-process HTTP smoke test returned a correlated intent and rejected malformed input
-  with HTTP 422; the smoke test used Fusion's deterministic fallback, not the local GGUF.
+  38/38. Cross-process HTTP smoke tests returned a correlated intent and rejected malformed input
+  with HTTP 422 using the deterministic fallback. A GDA run with the local GGUF configured started
+  the main scene and received HTTP 200; a direct request to that model returned a correlated
+  `approach` intent for `agent_loop_test_target`.
 
 Not implemented yet:
 
@@ -125,9 +127,9 @@ Not implemented yet:
   Feed avatars remain observer-only for this test.
 - Fusion's decision seam is not connected to `SessionOrchestrator`; the local agent-loop endpoint
   uses its own decision source configured through `FUSION_GGUF_MODEL`.
-- A full in-scene run through governance, Jolt movement, and subsequent perception has not yet
-  been verified after adding the opt-in scene composition. The HTTP smoke test is not that
-  end-to-end test.
+- The GDA preflight is headless and does not prove the avatar visibly moved or reached the marker,
+  nor that a subsequent perception reflected that movement. Verify those physical outcomes in an
+  interactive runtime; GDA's live daemon is unavailable on Windows.
 - The cross-process smoke test is not automated in CI, and production observer-field composition
   remains separate work.
 
@@ -159,4 +161,5 @@ fallback approaches the test target; the GGUF may choose `approach` or `wait`. G
 each intent was accepted or rejected. For an approach, verify the local avatar moves toward the
 marker under Jolt and idles within its one-metre arrival radius. Stop with `Ctrl+C`; unset the
 environment variables afterward to restore the default observer-only run. The test target and
-single-avatar driver are created only when the opt-in flag is set.
+single-avatar driver are created only when the opt-in flag is set. A headless GDA preflight can
+verify startup and HTTP communication but cannot establish visible movement or target arrival.
