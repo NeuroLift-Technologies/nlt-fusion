@@ -12,14 +12,14 @@ using NltWorldEngine.Agents;
 /// </summary>
 internal static class Program
 {
-    /// <summary>
-    /// Runs ActionAssertions.RunAll() and writes the result.
-    /// Returns 0 when all assertions pass, 1 when any fail.
-    /// </summary>
-    private static int Main()
-    {
-        var ok = ActionAssertions.RunAll();
-        Console.WriteLine(ok ? "RESULT: all assertions passed" : "RESULT: FAILURES present");
-        return ok ? 0 : 1;
-    }
+	/// <summary>
+	/// Runs ActionAssertions.RunAll() and writes the result.
+	/// Returns 0 when all assertions pass, 1 when any fail.
+	/// </summary>
+	private static int Main()
+	{
+		var ok = ActionAssertions.RunAll();
+		Console.WriteLine(ok ? "RESULT: all assertions passed" : "RESULT: FAILURES present");
+		return ok ? 0 : 1;
+	}
 }

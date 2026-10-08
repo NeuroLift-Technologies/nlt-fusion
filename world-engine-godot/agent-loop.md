@@ -12,13 +12,13 @@ nearby people, objects, and places, choose a semantic action, and observe the ph
 
 ```text
 Godot physical perception
-        ↓
+		↓
 Fusion semantic decision
-        ↓
-ASFDK-C# governance gate (engine-side)
-        ↓
-Godot physical validation and execution
-        ↓
+		↓
+ASFDK-C# governance gate
+		↓
+Godot intent validation and physical execution
+		↓
 Next physical perception
 ```
 
@@ -28,34 +28,12 @@ Next physical perception
 | --- | --- |
 | Position, velocity, scene, visibility, affordances, occupancy, collision, and physical effects | `nlt-world-engine` |
 | Avatar/Aide meaning, goals, needs, coaching, burnout/readiness, and semantic intent | `neurolift-ai-fusion` |
-| Cross-cutting interaction governance | `asfdk-csharp`, invoked through an engine-side governance boundary |
 | Intent validation, target and affordance checks, movement, and interaction consequences | `nlt-world-engine` |
 | Observer presentation | Displays each owner's supplied data without deriving or overwriting the other's facts |
 
 Fusion sends **intent**, not physical commands. It cannot set coordinates or velocity, teleport an
 agent, or directly mutate an object's state. The world engine checks an intent against current world
 conditions and owns every resulting physical effect.
-
-## ASFDK governance boundary
-
-The runtime uses **ASFDK-C#** as a cross-cutting governance check on the engine's
-intent-ingress path: Fusion proposes an intent, the governance boundary evaluates the applicable
-interaction policy, and only then does the engine perform its independent physical checks and
-execute an allowed intent. ASFDK does not own world state or replace checks for visibility, range,
-collision, affordances, or occupancy. This is an in-process engine component, not another network
-hop or a Fusion authority.
-
-`AsfdkGovernanceGate` adapts the available ASFDK APIs to `IGovernanceGate`: it sanitizes intent
-text, denies Orange-or-higher RRT assessments with interventions, and carries Sleepwalker distress
-as a governance note. Intent denials include an explanation. The current gate-unavailable policy is
-fail-open with an explicit audit explanation; physical validation still applies. This policy should
-be revisited before production use. The async check is performed outside Godot's physics/render
-loop.
-
-This governance stage is an implementation boundary, not a new `nlt.agent-loop.v1` wire message.
-If it denies an intent, the engine does not apply physical effects and returns an explicit rejection.
-The gate is wired into `IntentIngress`; however, the loop driver is not yet instantiated in the
-running Godot scene.
 
 ## Messages and actions
 
@@ -101,19 +79,18 @@ Implemented:
   undeclared fields such as physical-write commands.
 - Strict protocol and correlation/target validation in Godot:
   `world-engine-godot/Agents/AgentLoopProtocol.cs`.
-- `AsfdkGovernanceGate` and `IntentIngress`: ASFDK review, contract validation, live target
-  re-checks, and engine-owned locomotion dispatch.
+- `AsfdkGovernanceGate` and `IntentIngress`: ASFDK review, live target re-checks, and
+  engine-owned locomotion dispatch. Gate unavailability currently fails open with an explicit
+  explanation; physical validation still applies.
 - A transport-neutral Fusion validation seam around an injected semantic decision callback:
   `neurolift-ai-fusion/src/fusion/agent_loop.py`.
-- Godot's asynchronous `FusionHttpLink` and `AgentLoopDriver`, targeting Fusion's
+- Godot's async `FusionHttpLink` and `AgentLoopDriver`, targeting Fusion's
   `POST /agent-loop/perception` endpoint with a request timeout and one in-flight request per
   avatar.
 - Focused Python and C# contract assertions for serialization, stale or hidden targets,
   unauthorized actions, results, and rejection reasons.
-- Build and harness verification: `dotnet build world-engine-godot/world-engine-godot.csproj`
-  succeeded; `dotnet run --project world-engine-godot/AgentHarness/AgentHarness.csproj` passed
-  36/36. A cross-process HTTP smoke test returned a correlated intent and rejected malformed input
-  with HTTP 422; the smoke test used Fusion's deterministic fallback, not the local GGUF.
+- A cross-process HTTP smoke test returned a correlated intent and rejected malformed input with
+  HTTP 422 using Fusion's deterministic fallback, not the local GGUF.
 
 Not implemented yet:
 

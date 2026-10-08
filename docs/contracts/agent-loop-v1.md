@@ -12,8 +12,9 @@ read-only observer/fixture projection.
 ```text
 Godot physical tick
   └─ perception snapshot ──▶ Fusion semantic decision
-                                └─ intent ──▶ Godot validation and physical execution
-                                                   └─ next snapshot ──▶ Fusion
+                                └─ intent ──▶ engine-side ASFDK governance check
+                                                 └─ Godot physical validation and execution
+                                                       └─ next snapshot ──▶ Fusion
 ```
 
 | Data | Authority |
@@ -26,6 +27,15 @@ Godot physical tick
 Fusion must not send coordinates, velocity, teleport requests, or object-state writes. An intent is
 a request, not authority: the engine may reject it based on current physical state and reports the
 reason rather than silently dropping it.
+
+The runtime places an in-process ASFDK-C# governance boundary at intent ingress, before physical
+execution. `AsfdkGovernanceGate` is implemented and wired into `IntentIngress`; its current policy
+mapping applies prompt defense, RRT crisis assessment, and Sleepwalker distress assessment.
+Intent-specific TOI policy mapping remains pending, and assessments must not be treated as TOI
+authorization. This is an implementation-level check, not a message or authority transfer in this
+protocol. ASFDK governance does not replace the engine's physical validation. The current
+gate-unavailable fallback is fail-open with an audit explanation and must be reviewed before
+production use.
 
 ## 2. Perception snapshot
 
@@ -113,12 +123,16 @@ time; a target's prior visibility does not guarantee that it is still available.
   actually occurred. Fusion must not infer physical success from issuing an intent.
 - Validation and execution are separate: validate schema/correlation/target, then re-check current
   engine-side range, visibility, collision, and affordance state at execution.
+- The ASFDK-C# governance check is separate from physical validation. A governance denial must
+  prevent execution and be reported as a rejection; this contract does not define the internal
+  ASFDK policy or adapter API.
 
 ## 5. Transport and observer
 
-Transport is intentionally undecided. The DTOs and schema do not assume file polling, HTTP,
-WebSocket, in-process calls, or a particular port. Do not add listeners or transport dependencies
-until the architecture choice is approved.
+The DTOs and schema are transport-agnostic and do not require file polling, HTTP, WebSocket,
+in-process calls, or a particular port. The current Godot integration uses asynchronous loopback
+HTTP to Fusion's `/agent-loop/perception` endpoint; this is an implementation choice, not a
+transport requirement imposed on other compliant peers.
 
 `nlt.state-feed.v1` is not a substitute for this loop. Before production observer integration, its
 physical fields must be populated from engine-owned state and Fusion fields from Fusion-owned state;

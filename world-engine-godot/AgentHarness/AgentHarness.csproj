@@ -25,5 +25,7 @@
     <Reference Include="NltWorldEngine">
       <HintPath>..\.godot\mono\temp\bin\Debug\NLT World Engine (Godot).dll</HintPath>
     </Reference>
+    <!-- Governance assertions use Asfdk types directly (real gate, not a stub). -->
+    <ProjectReference Include="..\..\..\asfdk-csharp\src\Asfdk\Asfdk.csproj" />
   </ItemGroup>
 </Project>

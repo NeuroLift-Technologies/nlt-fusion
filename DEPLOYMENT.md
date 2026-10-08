@@ -14,7 +14,7 @@
 
 ## Historical UE 5.8 Deployment TL;DR
 
-The historical UE 5.8 deployment used a rendered simulation on the developer's machine as the primary training and spectator path. An optional headless server target was documented as future infrastructure for that UE world.
+A rendered simulation on the developer's machine is the primary build and spectator path, now on the Godot 4.7.2 desktop app. A headless server target is optional later infrastructure for running the same physical world without a rendered viewport.
 
 **No spectator viewer currently exists.** The Babylon.js web viewer (`_archive/world-engine-v2/`) was archived and contained no network code at all; `Content/Web/` holds a 2D canvas viewer that was never wired up. In the target architecture the Godot desktop app is the spectator, with a Python sidecar owning HTTP 8765 and WebSocket 8766 — Godot ships no server of its own.
 
@@ -28,9 +28,11 @@ The Vercel/static-site instructions later in this document targeted `world-engin
 
 ---
 
-## Historical UE 5.8 Deployment Architecture
+## Historical UE Deployment Architecture
 
-The historical UE 5.8 deployment used a rendered Unreal runtime on the machine where the human watched the training world:
+The diagrams below document the former UE-based deployment concept only. They are historical
+reference material, not the current deployment architecture; Godot 4.7.2 is the authoritative
+runtime.
 
 ```text
                     ┌─────────────────────────────────┐
@@ -46,7 +48,8 @@ The historical UE 5.8 deployment used a rendered Unreal runtime on the machine w
                     └─────────────────────────────────┘
 ```
 
-The historical UE 5.8 reference also described an optional headless path using a future `WorldEngineServer` target or a `-nullrhi` commandlet to run the same UE physical world without a rendered viewport:
+The historical optional headless path used a future `WorldEngineServer` target or a `-nullrhi`
+commandlet to run the same UE physical world without a rendered viewport:
 
 ```text
                     ┌─────────────────────────────────┐
