@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <AssemblyName>AgentHarness</AssemblyName>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+
+  <!--
+    References the Godot project's built assemblies. These live under .godot/ which is gitignored,
+    so `dotnet build world-engine-godot.csproj` must run at least once before this project builds.
+    Paths are relative to this csproj (world-engine-godot/AgentHarness/).
+    world-engine-godot.csproj carries <Compile Remove="AgentHarness/**/*.cs" /> so these sources
+    are NOT swept into the Godot assembly.
+  -->
+  <ItemGroup>
+    <Reference Include="GodotSharp">
+      <HintPath>..\.godot\mono\temp\bin\Debug\GodotSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="NltWorldEngine">
+      <HintPath>..\.godot\mono\temp\bin\Debug\NLT World Engine (Godot).dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>
