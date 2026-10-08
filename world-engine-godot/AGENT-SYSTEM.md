@@ -3,9 +3,11 @@
 > **Scope:** `world-engine-godot/Agents/` — the action seam, the movement authority, and the two
 > controllers behind it.
 >
-> **Status (2026-10-05):** compiles clean; self-test is 12/12. **Not yet wired into the running
-> scene.** `Main.cs` still drives residents from the state feed, and no `AgentBrain` is instantiated
-> anywhere. See [§8 Known gaps](#8-known-gaps) — read that before planning work on top of this.
+> **Status:** agent-control assertions can be run in or out of Godot. The standalone
+> `AgentHarness` is a console assertion runner, not a live simulation or a Fusion connection.
+> Agent control is **not yet wired into the running scene**: `Main.cs` still drives residents from
+> the state feed, and no `AgentBrain` is instantiated anywhere. See [§8 Known gaps](#8-known-gaps)
+> before planning work on top of this.
 >
 > **Naming divergence from the plan:** `MIGRATION-PLAN.md` §2.6b/2.6c names these classes
 > `DeterministicUtilityController` and `LlmCommandController`. The files on disk are
@@ -132,9 +134,9 @@ dotnet build world-engine-godot.csproj
 Expected: `Build succeeded. 0 Error(s)` with 2 pre-existing `CS8601` warnings in `WorldView.cs`.
 Those are unrelated to this directory — do not attribute them to a change here.
 
-### 5.2 Run the self-test (verified)
+### 5.2 Run the assertions
 
-Two entry points, same 12 assertions.
+The same `ActionAssertions.RunAll()` checks have two entry points:
 
 **Inside Godot** (needs a Godot 4.7.2 .NET build on `PATH`):
 
@@ -144,19 +146,21 @@ godot --headless --path . --script res://Agents/ActionSelfTest.cs
 
 Exits `0` when all pass, `1` otherwise.
 
-**Out of engine** — the assertions are a plain static class precisely so they *can* run without
-launching Godot. The project at **`AgentHarness/`** references the built assembly and drives
-`ActionAssertions.RunAll()` from a plain console `Main` (see below).
+**Out of engine** — `AgentHarness/` is a plain .NET console runner that calls
+`ActionAssertions.RunAll()` against the already-built Godot assembly. It does not launch Godot,
+instantiate the running scene, connect to Fusion, or test live transport or physical interactions.
+It verifies the action/controller logic and protocol validation assertions only.
 
 ```powershell
 cd C:\Users\joshd\nlt-repos\nlt-world-engine\world-engine-godot
 dotnet build world-engine-godot.csproj                 # produces the referenced DLLs
-dotnet run --project AgentHarness/AgentHarness.csproj  # exits 0 = 12/12, 1 = failures
+dotnet run --project AgentHarness/AgentHarness.csproj  # exits 0 = all assertions pass
 ```
 
-`AgentHarness/Program.cs` is four lines — call `ActionAssertions.RunAll()`, print `RESULT`, return
-`0`/`1` — so it is CI-shaped: any job that can `dotnet build` the Godot project can run the
-assertions without a Godot binary on `PATH`.
+`AgentHarness/Program.cs` calls `ActionAssertions.RunAll()`, prints `RESULT`, and returns `0` on
+success or `1` on failure. It is CI-friendly: after the Godot project has been built, a job can run
+the assertions without a Godot binary on `PATH`. The check count may grow as assertions are added;
+the runner reports the actual passed/failed totals.
 
 How the two projects coexist in one folder:
 

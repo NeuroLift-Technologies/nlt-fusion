@@ -29,6 +29,22 @@ public interface IAgentController
 /// Locomotion realism lives here and nowhere else — acceleration and deceleration caps, turn-rate
 /// limits, friction and inertia. A model can ask to go north; it cannot ask to be 40 m away next
 /// tick. That is the entire point of keeping this separate from <see cref="IAgentController"/>.
+///
+/// Two execution paths use this class:
+/// <list type="bullet">
+///   <item>
+///     <b>Harness / test path</b> — no physics body. <see cref="Step"/> integrates
+///     <see cref="Position"/> directly and <see cref="SyncFromPhysics"/> is never called.
+///     This is what <c>ActionAssertions</c> uses.
+///   </item>
+///   <item>
+///     <b>Live physics path</b> — <c>AgentBrain._PhysicsProcess</c> calls
+///     <see cref="SyncFromPhysics"/> before each <see cref="Step"/> to bring the XZ velocity
+///     back from the Jolt <c>CharacterBody3D</c> after collision resolution.
+///     <see cref="Position"/> drifts in this path and must not be used for authoritative placement;
+///     <c>AgentBrain.GlobalPosition</c> is authoritative instead.
+///   </item>
+/// </list>
 /// </summary>
 public sealed class LocomotionController
 {
@@ -47,6 +63,10 @@ public sealed class LocomotionController
     /// <summary>Speed below which the agent counts as standing still (drives the idle animation).</summary>
     public float StopSpeed { get; set; } = 0.05f;
 
+    /// <summary>
+    /// Integrated position for the harness/test path. Not authoritative in the live physics path —
+    /// use <c>AgentBrain.GlobalPosition</c> there.
+    /// </summary>
     public Vector3 Position { get; private set; }
 
     public Vector3 Velocity { get; private set; }
@@ -100,5 +120,19 @@ public sealed class LocomotionController
     {
         Position = position;
         Velocity = Vector3.Zero;
+    }
+
+    /// <summary>
+    /// Sync the XZ velocity back from the physics body so the accel/decel ramps start from the
+    /// actual post-collision speed each tick. Called by <c>AgentBrain._PhysicsProcess</c> before
+    /// <see cref="Step"/> in the live physics path.
+    ///
+    /// In the harness/test path (no CharacterBody3D) this is never called and the controller
+    /// integrates its own <see cref="Position"/> — both modes are valid and intentional.
+    /// </summary>
+    public void SyncFromPhysics(Vector3 physicsVelocity)
+    {
+        // Only the XZ plane is locomotion-owned. Y (gravity) belongs to the physics body.
+        Velocity = new Vector3(physicsVelocity.X, Velocity.Y, physicsVelocity.Z);
     }
 }

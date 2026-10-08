@@ -1,8 +1,12 @@
-# NLT World Engine — Godot Renderer & Spectator Plan
+# NLT World Engine — Historical Godot Renderer & Spectator Plan
 
-**Status:** rewritten 2026-10-02. Supersedes the port-and-fidelity plan.
-**Thread:** `MIGRATE-001`
+**Status:** **SUPERSEDED 2026-10-07 by ENG-002.** Historical renderer-only scope; do not use as current architecture or implementation plan.
+**Thread:** `MIGRATE-001` (superseded)
 **Owner:** Joshua W. Dorsey, Sr. · **Authority:** OTOI §4.4
+
+> Joshua's ENG-002 decision makes Godot 4.7.2 the complete authoritative world-engine runtime,
+> replacing UE 5.8. This document's renderer-only boundary and its claim that Fusion owns the
+> simulation are no longer current.
 
 ---
 

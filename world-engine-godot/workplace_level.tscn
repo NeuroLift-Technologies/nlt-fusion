@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://cisrvbtyn1jdi"]
 
 [ext_resource type="PackedScene" uid="uid://bwgorccg34rb6" path="res://assets/levels/Workplace_Level.fbx" id="1_tp8sa"]
-[ext_resource type="Script" uid="uid://b4tkplvh7fq40" path="res://addons/sky_3d/src/SkyDome.gd" id="2_e2oaf"]
 
 [node name="Workplace_Level" unique_id=1121421424 instance=ExtResource("1_tp8sa")]
 
@@ -15,5 +14,3 @@ visible = false
 visible = false
 
 [node name="SM_SkySphere" parent="." index="7" unique_id=1841464742]
-script = ExtResource("2_e2oaf")
-wind_direction = 2.35619451204804

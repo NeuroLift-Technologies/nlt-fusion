@@ -45,6 +45,7 @@ public partial class ObserverRoot : Control
     private Label _fixtureBadge = null!;
     private Button _playButton = null!;
     private Button _focusButton = null!;
+    private OptionButton _followTargetPicker = null!;
     private HBoxContainer _speedRow = null!;
     private HBoxContainer _levelRow = null!;
     private PanelContainer _settingsPanel = null!;
@@ -96,6 +97,9 @@ public partial class ObserverRoot : Control
     /// request; the composition root decides and reports back through <see cref="SetFocusActive"/>.
     /// </summary>
     public event System.Action? FocusRequested;
+
+    /// <summary>Raised when the selected camera-follow target changes; empty means the default feed avatar.</summary>
+    public event System.Action<string>? FollowTargetChanged;
 
     public AccessibilitySettings A11y => _a11y;
 
@@ -435,6 +439,15 @@ public partial class ObserverRoot : Control
         _focusButton.WithShortcut(Key.F);
         _focusButton.Pressed += () => FocusRequested?.Invoke();
         row.AddChild(_focusButton);
+
+        _followTargetPicker = new OptionButton
+        {
+            CustomMinimumSize = new Vector2(130, 0),
+            SizeFlagsHorizontal = ControlSizeFlags.ShrinkBegin,
+        };
+        _followTargetPicker.TooltipText = "Choose which resident or live avatar the camera follows";
+        _followTargetPicker.ItemSelected += OnFollowTargetSelected;
+        row.AddChild(_followTargetPicker);
 
         row.AddChild(Ui.Heading("speed", _a11y.Palette.TextMuted));
         _speedRow = Ui.InlineRow(2);
@@ -827,6 +840,50 @@ public partial class ObserverRoot : Control
         RefreshStatus();
     }
 
+    private void OnFollowTargetSelected(long index)
+    {
+        if (_followTargetPicker == null || index < 0 || index >= _followTargetPicker.ItemCount)
+            return;
+        FollowTargetChanged?.Invoke(_followTargetPicker.GetItemMetadata((int)index).AsString());
+    }
+
+    /// <summary>Rebuild the follow selector from the currently displayed document.</summary>
+    public void SetFollowTargets(IReadOnlyList<AgentState> agents, string selectedId, bool includeLocalAvatar)
+    {
+        if (_followTargetPicker == null)
+            return;
+
+        _followTargetPicker.ItemSelected -= OnFollowTargetSelected;
+        _followTargetPicker.Clear();
+        if (includeLocalAvatar)
+        {
+            _followTargetPicker.AddItem("Local avatar");
+            _followTargetPicker.SetItemMetadata(_followTargetPicker.ItemCount - 1, "__local_avatar__");
+        }
+        foreach (AgentState agent in agents)
+        {
+            _followTargetPicker.AddItem(agent.Name);
+            _followTargetPicker.SetItemMetadata(_followTargetPicker.ItemCount - 1, agent.Id);
+        }
+        _followTargetPicker.AddItem("World view (no follow)");
+        _followTargetPicker.SetItemMetadata(_followTargetPicker.ItemCount - 1, "__none__");
+
+        string lookupId = string.IsNullOrEmpty(selectedId) ? "__none__" : selectedId;
+        int selectedIndex = 0;
+        for (int i = 0; i < _followTargetPicker.ItemCount; i++)
+        {
+            if (_followTargetPicker.GetItemMetadata(i).AsString() == lookupId)
+            {
+                selectedIndex = i;
+                break;
+            }
+        }
+        if (_followTargetPicker.ItemCount > 0)
+            _followTargetPicker.Select(selectedIndex);
+        _followTargetPicker.Disabled = _followTargetPicker.ItemCount == 0;
+        _followTargetPicker.ItemSelected += OnFollowTargetSelected;
+    }
+
     private void RefreshStatus()
     {
         if (_status == null)
@@ -858,6 +915,20 @@ public partial class ObserverRoot : Control
     /// Reflect the world's follow state on the Focus button. Called by the composition root once it has
     /// acted on <see cref="FocusRequested"/> — the observer does not move the camera itself.
     /// </summary>
+    public void SetFocusTarget(string selectedId)
+    {
+        if (_followTargetPicker == null)
+            return;
+        for (int i = 0; i < _followTargetPicker.ItemCount; i++)
+        {
+            if (_followTargetPicker.GetItemMetadata(i).AsString() == selectedId)
+            {
+                _followTargetPicker.Select(i);
+                return;
+            }
+        }
+    }
+
     public void SetFocusActive(bool on)
     {
         if (_focusButton == null)

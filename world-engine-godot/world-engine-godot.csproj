@@ -14,5 +14,13 @@
   -->
   <ItemGroup>
     <Compile Remove="AgentHarness/**/*.cs" />
+    <Compile Remove="AgentLoopEndpoint/**/*.cs" />
+  </ItemGroup>
+
+  <!-- ASFDK-C# governance at intent ingress (AGENT-LOOP-001). Local project reference
+       so the engine calls the real PromptDefense / RRT / Sleepwalker / TOI APIs.
+       No transport, no Fusion dependency — engine-side only. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\asfdk-csharp\src\Asfdk\Asfdk.csproj" />
   </ItemGroup>
 </Project>

@@ -1,3 +1,5 @@
+using NltWorldEngine;
+using NltWorldEngine.Agents;
 using Godot;
 using NltWorldEngine.Feed;
 using NltWorldEngine.Observer;
@@ -15,7 +17,19 @@ public partial class Main : NltWorldEngine.WorldView
 	private FeedTransport _feed = null!;
 	private ObserverRoot _observer = null!;
 	private bool _following;
+	private string _followTargetId = "";
+	private const string LocalAvatarTargetId = "__local_avatar__";
 	private string _sceneId = "";
+	/// <summary>
+	/// When true, spawn a live Jolt avatar per feed agent. Off by default so the observer
+	/// fixture path is unchanged until the loop is validated.
+	/// </summary>
+	[Export] public bool EnableLiveAvatars { get; set; } = false;
+
+	private PackedScene? _avatarScene;
+
+	private readonly System.Collections.Generic.Dictionary<string, AvatarCharacter> _avatars = new();
+
 
 	public override void _Ready()
 	{
@@ -39,6 +53,7 @@ public partial class Main : NltWorldEngine.WorldView
 		ObserverCapture.TryCreate(this);
 		_observer.LevelChanged += ApplyRequestedLevel;
 		_observer.FocusRequested += ToggleFollow;
+		_observer.FollowTargetChanged += SelectFollowTarget;
 		ApplyRequestedLevel();
 	}
 
@@ -62,17 +77,38 @@ public partial class Main : NltWorldEngine.WorldView
 	{
 		_following = !_following;
 		if (_following)
-			Follow(CurrentAvatarPoint);
+			Follow(CurrentFollowTargetPoint);
 		else
 			Follow(null);
 		_observer.SetFocusActive(_following);
 	}
 
-	/// <summary>The followed avatar's world position from the document on show, or null without one.</summary>
-	private Vector3? CurrentAvatarPoint()
+	private void SelectFollowTarget(string targetId)
 	{
-		var avatar = FeedTransport.PrimaryAvatar(_feed.Current);
-		return avatar?.Position3();
+		_followTargetId = targetId == "__none__" ? "" : targetId;
+		_observer.SetFollowTargets(_feed.Current?.Agents ?? System.Array.Empty<AgentState>(),
+			_followTargetId, true);
+		if (_following)
+			Follow(CurrentFollowTargetPoint);
+	}
+
+	/// <summary>Read the selected subject's current world position.</summary>
+	private Vector3? CurrentFollowTargetPoint()
+	{
+		if (_followTargetId == "__none__")
+			return null;
+		if (_followTargetId == LocalAvatarTargetId)
+		{
+			if (_avatars.TryGetValue(LocalAvatarTargetId, out AvatarCharacter? local) && IsInstanceValid(local))
+				return local.GlobalPosition;
+			return null;
+		}
+
+		if (string.IsNullOrEmpty(_followTargetId))
+			return FeedTransport.PrimaryAvatar(_feed.Current)?.Position3();
+
+		AgentState? selected = _feed.Current?.Agent(_followTargetId);
+		return selected?.Position3();
 	}
 
 	/// <summary>
@@ -95,5 +131,118 @@ public partial class Main : NltWorldEngine.WorldView
 		}
 
 		Residents.Sync(doc, ReducedMotion);
+
+		SyncLiveAvatars(doc);
+		EnsureFollowableLocalAvatar(doc);
+		if (string.IsNullOrEmpty(_followTargetId))
+			_followTargetId = FeedTransport.PrimaryAvatar(doc)?.Id ?? "";
+		_observer.SetFollowTargets(doc.Agents, _followTargetId, EnableLiveAvatars);
+		if (_following)
+			Follow(CurrentFollowTargetPoint);
+	}
+
+	private void EnsureFollowableLocalAvatar(NltWorldEngine.StateFeed doc)
+	{
+		if (_avatars.TryGetValue(LocalAvatarTargetId, out AvatarCharacter? current) && IsInstanceValid(current))
+			return;
+
+		_avatarScene ??= GD.Load<PackedScene>("res://Agents/avatar.tscn");
+		if (_avatarScene == null)
+			return;
+		EnsureAvatarGround();
+		AvatarCharacter local = _avatarScene.Instantiate<AvatarCharacter>();
+		local.Name = LocalAvatarTargetId;
+		local.DisplayName = "Local Model";
+		local.ReducedMotion = ReducedMotion;
+		AddChild(local);
+		AgentState? primary = FeedTransport.PrimaryAvatar(doc);
+		Vector3 spawn = primary?.Position3() ?? Vector3.Zero;
+		local.GlobalPosition = spawn + new Vector3(2f, 1f, 0f);
+		local.Observe(local.GlobalPosition, new[] { 0.5f, 0.5f, 0.5f, 0.5f }, doc.Scene.Id);
+		_avatars[LocalAvatarTargetId] = local;
+	}
+
+	/// <summary>
+	/// Spawn/sync one <see cref="AvatarCharacter"/> per feed agent when live avatars are
+	/// enabled. Feed <see cref="Resident"/> ghosts keep rendering unchanged — avatars are
+	/// additive, offset +2 m on X so both are visible side by side for comparison.
+	/// No transport, no Fusion, no ASFDK here: default UtilityAgentController only.
+	/// </summary>
+	private void SyncLiveAvatars(NltWorldEngine.StateFeed doc)
+	{
+		if (!EnableLiveAvatars)
+			return;
+
+		_avatarScene ??= GD.Load<PackedScene>("res://Agents/avatar.tscn");
+		if (_avatarScene == null)
+			return;
+
+		EnsureAvatarGround();
+
+		const string localId = LocalAvatarTargetId;
+		if (!_avatars.TryGetValue(localId, out AvatarCharacter? localAvatar) || !IsInstanceValid(localAvatar))
+		{
+			localAvatar = _avatarScene.Instantiate<AvatarCharacter>();
+			localAvatar.Name = localId;
+			localAvatar.DisplayName = "Local Model";
+			localAvatar.ReducedMotion = ReducedMotion;
+			AddChild(localAvatar);
+			AgentState? primary = FeedTransport.PrimaryAvatar(doc);
+			Vector3 spawn = primary?.Position3() ?? Vector3.Zero;
+			localAvatar.GlobalPosition = spawn + new Vector3(2f, 1f, 0f);
+			localAvatar.Observe(localAvatar.GlobalPosition, new[] { 0.5f, 0.5f, 0.5f, 0.5f }, doc.Scene.Id);
+			_avatars[localId] = localAvatar;
+		}
+
+		var seen = new System.Collections.Generic.HashSet<string> { localId };
+		foreach (var agent in doc.Agents)
+		{
+			seen.Add(agent.Id);
+			if (!_avatars.TryGetValue(agent.Id, out var avatar) || !IsInstanceValid(avatar))
+			{
+				avatar = _avatarScene.Instantiate<AvatarCharacter>();
+				avatar.Name = agent.Id;
+				avatar.DisplayName = agent.Name;
+				avatar.ReducedMotion = ReducedMotion;
+				AddChild(avatar);
+				// Offset so the live body doesn't z-fight the feed ghost.
+				avatar.GlobalPosition = agent.Position3() + new Vector3(2f, 1f, 0f);
+				avatar.Observe(avatar.GlobalPosition,
+					new[] { 0.5f, 0.5f, 0.5f, 0.5f }, doc.Scene.Id);
+				_avatars[agent.Id] = avatar;
+			}
+			else
+			{
+				avatar.ReducedMotion = ReducedMotion;
+			}
+		}
+
+		var gone = new System.Collections.Generic.List<string>();
+		foreach (var id in _avatars.Keys)
+			if (!seen.Contains(id))
+				gone.Add(id);
+		foreach (var id in gone)
+		{
+			if (IsInstanceValid(_avatars[id]))
+				_avatars[id].QueueFree();
+			_avatars.Remove(id);
+		}
+	}
+
+	/// <summary>
+	/// Flat Jolt ground so <c>IsOnFloor()</c> has something to stand on. Levels like
+	/// workplace (FBX instance, no collision) otherwise leave avatars falling forever.
+	/// </summary>
+	private void EnsureAvatarGround()
+	{
+		if (GetNodeOrNull<StaticBody3D>("AvatarGround") != null)
+			return;
+		var ground = new StaticBody3D { Name = "AvatarGround" };
+		var shape = new CollisionShape3D();
+		var box = new BoxShape3D { Size = new Vector3(500f, 1f, 500f) };
+		shape.Shape = box;
+		ground.AddChild(shape);
+		ground.Position = new Vector3(0f, -0.5f, 0f);
+		AddChild(ground);
 	}
 }

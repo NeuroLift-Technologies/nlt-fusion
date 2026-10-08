@@ -20,12 +20,20 @@ public partial class Resident : Node3D
 
     public override void _Ready()
     {
-        var packed = GD.Load<PackedScene>(ModelPath);
-        if (packed != null)
+        Node? model = GetNodeOrNull<Node>("Model");
+        if (model == null)
         {
-            var model = packed.Instantiate();
-            model.Name = "Model";
-            AddChild(model);
+            var packed = GD.Load<PackedScene>(ModelPath);
+            if (packed != null)
+            {
+                model = packed.Instantiate();
+                model.Name = "Model";
+                AddChild(model);
+            }
+        }
+
+        if (model != null)
+        {
             _anim = model.GetNodeOrNull<AnimationPlayer>("AnimationPlayer");
 
             // This clip targets ResidentRig/Skeleton3D explicitly. NLTHumanoid uses :Bone

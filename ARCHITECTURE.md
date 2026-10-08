@@ -1,10 +1,10 @@
 # NeuroLift World Engine — UE 5.8 Subsystem Reference
 
-> **This document describes the UE 5.8 implementation, which is migrating to Godot 4.7.2 under thread `MIGRATE-001`.**
+> **Historical reference:** this document describes the frozen UE 5.8 implementation. Per Joshua's ENG-002 decision (2026-10-07), Godot 4.7.2 replaces UE in its entirety as the authoritative runtime.
 >
-> It is retained as the **frozen behavioural oracle**: a description of the semantics the Godot port must reproduce. Read it for that purpose, not as the target architecture. The target is in `world-engine-godot/MIGRATION-PLAN.md`.
+> It is retained for historical context only. It is not a behavioral oracle, conformance target, or target architecture. Do not change UE simulation behavior; current implementation work belongs in `world-engine-godot/`.
 >
-> **Do not change UE simulation behaviour** (plan item 1.6). Where this document says "UE", read "the physical layer, currently UE".
+> Do not change UE simulation behavior. References to UE below describe its historical implementation only; the physical layer is now implemented authoritatively in Godot.
 
 ## The Vision
 
@@ -16,7 +16,7 @@
 >
 > The physical substrate is Godot 4.7.2 (C#). The engine is an implementation detail of the physical layer and may change by Joshua's decision under OTOI §4.4; the boundary between Fusion and the world engine does not.
 
-The physical layer is the **driving engine** for the Avatar-Aide-Advocate system — currently UE 5.8, moving to Godot 4.7.2.
+The physical layer is the **driving engine** for the Avatar-Aide-Advocate system; its authoritative implementation is Godot 4.7.2.
 This document supersedes the earlier Cloudflare/Vercel MMO architecture.
 
 ---
@@ -31,7 +31,7 @@ This document supersedes the earlier Cloudflare/Vercel MMO architecture.
 
 ## Architecture Overview
 
-**Primary runtime:** the rendered simulation on the developer's machine — currently a UE 5.8 Editor or standalone game, moving to the Godot 4.7.2 desktop app. The human watches the same world in which the agents simulate and train. A headless server target is optional later infrastructure for running the same physical world without a rendered viewport; it is not the primary training architecture.
+**Historical UE runtime:** the rendered simulation on the developer's machine ran in a UE 5.8 Editor or standalone game. The authoritative runtime is now Godot 4.7.2; the following UE deployment and subsystem details are retained as historical reference only.
 
 The optional `WorldEngineServer` target remains available for a future headless deployment path, but server compilation and deployment are not prerequisites for the Editor-based training loop.
 

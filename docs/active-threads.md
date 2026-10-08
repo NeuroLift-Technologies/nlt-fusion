@@ -9,12 +9,34 @@
 ## Active Threads
 ### 🔁 AGENT-LOOP-001 — Fusion semantic / Godot physical closed loop
 
-- **Status:** transport-neutral protocol and validators delivered; live runtime loop remains gated.
-- **Decision:** use a closed loop (engine-owned perception → Fusion semantic intent → engine-owned execution/result); transport selection remains deferred as requested.
-- **Ownership:** Fusion owns semantic decisions; the world engine owns physical facts, target/affordance validation, movement, collision, and consequences.
-- **Delivered:** `docs/contracts/agent-loop-v1.md` and its JSON Schema; `docs/agent-loop.md` feature overview; README summaries in both repos; strict Godot DTO parsing/validation; Fusion-side injectable decision/validation seam; focused contract tests.
-- **Open:** Fusion seam is not wired into `SessionOrchestrator`; Godot protocol is not wired into `AgentBrain`/`Main`; Jolt-backed collision and interaction execution are absent; no live observer-field composition or cross-process smoke test.
-- **Next gate:** approve/choose a transport before adding listeners, ports, or transport dependencies. Separately wire and verify engine-owned physical handlers before claiming semantic actions produce world effects.
+- **Status:** transport-neutral protocol, governance gate, intent ingress, perception builder, and async loopback HTTP transport delivered; cross-process loop validated with a live smoke test; in-scene wiring and SessionOrchestrator remain.
+- **Decision:** use a closed loop (engine-owned perception → Fusion semantic intent → engine-owned execution/result). **Transport decided 2026-10-08 (Joshua): asynchronous loopback HTTP request/response** — Godot POSTs each perception to a Fusion endpoint; Fusion returns a correlated intent. Chosen because it fits the single-avatar low-frequency decision cycle, is straightforward across C# and Python, and avoids a persistent WebSocket session. Revisit WebSockets only if later requirements need streaming or multiple high-rate channels. Constraints: model inference stays off the Godot physics/render thread; enforced timeouts; one in-flight request per avatar; stale ticks rejected; fail closed on transport errors. Godot still performs ASFDK governance, live-world validation, and physical execution.
+- **Ownership:** Fusion owns semantic decisions; the world engine owns physical facts, target/affordance validation, movement, collision, and consequences; ASFDK-C# governs intents at engine ingress before physical execution.
+- **Delivered:** `docs/contracts/agent-loop-v1.md` and its JSON Schema; `docs/agent-loop.md` feature overview; strict Godot DTO parsing/validation; Fusion-side injectable decision/validation seam; `Agents/GovernanceGate.cs` with real `asfdk-csharp` integration; `Agents/IntentIngress.cs` with contract validation, governance, live-world revalidation, and locomotion dispatch; `Agents/PerceptionBuilder.cs` with live avatar state, task anchors, and nearby-avatar observations; focused harness assertions. **Transport layer (2026-10-08):** `Agents/FusionHttpLink.cs` (async POST, background tasks, 5 s timeout, one-in-flight per avatar, correlated response validation, fail-closed on transport errors) + `Agents/AgentLoopDriver.cs` (per-avatar perception cadence → link → ingress); Fusion side `neurolift-ai-fusion/src/fusion/agent_loop_http.py` (FastAPI `POST /agent-loop/perception`, wraps `FusionAgentLoop`, inference via `asyncio.to_thread`, one-in-flight 429, `FUSION_GGUF_MODEL` or deterministic fallback). Verified: Godot build 0 errors, harness 36/36, Fusion pytest 19/19 (7 new HTTP + 12 seam), **live cross-process smoke test**: POST perception → 200 correlated intent (`observedTick: 42`, `approach`/`desk_1`, no physical fields); malformed body → 422 fail-closed.
+- **Open:** Fusion seam is not wired into `SessionOrchestrator`; `AgentLoopDriver`/`FusionHttpLink` not yet instantiated in `Main.tscn` (needs `EnableLiveAvatars` + driver node); no GGUF model path wired for production decisions (fallback decision source used in smoke test); no cross-process automated smoke test in CI.
+- **Next gate:** instantiate `AgentLoopDriver` in the Godot scene and run a full Godot↔Fusion loop with ASFDK governance in the path; connect Fusion `SessionOrchestrator` (Copilot); automate the cross-process smoke test. Keep the current engine-side governance, live-world checks, and physical ownership intact.
+
+### 🧭 ENG-002 — Godot replaces UE
+
+- **Status:** decision recorded; current repository docs now aligned.
+- **Decision (2026-10-07, Joshua):** Godot replaces UE 5.8 in its entirety as the world engine's authoritative runtime. The UE tree remains frozen, non-authoritative historical reference material, not a conformance oracle.
+- **Implementation scope:** Godot owns the complete physical simulation runtime, not just rendering. Fusion continues to own semantic cognition and intents; the transport-neutral boundary is tracked by `AGENT-LOOP-001`.
+- **Historical plans:** `world-engine-godot/MIGRATION-PLAN.md` and `RENDERER-PLAN.md` describe superseded decisions and must not be used as current implementation instructions.
+
+### 🧭 DIV-001 — Simulation ownership boundary (SUPERSEDED 2026-10-07)
+
+- **Status:** superseded by Joshua's clarification the same day — the original principle stands: **Fusion owns semantics; `nlt-world-engine` owns the physical.** No joint-ownership rewrite is happening.
+- **New requirement (2026-10-07, Joshua):** the AI must **"see" and interact with the physical world.** Concretely: agents need a perception surface (what they can see: nearby people, objects, places) and semantic actions (approach / look_at / use / sit / rest / communicate) whose physical effects — movement, collision, object state — are executed and owned by the world engine. This is the missing layer flagged in AGENT-SYSTEM.md gaps 1, 5, 6 and extends `AgentObservation` beyond its current self-state-only fields.
+
+### 🧭 PHYS-001 — Jolt Physics as the engine's 3D physics backend
+
+- **Status:** open — decision recorded; collision wiring still pending
+- **Owner:** **Joshua** (decision), survey by Fledge (2026-10-07)
+- **Decision (2026-10-07, Joshua):** the world engine's 3D physics engine is **Jolt**.
+- **Survey result:** `world-engine-godot/project.godot` already declares `[physics] 3d/physics_engine="Jolt Physics"` (line ~41). No Jolt addon under `world-engine-godot/addons/` — Joshua confirms Jolt is built into the Godot build in use. Consistent.
+- **Known gap this gates:** `AgentBrain` has no `CharacterBody3D`/physics body (AGENT-SYSTEM.md §8.6), `TerrainBuilderPhysics` is an empty placeholder — so movement still has no collision resolution. Wiring that up should target Jolt via `CharacterBody3D` + `move_and_slide()` and static level collision.
+- **Update 2026-10-08 (Cline):** `AgentBrain` is now `CharacterBody3D` with `MoveAndSlide()` per-physics-tick + `AvatarCharacter : AgentBrain` capsule scene (`Agents/avatar.tscn`) + `Main.SyncLiveAvatars` spawning live Jolt bodies behind `EnableLiveAvatars=false`. `TerrainBuilderPhysics` still an empty placeholder; `EnsureAvatarGround` flat StaticBody3D covers levels without collision. AGENT-SYSTEM.md §8.6 is now stale and needs a refresh pass.
+- **Next action:** when agent embodiment gains collision, verify against the Jolt server (not GodotPhysics) and note any `CharacterBody3D` behavioural differences.
 
 ### 🔭 OBS-001 — Phase D observer (Godot renderer + spectator)
 
@@ -57,13 +79,14 @@ Also uncommitted and unrelated to the observer: the `MIGRATE-PLAN.md` / `RENDERE
 - **World view does not match the scenario** — the fixture is the StayAlert *apartment morning routine*; the rendered world is an outdoor village. `GRAPH-001` scope, not observer scope.
 - **`--selftest` cannot check layout headlessly** — it compares absolute control positions against a viewport headless reports as 64×64, so it reports ~15 false failures. Pre-existing; means layout verification needs a real window.
 
-### 🔀 MIGRATE-001 — UE 5.8 → Godot 4.7.2 engine migration
-- **Status:** open (Phase 1 capture **live**; SIM-001 fixed; awaiting decision on event-stream scope)
+### 🔀 MIGRATE-001 — UE 5.8 → Godot 4.7.2 engine migration (SUPERSEDED)
+
+- **Status:** superseded by Joshua's ENG-002 decision (2026-10-07). Historical record only; no migration/conformance work remains active under this thread.
 - **Owner:** Kilo · **Joined by:** Hermes (Phase 1)
 - **Started:** 2026-10-02
 - **Last updated:** 2026-10-02
 - **Branch:** `fix/hash-v2-double-precision` · **Escalation:** [`docs/escalations/2026-10-02-godot-migration.md`](escalations/2026-10-02-godot-migration.md) — ✅ **RESOLVED 2026-10-02** by Joshua (framework change approved under OTOI §4.4) · **Governance proposal:** [#64](https://github.com/NeuroLift-Technologies/nlt-world-engine/issues/64) (core-principle amendment, awaiting written approval per OTOI §9)
-- **Scope:** Replace the UE 5.8 authoritative simulation with Godot 4.7.2 (C#) as this repo's deterministic runtime and training environment, retaining UE as a frozen behavioural oracle until the port passes conformance.
+- **Historical scope:** The former plan treated Godot as a fidelity port and UE as a frozen behavioral oracle. ENG-002 supersedes both assumptions: Godot replaces UE in its entirety, and UE is not a conformance oracle.
 - **Plan:** `.kilo/plans/1790898229735-ue-to-godot-migration-plan.md` (canonical), mirrored at `world-engine-godot/MIGRATION-PLAN.md`
 - **Settled terms:** staged validated port · C#/.NET 8 with an engine-agnostic `net8.0` core · training-environment surfaces in scope but PPO deferred · Python sidecar owns ports 8765/8766 · 4 interior scenarios rebuilt procedurally as instanced sub-scenes · governance via in-process `asfdk-csharp` · four-tier validation gate · character embodiment in scope.
 - **Delivered:**
@@ -121,13 +144,13 @@ Also uncommitted and unrelated to the observer: the `MIGRATE-PLAN.md` / `RENDERE
 - **Adopted from the stale predecessor** `docs/design/realistic-viewer-architecture.md` (Three.js-era, orphaned — do not implement against): **CC0-only sourcing** (Mixamo/Poly Haven) and **perf targets** 60 FPS · 10–20 animated characters · <16 ms frame time.
 - **⚠️ Licence risk flagged, not resolved (G1.1):** Mixamo's terms have historically **not permitted redistribution of the raw assets**. If residents ship in this repo or a build, that needs a real answer. Do not assume CC0.
 - **⚠️ Constraint conflict (G2.4):** `RENDERER-PLAN.md` D.4 mandates *reduced motion*; animated walk cycles and the unconditional wind shader in `VegetationBuilder.cs` run against it. Must resolve when animation lands, not after.
-- **Inherited constraints:** Godot is a renderer, not a simulation (§1) · no determinism required (§1.3) · third-party plugins reserved to Joshua (§0.1) · **no asset committed blind — provenance manifest row required first** (§0.2) · accessibility is a renderer constraint (§6 D.4) · PR ≤100 files.
+- **Historical constraints from the superseded renderer plan:** renderer-only scope and no-determinism assumptions no longer apply after ENG-002. Third-party plugins remain reserved to Joshua; **no asset is committed without provenance**; accessibility remains a system requirement.
 - **Next action:** Joshua to answer G1.1–G1.5 (asset source & redistribution, character count + LOD budget, animation source, hero-prop policy, budget authorisation). G2 pipeline work is blocked until G1.1 and G1.5 land.
 
 ### 📐 RENDERER-001 — Godot renderer plan (Phase A state feed)
 - **Status:** Phase A complete · Phase B–D open
-- **Owner:** Kiro · **Plan:** [`world-engine-godot/RENDERER-PLAN.md`](../world-engine-godot/RENDERER-PLAN.md)
-- **Started:** 2026-10-03 · **Last updated:** 2026-10-03
+- **Owner:** Cline (handoff from Kiro, 2026-10-08) · **Plan:** [`world-engine-godot/RENDERER-PLAN.md`](../world-engine-godot/RENDERER-PLAN.md)
+- **Started:** 2026-10-03 · **Last updated:** 2026-10-08
 - **Scope:** Implement the Godot renderer per `RENDERER-PLAN.md`: state feed, open world residents, interior scenes, observer panels.
 - **Delivered (2026-10-03):**
   - **Phase A complete (A.1–A.5).** Contract doc `docs/contracts/state-feed-v1.md` published (A.1); envelope with velocity (A.2); burnout episodes (A.3); self-recognition (A.4); all present in `fixtures/state-feed.sample.json`.

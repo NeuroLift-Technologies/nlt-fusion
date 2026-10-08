@@ -8,14 +8,14 @@
 
 You are a coding agent operating within the **NLT World Engine** — the authoritative simulation environment where AI Avatars (with ADHD traits) and AI Aides live, perceive, act, and learn.
 
-> **Engine migration in progress (thread `MIGRATE-001`).** The authoritative simulation is moving from UE 5.8 to Godot 4.7.2 (C#). UE is a **frozen behavioural oracle** until the Godot port passes conformance; do not change UE simulation behaviour. See `world-engine-godot/MIGRATION-PLAN.md` before making changes that span the two.
+> **Engine: Godot 4.7.2 (C#) is authoritative (thread `ENG-002`).** Decided by Joshua on 2026-10-07: Godot replaces UE 5.8 in its entirety as this repo's simulation runtime. The UE 5.8 tree in `WorldEngine/` is a **frozen, non-authoritative reference implementation** retained for its documented semantics — it is not the simulation and not a conformance oracle. Do not change UE simulation behaviour, and do not treat UE as the target architecture. Authoritative work happens in `world-engine-godot/`.
 
 **Mandatory reading order:**
 1. `NLT-DEV-OTOI.md` — Full org-level coding agent contract (this repo, root level)
 2. `CLAUDE.md` — Project-specific context (this repo)
 3. `docs/active-threads.md` — Current work state (this repo, if present)
 4. `README.md` — Full project documentation
-5. `ARCHITECTURE.md` — UE 5.8 subsystem reference (see migration banner)
+5. `ARCHITECTURE.md` — UE 5.8 subsystem reference (retained historical semantics, not target architecture)
 
 **Final authority:** Joshua W. Dorsey, Sr. Escalate. Do not guess.
 
@@ -89,9 +89,9 @@ These are **non-negotiable**. No exceptions without explicit Joshua approval:
 ```
 nlt-world-engine/
 ├── README.md                              ← Full project docs (start here)
-├── ARCHITECTURE.md                        ← UE 5.8 subsystem reference (see migration banner)
+├── ARCHITECTURE.md                        ← UE 5.8 historical subsystem reference
 ├── ONBOARDING.md                          ← 3-minute onboarding
-├── DEPLOYMENT.md                          ← UE 5.8 build + deployment (see migration banner)
+├── DEPLOYMENT.md                          ← UE 5.8 historical build instructions
 ├── NLT-DEV-OTOI.md                        ← Canonical org-level agent contract
 ├── AGENTS.md                              ← This file
 ├── CLAUDE.md                              ← Claude Code repo instructions
@@ -102,9 +102,11 @@ nlt-world-engine/
 ├── pr_body.md                             ← PR body template
 ├── nltotoi.json                           ← Discovery manifest
 │
-├── WorldEngine/                           ← UE 5.8 reference implementation — FROZEN behavioural
-│   │                                         oracle for MIGRATE-001; do not change simulation
-│   │                                         behaviour (plan item 1.6)
+├── WorldEngine/                           ← UE 5.8 reference implementation — FROZEN and
+│   │                                         NON-AUTHORITATIVE (ENG-002). Retained for its
+│   │                                         documented semantics; not the simulation, not a
+│   │                                         conformance oracle. Do not change simulation
+│   │                                         behaviour.
 │   ├── Source/WorldEngine/               ← C++ module (129 files, ~20,700 LOC)
 │   ├── Content/                          ← UE assets (maps, scenarios, materials)
 │   ├── Scripts/                          ← Python automation (QA, VFX, scenarios)
@@ -112,8 +114,8 @@ nlt-world-engine/
 │   ├── Skills/                           ← Skill definitions
 │   └── docs/architecture/                ← Architecture documentation
 │
-├── world-engine-godot/                    ← Godot 4.7.2 (C#) — TARGET authoritative sim
-│   ├── *.cs                              ← Procedural world prototype (rendering only)
+├── world-engine-godot/                    ← Godot 4.7.2 (C#) — authoritative runtime
+│   ├── *.cs                              ← Authoritative physical runtime (implementation in progress)
 │   ├── assets/levels/                    ← Interior level geometry imported via ufbx FBX
 │   ├── addons/godot_ai/                  ← Third-party Godot↔MCP bridge (external, unapproved)
 │   └── MIGRATION-PLAN.md                 ← Migration plan, mirrored from .kilo/plans/
@@ -133,16 +135,16 @@ nlt-world-engine/
 
 ## Codebase Overview
 
-This repo has **two runnable components**, in a migration state:
+This repo has **two runnable components**:
 
 | Component | Location | How to run | Status |
 |---|---|---|---|
-| **UE 5.8 reference simulation** | `WorldEngine/` | `make WorldEngineEditor` | **FROZEN** — behavioural oracle for MIGRATE-001. Still the only runnable authoritative sim until the Godot port passes conformance. Do not change simulation behaviour (plan item 1.6) |
-| **Godot 4.7.2 target simulation** | `world-engine-godot/` | Open `project.godot` in Godot 4.7.2 **.NET (mono)** | **In progress** — rendering only. No agents, determinism, protocol, or governance yet (plan Phase 0-7) |
+| **Godot 4.7.2 simulation** | `world-engine-godot/` | Open `project.godot` in Godot 4.7.2 **.NET (mono)** | **AUTHORITATIVE** (ENG-002, Joshua 2026-10-07). Rendering and observer UI land; agent loop, collision, and the perception/action surface are in progress (AGENT-LOOP-001) |
+| **UE 5.8 reference implementation** | `WorldEngine/` | `make WorldEngineEditor` | **FROZEN, NON-AUTHORITATIVE** — retained for its documented semantics. Not the simulation and not a conformance oracle. Do not change simulation behaviour |
 
 The Babylon.js viewer (`world-engine-v2/`) and Python ECS engine (`world-engine/`) are **archived** under `_archive/`. Neither connected to the live simulation anyway — the viewer's logic layer contains no `fetch`, `WebSocket`, or `XMLHttpRequest` at all.
 
-All authoritative state lives in the authoritative simulation engine. That engine is moving from UE 5.8 to Godot 4.7.2 under thread `MIGRATE-001`; see `world-engine-godot/MIGRATION-PLAN.md`.
+All authoritative state lives in the Godot 4.7.2 simulation under `world-engine-godot/`, per thread `ENG-002`.
 
 ---
 
