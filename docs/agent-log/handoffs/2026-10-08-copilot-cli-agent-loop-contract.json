@@ -5,7 +5,7 @@
     "date": "2026-10-08",
     "otoi_version": "ORG-DEV-OTOI-1.0.3",
     "repo": "NeuroLift-Technologies/nlt-world-engine",
-    "branch": "chore/inherited-worktree-2026-10-04",
+    "branch": "feat/agent-loop-v1-20261008",
     "work_completed": [
       "Defined the transport-neutral nlt.agent-loop.v1 perception, intent, and execution-result contract and strict JSON Schema.",
       "Added Godot C# DTO parsing and correlation/target validation, plus the Fusion injectable decision/validation seam.",
@@ -29,7 +29,7 @@
       "Choose/approve a live transport before adding listeners, ports, or transport dependencies."
     ],
     "escalations": [],
-    "next_agent_notes": "Continue from the transport/executor gate. Do not treat contract validators as a live bridge. Preserve unrelated inherited worktree changes; the Godot build encountered a PDB file lock from an already-running Godot process.",
+    "next_agent_notes": "Continue from the transport/executor gate. Do not treat contract validators as a live bridge. Preserve unrelated inherited worktree changes. PRs are open: nlt-world-engine#87 and NeuroLift-Technologies/neurolift-ai-fusion#118.",
     "files_modified": [
       "docs/contracts/agent-loop-v1.md",
       "docs/contracts/agent-loop-v1.schema.json",
@@ -54,6 +54,6 @@
       "git diff --check — passed."
     ],
     "tests_passing": true,
-    "pr_url": ""
+    "pr_url": "https://github.com/NeuroLift-Technologies/nlt-world-engine/pull/87"
   }
 }
