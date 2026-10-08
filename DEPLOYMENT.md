@@ -1,8 +1,8 @@
 # UE 5.8 Deployment — NeuroLift World Engine
 
-> **This document covers the UE 5.8 reference implementation, which is frozen.** The authoritative simulation is moving to **Godot 4.7.2 (C#)** under thread `MIGRATE-001`. See [`world-engine-godot/MIGRATION-PLAN.md`](world-engine-godot/MIGRATION-PLAN.md) for the target, and [`docs/engine-reference/godot/VERSION.md`](docs/engine-reference/godot/VERSION.md) for the pinned toolchain (Godot 4.7.2 .NET mono + .NET 8).
+> **Historical deployment instructions:** this document covers the frozen UE 5.8 reference implementation only. Per Joshua's ENG-002 decision (2026-10-07), Godot 4.7.2 replaces UE in its entirety as the authoritative runtime. These UE instructions are not a deployment path for the current simulation. See [`docs/engine-reference/godot/VERSION.md`](docs/engine-reference/godot/VERSION.md) for the pinned Godot toolchain.
 >
-> **Do not change UE simulation behaviour** (plan item 1.6). Keep these UE build instructions working — UE is the oracle the Godot port is validated against.
+> Do not change UE simulation behavior; retain these instructions only for reference builds.
 
 ## The Vision
 
@@ -12,9 +12,9 @@
 
 ---
 
-## TL;DR
+## Historical UE 5.8 Deployment TL;DR
 
-A rendered simulation on the developer's machine is the primary build, training, and spectator path — currently UE 5.8, targeting the Godot 4.7.2 desktop app. A headless server target is optional later infrastructure for running the same physical world without a rendered viewport; it is not the primary training architecture.
+The historical UE 5.8 deployment used a rendered simulation on the developer's machine as the primary training and spectator path. An optional headless server target was documented as future infrastructure for that UE world.
 
 **No spectator viewer currently exists.** The Babylon.js web viewer (`_archive/world-engine-v2/`) was archived and contained no network code at all; `Content/Web/` holds a 2D canvas viewer that was never wired up. In the target architecture the Godot desktop app is the spectator, with a Python sidecar owning HTTP 8765 and WebSocket 8766 — Godot ships no server of its own.
 
@@ -28,9 +28,9 @@ The Vercel/static-site instructions later in this document targeted `world-engin
 
 ---
 
-## Deployment Architecture
+## Historical UE 5.8 Deployment Architecture
 
-The primary deployment is a rendered Unreal runtime on the machine where the human watches the training world:
+The historical UE 5.8 deployment used a rendered Unreal runtime on the machine where the human watched the training world:
 
 ```text
                     ┌─────────────────────────────────┐
@@ -46,7 +46,7 @@ The primary deployment is a rendered Unreal runtime on the machine where the hum
                     └─────────────────────────────────┘
 ```
 
-The optional headless path uses a future `WorldEngineServer` target or a `-nullrhi` commandlet to run the same UE physical world without a rendered viewport:
+The historical UE 5.8 reference also described an optional headless path using a future `WorldEngineServer` target or a `-nullrhi` commandlet to run the same UE physical world without a rendered viewport:
 
 ```text
                     ┌─────────────────────────────────┐

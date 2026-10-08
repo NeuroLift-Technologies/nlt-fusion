@@ -103,6 +103,58 @@ Plugins/**/ThirdParty/ASFDK/
 export.cfg
 export_presets.cfg
 
+# Godot-cpp is a registered submodule of THIS repo (see root .gitmodules),
+# living at world-engine-godot/godot-cpp. Only the stray root-level copies are
+# scratch. These patterns are anchored with a leading slash on purpose: an
+# unanchored `godot-cpp/` would also match the real submodule path and silently
+# shadow it if the gitlink were ever dropped from the index.
+/godot-cpp.zip
+/godot-cpp/
+
+# Godot add-ons/extensions are local-only; godot-cpp above is the sole
+# exception and remains tracked as our submodule. This does not untrack
+# add-ons already committed to the repository.
+world-engine-godot/addons/
+world-engine-godot/ml-MODELS/
+ziva_agent_DUPLICATE_moved_out/
+world-engine-godot/.fennara/
+
+# Ignore the accidental godot-cpp source copy at the project root. The
+# registered world-engine-godot/godot-cpp submodule is the maintained copy.
+world-engine-godot/.clang-format
+world-engine-godot/.gdignore
+world-engine-godot/.git-blame-ignore-revs
+world-engine-godot/.github/
+world-engine-godot/.pre-commit-config.yaml
+world-engine-godot/CMakeLists.txt
+world-engine-godot/LICENSE.md
+world-engine-godot/LICENSE.txt
+world-engine-godot/Makefile
+world-engine-godot/SConstruct
+world-engine-godot/binding_generator.py
+world-engine-godot/build_profile.json
+world-engine-godot/build_profile.py
+world-engine-godot/cmake/
+world-engine-godot/doc_classes/
+world-engine-godot/doc_source_generator.py
+world-engine-godot/gdextension/
+world-engine-godot/include/godot_cpp/
+world-engine-godot/make_interface_header.py
+world-engine-godot/methods.py
+world-engine-godot/misc/
+world-engine-godot/natvis/
+world-engine-godot/pyproject.toml
+world-engine-godot/src/
+world-engine-godot/test/
+world-engine-godot/tools/
+
+# Local build/agent scratch — process ids and captured stderr
+*.pid
+push*.err
+push*.log
+world-engine-godot/build-godot.pid
+world-engine-godot/build-godot.err
+
 # Godot .NET build output (Godot.NET.Sdk emits under .godot/mono/, but keep
 # bin/obj ignored in case the SDK layout changes or a plain dotnet build is run)
 world-engine-godot/**/bin/
@@ -135,5 +187,3 @@ WorldEngine/Imports/FabCity/
 # Godot-side copies of the same art, staged for local scene building.
 world-engine-godot/assets/props/
 world-engine-godot/assets/props-cc0/
-
-

@@ -16,6 +16,27 @@
 - **Open:** Fusion seam is not wired into `SessionOrchestrator`; Godot protocol is not wired into `AgentBrain`/`Main`; Jolt-backed collision and interaction execution are absent; no live observer-field composition or cross-process smoke test.
 - **Next gate:** approve/choose a transport before adding listeners, ports, or transport dependencies. Separately wire and verify engine-owned physical handlers before claiming semantic actions produce world effects.
 
+### 🧭 ENG-002 — Godot replaces UE
+
+- **Status:** decision recorded; current repository docs now aligned.
+- **Decision (2026-10-07, Joshua):** Godot replaces UE 5.8 in its entirety as the world engine's authoritative runtime. The UE tree remains frozen, non-authoritative historical reference material, not a conformance oracle.
+- **Implementation scope:** Godot owns the complete physical simulation runtime, not just rendering. Fusion continues to own semantic cognition and intents; the transport-neutral boundary is tracked by `AGENT-LOOP-001`.
+- **Historical plans:** `world-engine-godot/MIGRATION-PLAN.md` and `RENDERER-PLAN.md` describe superseded decisions and must not be used as current implementation instructions.
+
+### 🧭 DIV-001 — Simulation ownership boundary (SUPERSEDED 2026-10-07)
+
+- **Status:** superseded by Joshua's clarification the same day — the original principle stands: **Fusion owns semantics; `nlt-world-engine` owns the physical.** No joint-ownership rewrite is happening.
+- **New requirement (2026-10-07, Joshua):** the AI must **"see" and interact with the physical world.** Concretely: agents need a perception surface (what they can see: nearby people, objects, places) and semantic actions (approach / look_at / use / sit / rest / communicate) whose physical effects — movement, collision, object state — are executed and owned by the world engine. This is the missing layer flagged in AGENT-SYSTEM.md gaps 1, 5, 6 and extends `AgentObservation` beyond its current self-state-only fields.
+
+### 🧭 PHYS-001 — Jolt Physics as the engine's 3D physics backend
+
+- **Status:** open — decision recorded; collision wiring still pending
+- **Owner:** **Joshua** (decision), survey by Fledge (2026-10-07)
+- **Decision (2026-10-07, Joshua):** the world engine's 3D physics engine is **Jolt**.
+- **Survey result:** `world-engine-godot/project.godot` already declares `[physics] 3d/physics_engine="Jolt Physics"` (line ~41). No Jolt addon under `world-engine-godot/addons/` — Joshua confirms Jolt is built into the Godot build in use. Consistent.
+- **Known gap this gates:** `AgentBrain` has no `CharacterBody3D`/physics body (AGENT-SYSTEM.md §8.6), `TerrainBuilderPhysics` is an empty placeholder — so movement still has no collision resolution. Wiring that up should target Jolt via `CharacterBody3D` + `move_and_slide()` and static level collision.
+- **Next action:** when agent embodiment gains collision, verify against the Jolt server (not GodotPhysics) and note any `CharacterBody3D` behavioural differences.
+
 ### 🔭 OBS-001 — Phase D observer (Godot renderer + spectator)
 
 - **Status:** open — D.1–D.5 delivered; **claimed by Kilo 2026-10-04**; mouse input and layout still need a human click-through
@@ -57,13 +78,14 @@ Also uncommitted and unrelated to the observer: the `MIGRATE-PLAN.md` / `RENDERE
 - **World view does not match the scenario** — the fixture is the StayAlert *apartment morning routine*; the rendered world is an outdoor village. `GRAPH-001` scope, not observer scope.
 - **`--selftest` cannot check layout headlessly** — it compares absolute control positions against a viewport headless reports as 64×64, so it reports ~15 false failures. Pre-existing; means layout verification needs a real window.
 
-### 🔀 MIGRATE-001 — UE 5.8 → Godot 4.7.2 engine migration
-- **Status:** open (Phase 1 capture **live**; SIM-001 fixed; awaiting decision on event-stream scope)
+### 🔀 MIGRATE-001 — UE 5.8 → Godot 4.7.2 engine migration (SUPERSEDED)
+
+- **Status:** superseded by Joshua's ENG-002 decision (2026-10-07). Historical record only; no migration/conformance work remains active under this thread.
 - **Owner:** Kilo · **Joined by:** Hermes (Phase 1)
 - **Started:** 2026-10-02
 - **Last updated:** 2026-10-02
 - **Branch:** `fix/hash-v2-double-precision` · **Escalation:** [`docs/escalations/2026-10-02-godot-migration.md`](escalations/2026-10-02-godot-migration.md) — ✅ **RESOLVED 2026-10-02** by Joshua (framework change approved under OTOI §4.4) · **Governance proposal:** [#64](https://github.com/NeuroLift-Technologies/nlt-world-engine/issues/64) (core-principle amendment, awaiting written approval per OTOI §9)
-- **Scope:** Replace the UE 5.8 authoritative simulation with Godot 4.7.2 (C#) as this repo's deterministic runtime and training environment, retaining UE as a frozen behavioural oracle until the port passes conformance.
+- **Historical scope:** The former plan treated Godot as a fidelity port and UE as a frozen behavioral oracle. ENG-002 supersedes both assumptions: Godot replaces UE in its entirety, and UE is not a conformance oracle.
 - **Plan:** `.kilo/plans/1790898229735-ue-to-godot-migration-plan.md` (canonical), mirrored at `world-engine-godot/MIGRATION-PLAN.md`
 - **Settled terms:** staged validated port · C#/.NET 8 with an engine-agnostic `net8.0` core · training-environment surfaces in scope but PPO deferred · Python sidecar owns ports 8765/8766 · 4 interior scenarios rebuilt procedurally as instanced sub-scenes · governance via in-process `asfdk-csharp` · four-tier validation gate · character embodiment in scope.
 - **Delivered:**
@@ -121,7 +143,7 @@ Also uncommitted and unrelated to the observer: the `MIGRATE-PLAN.md` / `RENDERE
 - **Adopted from the stale predecessor** `docs/design/realistic-viewer-architecture.md` (Three.js-era, orphaned — do not implement against): **CC0-only sourcing** (Mixamo/Poly Haven) and **perf targets** 60 FPS · 10–20 animated characters · <16 ms frame time.
 - **⚠️ Licence risk flagged, not resolved (G1.1):** Mixamo's terms have historically **not permitted redistribution of the raw assets**. If residents ship in this repo or a build, that needs a real answer. Do not assume CC0.
 - **⚠️ Constraint conflict (G2.4):** `RENDERER-PLAN.md` D.4 mandates *reduced motion*; animated walk cycles and the unconditional wind shader in `VegetationBuilder.cs` run against it. Must resolve when animation lands, not after.
-- **Inherited constraints:** Godot is a renderer, not a simulation (§1) · no determinism required (§1.3) · third-party plugins reserved to Joshua (§0.1) · **no asset committed blind — provenance manifest row required first** (§0.2) · accessibility is a renderer constraint (§6 D.4) · PR ≤100 files.
+- **Historical constraints from the superseded renderer plan:** renderer-only scope and no-determinism assumptions no longer apply after ENG-002. Third-party plugins remain reserved to Joshua; **no asset is committed without provenance**; accessibility remains a system requirement.
 - **Next action:** Joshua to answer G1.1–G1.5 (asset source & redistribution, character count + LOD budget, animation source, hero-prop policy, budget authorisation). G2 pipeline work is blocked until G1.1 and G1.5 land.
 
 ### 📐 RENDERER-001 — Godot renderer plan (Phase A state feed)

@@ -4,13 +4,12 @@
 
 **Repo:** `NeuroLift-Technologies/nlt-world-engine`
 **Date:** 2026-10-02
-**Status:** **SUPERSEDED 2026-10-02 — see [`RENDERER-PLAN.md`](RENDERER-PLAN.md).** The scope below is *withdrawn, not deferred*: Godot is a **renderer + spectator**, not a simulation. Retained for historical record only; do not execute.
+**Status:** **SUPERSEDED 2026-10-07 by ENG-002.** Joshua decided Godot replaces UE in its entirety as the authoritative world-engine runtime. This historical plan's migration/conformance framing and its successor renderer-only plan are both withdrawn; do not execute or use them as current architecture.
 
-> ## ⚠️ This plan is withdrawn
+> ## ⚠️ Historical plan — withdrawn
 >
-> Per `RENDERER-PLAN.md` §1, the C# port, `NltWorldEngine.Core`, the Tier 2 conformance
-> gates, the golden fixtures and the UE oracle are **retired**. The items below remain
-> only as a record of what was planned and why.
+> ENG-002 supersedes this plan. The UE implementation is not a conformance oracle, and Godot
+> is not renderer-only. The contents below are preserved only as historical context.
 **Authority:** Joshua W. Dorsey, Sr. (OTOI §4.4 — framework change, approved via this plan)
 
 > Canonical plan copy lives at `.kilo/plans/1790898229735-ue-to-godot-migration-plan.md`.

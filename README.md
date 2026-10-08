@@ -1,6 +1,6 @@
 # NLT World Engine — AI Habitat & Physical Simulation Layer
 
-> **Engine migration in progress (thread `MIGRATE-001`).** The authoritative simulation is moving from **UE 5.8** to **Godot 4.7.2 (C#)**. UE remains a **frozen behavioural oracle** until the port passes conformance. Plan: [`world-engine-godot/MIGRATION-PLAN.md`](world-engine-godot/MIGRATION-PLAN.md). Pinned toolchain: [`docs/engine-reference/godot/VERSION.md`](docs/engine-reference/godot/VERSION.md).
+> **Engine: Godot 4.7.2 (C#) is authoritative (thread `ENG-002`).** Decided by Joshua on 2026-10-07: Godot replaces UE 5.8 in its entirety as this repo's simulation runtime. The UE 5.8 tree in `WorldEngine/` is a **frozen, non-authoritative reference implementation** retained for its documented semantics — it is not the simulation and not a conformance oracle. Pinned toolchain: [`docs/engine-reference/godot/VERSION.md`](docs/engine-reference/godot/VERSION.md).
 
 ## The Vision
 
@@ -12,7 +12,7 @@ NeuroLift Technologies Simulation Environment — the deterministic runtime wher
 
 > **Core principle:** Fusion owns semantic reality; **the world engine** owns physical reality. The engine is an implementation detail of the physical layer and may change by Joshua's decision under OTOI §4.4 — the Fusion ↔ world-engine boundary does not.
 >
-> **Architecture docs:** [`WorldEngine/docs/architecture/`](WorldEngine/docs/architecture/) documents the **UE reference implementation** — [`TECHNICAL_DIAGRAM.md`](WorldEngine/docs/architecture/TECHNICAL_DIAGRAM.md), [`unreal-simulation-architecture.md`](WorldEngine/docs/architecture/unreal-simulation-architecture.md), [`fusion-unreal-domain-mapping.md`](WorldEngine/docs/architecture/fusion-unreal-domain-mapping.md). Retained as the semantics the Godot port must reproduce.
+> **Architecture docs:** [`WorldEngine/docs/architecture/`](WorldEngine/docs/architecture/) and [`ARCHITECTURE.md`](ARCHITECTURE.md) describe the frozen UE 5.8 reference implementation for historical context. They are not the target architecture or a conformance oracle. Godot 4.7.2 replaces UE in its entirety as this repository's authoritative physical simulation runtime.
 
 ## Human Role in the Supervised Simulation
 
@@ -20,43 +20,23 @@ Humans are not passive observers of AI development here. They are active partici
 
 [`docs/Human-Role-in-Supervised-Simulation.md`](docs/Human-Role-in-Supervised-Simulation.md) — `NLT-SIM-HUMAN-ROLE-1.0.0`, *Draft / Proposed Architectural Standard*, governance: Solidarity Framework | ASFDK — defines that participation model. Six human roles: **Supervisor, Observer, Evaluator, Scenario Designer, Instructor/Guide, Governance Authority**. Four interaction modes: **Observation, Supervision, Intervention, Evaluation**. Its `Scope` field reads `NLT World Engine | AI-Fusion Framework`, so it binds **both** repos.
 
-**What this repo implements today.** The world engine is the *physical* substrate, so its share is the **Observer** role plus the transport half of **Supervisor** (pause / resume / step / replay / speed) — all read-only, delivered under [`RENDERER-PLAN.md` §6](world-engine-godot/RENDERER-PLAN.md). **Instructor/Guide, Scenario Designer, Governance Authority, and the interaction-mode state machine do not exist yet.** Governance Authority is the one element with prior art — UE's `NLTGovernanceSubsystem` integrating ASFDK — and arrives via Decision 6 of the migration plan. Guidance injection must arrive as `nlt.fusion-unreal` 1.0 actions so it stays inside the replay contract.
+**What this repo implements today.** Godot is the authoritative physical simulation runtime; Fusion owns semantic cognition and intents. The transport-neutral boundary is documented in [`docs/agent-loop.md`](docs/agent-loop.md). Live transport, runtime wiring, and engine-side physical action execution remain incomplete. Observer and supervised-simulation capabilities are also in progress; the legacy UE implementation is reference material only and does not define current runtime behavior.
 
-**Observer audience — a standing requirement.** People with ADHD must be able to **watch and understand the simulation without needing to parse a dense analytics dashboard.** This is a design constraint, not a later pass: it governs the observation surface, its accessibility settings, and its reading levels. It is stated here as the source of truth for both repos, and `RENDERER-PLAN.md` §6 is where it is implemented.
+**Observer audience — a standing requirement.** People with ADHD must be able to **watch and understand the simulation without needing to parse a dense analytics dashboard.** This is a design constraint, not a later pass: it governs the observation surface, its accessibility settings, and its reading levels.
 
 > **Draft status.** This standard is *proposed*, so it does not yet bind implementation. It is mirrored in `neurolift-ai-fusion`; both copies were byte-identical when this section was written, but neither repo designates a source of truth or commits the file.
 
 ## Architecture
 
 ```text
-Fusion Runtime (neurolift-ai-fusion)
-  ├── Avatar/Aide/Advocate intelligence
-  ├── ADHD trait modeling (26-dim)
-  ├── Coaching strategies
-  ├── Training (PPO, out-of-process Python)
-  └── Fusion + Advocate logic
-        │
-        │  WebSocket / HTTP API  (nlt.fusion-unreal 1.0 / nlt.world-engine.v1)
-        ▼
-NLT World Engine (this repo)
-  ├── Physical simulation layer — Godot 4.7.2 (C#)  ← target
-  │   ├── Deterministic core (.NET library, engine-independent)
-  │   │   ├── Fixed tick (1Hz), seeded RNG, canonical state hash v2
-  │   │   ├── Replay codec — recorded actions, not re-derived
-  │   │   ├── EventBus (256-entry ring buffer)
-  │   │   ├── AgentController seam (Observe → Act, per tick)
-  │   │   └── TrainingEnvironment surfaces (Reward / Completion / Reset)
-  │   ├── Presentation — terrain, water, sky, vegetation, settlement
-  │   ├── Interiors — 4 scenarios as instanced sub-scenes
-  │   └── Governance boundary — ASFDK (in-process .NET reference)
-  │
-  ├── Python sidecar — owns HTTP 8765 + WebSocket 8766 (Godot has no server)
-  │
-  └── UE 5.8 reference implementation (WorldEngine/)  ← FROZEN behavioural oracle
-      ├── Mass Entity population, StateTree behavior, Learning Agents RL
-      ├── Smart Objects + NavMesh, NLTGovernanceSubsystem
-      └── _archive/ — Babylon.js viewer (world-engine-v2/) and
-          Python ECS engine (world-engine/), both superseded
+Fusion (neurolift-ai-fusion)                   NLT World Engine (this repo)
+  semantic cognition, meaning, goals             Godot 4.7.2 authoritative runtime
+  and semantic action intents                    physical world, perception, validation,
+                    │                             movement, collision, consequences
+                    └── nlt.agent-loop.v1 ──────►
+                        transport-neutral contract; runtime transport is not wired
+
+UE 5.8 (WorldEngine/) — frozen historical reference, not authoritative
 ```
 
 ## Physical-World Agent Loop
@@ -74,7 +54,7 @@ but this is **not yet a live Fusion ↔ Godot runtime connection**: transport is
 Godot runtime dispatch are not wired, and physical interaction/collision execution is incomplete.
 No transport dependency, listener, or port is introduced by the contract.
 
-## Quick Start — Godot 4.7.2 (target engine)
+## Quick Start — Godot 4.7.2 (authoritative engine)
 
 **Prerequisites:** Godot **4.7.2 .NET (mono)** + .NET 8 SDK.
 
@@ -82,16 +62,15 @@ No transport dependency, listener, or port is introduced by the contract.
 # Open the project in Godot 4.7.2 .NET (mono)
 godot --path world-engine-godot
 
-# Planned Tier 1 gate — no deterministic core test project exists yet.
-# Once implemented, it will need no engine:
-# dotnet test world-engine-godot/NltWorldEngine.Core.Tests
+# Build and run the C# agent/protocol harness:
+dotnet run --project world-engine-godot/AgentHarness/AgentHarness.csproj
 ```
 
-**Status:** rendering only. Agents, determinism, protocol, and governance land in phases 2–7 of the migration plan.
+**Status:** Godot is the authoritative physical simulation runtime. Contract DTOs, validation, and agent-control harnesses exist; live Fusion transport, complete scene integration, and engine-owned interaction execution remain in progress. See [the agent-loop overview](docs/agent-loop.md).
 
-## Quick Start — Unreal Engine 5.8 (frozen oracle)
+## Historical Reference — Unreal Engine 5.8
 
-> Still the only runnable authoritative simulation until the port passes conformance. **Do not change UE simulation behaviour** (plan item 1.6).
+> UE is frozen, non-authoritative reference material. It is not the active simulation or a conformance oracle. **Do not change UE simulation behavior.**
 
 **Prerequisites:** UE 5.8 at `~/Documents/NLT/Engine/`, Linux (Clang 20.1.8)
 
@@ -158,17 +137,17 @@ nlt-world-engine/
 │   ├── world-engine-3d/          # Early Three.js experiment
 │   ├── openworld-engine/         # Open-world exploration variant
 │   └── studio/                   # Claude Design shell (superseded)
-├── ARCHITECTURE.md               # UE 5.8 subsystem reference (frozen)
-├── DEPLOYMENT.md                 # UE 5.8 build + deployment (frozen)
-├── world-engine-godot/           # Godot 4.7.2 (C#) — target authoritative sim
-│   ├── MIGRATION-PLAN.md         # Migration plan
+├── ARCHITECTURE.md               # UE 5.8 historical subsystem reference
+├── DEPLOYMENT.md                 # UE 5.8 historical build instructions
+├── world-engine-godot/           # Godot 4.7.2 (C#) — authoritative runtime
+│   ├── MIGRATION-PLAN.md         # Superseded historical plan
 │   └── assets/levels/            # Interior level geometry (ufbx FBX import)
 └── .github/workflows/            # CI (governance validation only)
 ```
 
 ## Key Subsystems — UE 5.8 reference (frozen)
 
-> Retained so the Godot port can be checked against it. The migration plan maps each of these to its target location.
+> Retained for historical reference only. Godot replaces UE in its entirety; no UE-to-Godot conformance mapping is active.
 
 | Subsystem | Purpose |
 |-----------|---------|
@@ -209,7 +188,7 @@ nlt-world-engine/
 
 ## Character & Mesh — UE reference
 
-> `SM_SimBody_Base` is a **static low-poly mesh, not a rig**, and `CHAR-001` (emotion-driven animation) was blocked on missing mesh assets. The vision calls for *"articulated bodies, animated walk cycles, and name labels"* — none of which UE delivers today. In scope for the migration as Phase 5c: a glTF humanoid rig, a **procedural** walk cycle driven by velocity (no animation assets to author), and `Label3D` name labels.
+> `SM_SimBody_Base` is a **static low-poly mesh, not a rig**, and `CHAR-001` (emotion-driven animation) was blocked on missing mesh assets. The vision calls for *"articulated bodies, animated walk cycles, and name labels"* — none of which UE delivered. The old migration plan described a glTF humanoid rig, a **procedural** walk cycle driven by velocity, and `Label3D` name labels; that plan is superseded and is not current scope.
 
 - `BP_AvatarCharacter` — Blueprint character + SimBody skeletal mesh
 - `SM_SimBody_Base` — low-poly humanoid (~179.5cm, Nanite off)
@@ -217,7 +196,7 @@ nlt-world-engine/
 
 ## Spectator
 
-The vision is *"humans watch through a spectator viewer."* Today there is **no viewer**: the Babylon.js client is archived, and `Content/Web/` holds a 2D canvas viewer that was never wired up. The Godot desktop app becomes the spectator (extend `WorldView.cs` with a HUD bound to live sim state) — and Godot 4 cannot export C# to web, so a browser client would have to be a separate project talking to the Python sidecar.
+The vision is *"humans watch through a spectator viewer."* The Babylon.js client is archived, and `Content/Web/` holds a 2D canvas viewer that was never wired up. Godot 4.7.2 is now the authoritative desktop simulation runtime and observer surface; its integration with live Fusion state remains in progress. Godot 4 cannot export C# to web, so any future browser client would be a separate project.
 
 ## Archived Components
 
@@ -231,9 +210,9 @@ Both previously lived at repository root and are now under `_archive/`. Neither 
 | Workflow | Triggers | Purpose |
 |----------|----------|---------|
 | `validate-governance.yml` | push/PR to any branch | Governance validation |
-| `world-engine-godot-build.yml` | *(planned, Phase 7.2)* | `dotnet build` + `dotnet test` on the engine-independent core |
+| Godot project build | Local .NET/Godot SDK | Builds the authoritative Godot application; no product build workflow is currently configured |
 
-**No workflow currently builds product code.** `world-engine-v2-build.yml` was removed because it filtered on `world-engine-v2/**`, which moved to `_archive/` — the job could never fire. The Godot build and Tier 1 test gate land in Phase 7.2 of the migration plan.
+**No workflow currently builds product code.** `world-engine-v2-build.yml` was removed because it filtered on `world-engine-v2/**`, which moved to `_archive/`. Godot build and harness commands are documented in the [quick start](#quick-start--godot-472-authoritative-engine).
 
 ## Documentation
 
@@ -267,9 +246,9 @@ License TBD — Open Source. See `LICENSE` for details when available.
 - Website: https://neurolifttech.com
 - Founder: Joshua W. Dorsey — joshua.dorsey@neurolifttech.com
 
-## Remaining Work
+## Historical UE 5.8 Work Log
 
-The following work remains after the deterministic verification, replay-integrity, visual-LOD, and StateTree/Fusion reference foundations merged through PRs #55–#57.
+> The following backlog describes the retired UE 5.8 implementation only. It is preserved for historical context and is **not** the current Godot implementation plan or a conformance checklist. Current work is tracked in [`docs/active-threads.md`](docs/active-threads.md).
 
 ### Product and runtime implementation
 
@@ -283,7 +262,6 @@ The following work remains after the deterministic verification, replay-integrit
 
 - **UE build validation in CI:** Select a UE-capable runner, add `WorldEngineEditor` build validation, run the NLT Automation suites, and publish logs/test reports. **Current CI validates governance only** — no workflow builds or tests product code.
 - **Optional headless infrastructure:** Validate `WorldEngineServer` and headless runtime behavior on a UE distribution that supports Server targets. Optional later infrastructure, not a prerequisite for the training path.
-- **Golden fixtures are not yet committed (MIGRATE-001, plan items 1.5 / 1.7b):** the capture infrastructure is merged, but no fixture set has been committed and non-degeneracy is unproven. Editor-context capture yields *static* state because Mass processors need a game loop, so a fixture could be N byte-identical ticks encoding no behaviour — which would make Tier 2 conformance pass on nothing. **Phase 1 is not complete until a human runs PIE capture and proves the ticks differ.**
 - **Three vision claims are unmet in UE and unaddressed by the migration:** agent↔agent interaction, an NPC population (no NPC system exists at all — UE's "residents" are `AAvatarCharacter`), and realistic graphics. Each needs its own thread rather than being silently inherited.
 
 ### Completed foundations

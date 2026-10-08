@@ -1,17 +1,16 @@
 # Canonical Godot Toolchain Version
 
-Target toolchain for `MIGRATE-001`:
+Authoritative toolchain for the Godot world engine (decision `ENG-002`):
 
 - **Engine:** Godot **4.7.2 Mono** (.NET-enabled build)
 - **Language:** C#
 - **.NET SDK:** **8** (target framework `net8.0`)
 
-This file is the canonical version reference for the Godot specialists. Migration
-scope and conformance gates are defined in the
-[migration plan](../../../world-engine-godot/MIGRATION-PLAN.md).
+This file is the canonical version reference for the Godot specialists. The
+historical `MIGRATION-PLAN.md` does not define current scope or conformance gates.
 # Godot — Engine Reference
 
-Pinned engine version for the NLT World Engine migration. Every Godot-specialist agent in
+Pinned engine version for the NLT World Engine. Every Godot-specialist agent in
 `.claude/agents/` (`godot-*.md`) performs a mandatory version check against this file at
 session start. **If this file is missing or the version does not match the installed editor,
 those agents abort.** It was absent until 2026-10-02, which is why all five specialists were
@@ -42,9 +41,8 @@ project upward.
 
 ## Why mono and not standard
 
-Godot 4 does **not** support C# web export. The authoritative simulation is C#, so the
-spectator view must be the native desktop app rather than a browser client. See §9 of the
-migration plan.
+Godot 4 does **not** support C# web export. The authoritative runtime is C#, so it must run as
+the native desktop app rather than a browser client.
 
 ---
 
@@ -73,11 +71,10 @@ anything on top.
 | Path | Contents |
 |---|---|
 | `world-engine-godot/assets/levels/` | `Workplace_Level.fbx`, `Personal_Level.fbx`, `Social_Level.fbx`, `Academic_Level.fbx` — UE level geometry exports |
-| `world-engine-godot/addons/godot_ai/` | Third-party Godot↔MCP bridge (`hi-godot/godot-ai`, MIT) — external integration, see escalation |
+| `world-engine-godot/addons/godot_ai/` | Historical local third-party Godot↔MCP bridge; add-ons are ignored for new local copies |
 
-`OpenWorld_Level` has no FBX export and is intentionally absent: its terrain, city, vegetation
-and 12-building layout are generated at runtime by the UE subsystem, and on the Godot side are
-rebuilt procedurally from the core seed (migration plan §4.3).
+`OpenWorld_Level` has no FBX export and is intentionally absent: its terrain, city, vegetation,
+and building layout are generated procedurally by the Godot runtime.
 
 Other FBX sources already in the repository, usable directly via ufbx:
 
@@ -112,6 +109,5 @@ tracked files.
 
 ## Related
 
-- Migration plan: `world-engine-godot/MIGRATION-PLAN.md`
-- Escalation: `docs/escalations/2026-10-02-godot-migration.md`
-- Thread: `MIGRATE-001` in `docs/active-threads.md`
+- Current decision and work status: `ENG-002` and `AGENT-LOOP-001` in `docs/active-threads.md`
+- Historical plans: `world-engine-godot/MIGRATION-PLAN.md` and `RENDERER-PLAN.md` (superseded)

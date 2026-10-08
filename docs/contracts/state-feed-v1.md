@@ -208,11 +208,19 @@ Plain-language by requirement: the audience must understand the simulation witho
 }
 ```
 
-`eventId` and `occurredAt` are stable across feed snapshots when available; consumers should use
-`eventId` to deduplicate and `occurredAt` for event chronology. `tick` remains the feed tick at
-which the event is projected, not a substitute for the original event timestamp. Pending Aide
-interventions must not be reported as helped or emitted as completed events until an outcome is
-recorded.
+The following are contract expectations for a conforming producer, not guarantees of the current
+runtime implementation. The active readers discard `eventId` and `occurredAt`, the validator does
+not check them, and the replay fixture producer does not yet emit stable IDs or original event
+timestamps. Consumers must not rely on those fields as runtime-supported deduplication or chronology
+signals until the producer, readers, and validator are updated together.
+
+For a conforming producer, `eventId` and `occurredAt` should remain stable across feed snapshots;
+consumers should use `eventId` to deduplicate and `occurredAt` for event chronology. `tick` is the
+feed tick at which the event is projected, not a substitute for the original event timestamp.
+
+Likewise, the rule that pending Aide interventions must not be reported as helped or emitted as
+completed events until an outcome is recorded is a contract requirement, not a guarantee enforced
+by the current producer or consumers.
 
 `kind` values: `scene_enter`, `scene_exit`, `task_start`, `task_complete`, `task_failed`, `struggle_detected`, `aide_intervention`, `strategy_internalised`, `self_recognition`, `burnout_entered`, `burnout_recovered`, `fusion_ready`.
 
