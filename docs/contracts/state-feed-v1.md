@@ -4,6 +4,8 @@
 **Direction:** Fusion (Python) → nlt-world-engine (Godot). Read-only to the renderer.
 **Cadence:** ~1 Hz, matching the simulation tick. Godot interpolates between ticks.
 
+> **Runtime boundary note (2026-10-07):** This v1 document remains the observer/fixture projection contract; it is not the AI control protocol. The current closed-loop boundary is specified in [`agent-loop-v1.md`](agent-loop-v1.md): the engine owns physical observations and execution, while Fusion owns semantic decisions. Do not use the Fusion serializer's placeholder physical fields as authoritative live-world state.
+
 ---
 
 ## 1. Why this exists
