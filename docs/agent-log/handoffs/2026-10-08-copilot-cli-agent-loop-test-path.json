@@ -1,0 +1,46 @@
+{
+  "handoff_record": {
+    "session_id": "92e7cf1a-7135-4f27-87d3-99e4826f528f",
+    "agent_name": "GitHub Copilot CLI",
+    "date": "2026-10-08",
+    "otoi_version": "ORG-DEV-OTOI-1.0.3",
+    "repo": "NeuroLift-Technologies/nlt-world-engine",
+    "branch": "feat/godot-agent-loop-http-20261008",
+    "work_completed": [
+      "Added an opt-in one-avatar Godot test composition, visible target marker, and endpoint override without changing the default observer-only run.",
+      "Restricted agent-loop decisions to the dedicated local avatar and added perception, transport, and ingress outcome logging.",
+      "Updated local test instructions and thread status with the remaining end-to-end gate and environment constraints."
+    ],
+    "work_in_progress": [
+      "Run the local GGUF-backed Fusion-to-Godot physical loop when sufficient memory is available and the selected Python environment has FastAPI and Uvicorn."
+    ],
+    "blockers": [
+      "The latest Windows memory check showed 0.73 GB free; the GGUF was not loaded and Godot was not launched.",
+      "The checked GGUF Python environment has llama_cpp but does not have FastAPI; docs now show the minimal API dependency installation command."
+    ],
+    "decisions_made": [
+      "Keep the single-avatar Fusion loop disabled by default and enable it only with NLT_AGENT_LOOP_ENABLED=1.",
+      "Keep feed avatars observer-only during the local test; only __local_avatar__ receives Fusion decisions."
+    ],
+    "decisions_pending": [],
+    "escalations": [],
+    "next_agent_notes": "Build succeeded with 0 warnings/errors; AgentHarness passed 38/38. Do not start GGUF inference until memory headroom is safe. Start Fusion with the local GGUF and API dependencies, then start Godot with NLT_AGENT_LOOP_ENABLED=1 and verify accepted approach intent, Jolt movement, arrival stop, and updated subsequent perception. Fusion SessionOrchestrator integration and CI smoke automation remain separate work.",
+    "files_modified": [
+      "world-engine-godot/Main.cs",
+      "world-engine-godot/Agents/AgentLoopDriver.cs",
+      "world-engine-godot/Agents/FusionHttpLink.cs",
+      "docs/agent-loop.md",
+      "docs/active-threads.md",
+      "docs/agent-log/handoffs/2026-10-08-copilot-cli-agent-loop-test-path.json"
+    ],
+    "tests_run": [
+      "dotnet build .\\world-engine-godot\\world-engine-godot.csproj --no-restore — passed, 0 warnings and 0 errors.",
+      "dotnet run --no-restore --project .\\world-engine-godot\\AgentHarness\\AgentHarness.csproj — passed, 38/38 assertions.",
+      "git diff --check in nlt-world-engine and neurolift-ai-fusion — passed.",
+      "Checked GGUF runtime Python imports: llama_cpp passed; FastAPI import failed because the package is not installed.",
+      "Full Godot-to-Fusion GGUF physical run — not run due to low memory and missing FastAPI in the checked environment."
+    ],
+    "tests_passing": true,
+    "pr_url": "https://github.com/NeuroLift-Technologies/nlt-world-engine/pull/89"
+  }
+}

@@ -26,12 +26,30 @@ public partial class AgentLoopDriver : Node
     /// <summary>When false the driver posts nothing; avatars keep their local controllers.</summary>
     [Export] public bool Enabled { get; set; } = false;
 
+    /// <summary>Only this avatar receives decisions; defaults to the dedicated local test avatar.</summary>
+    [Export] public string TargetAgentId { get; set; } = "__local_avatar__";
+
+    /// <summary>Fusion endpoint; may be overridden from the composition root for local testing.</summary>
+    [Export] public string FusionEndpoint
+    {
+        get => _fusionEndpoint;
+        set
+        {
+            _fusionEndpoint = value;
+            if (_link != null)
+                _link.FusionEndpoint = value;
+        }
+    }
+
+    private string _fusionEndpoint = "http://127.0.0.1:8001/agent-loop/perception";
+
     /// <summary>Task anchors in the current scene, for perception + affordance checks.</summary>
     public IReadOnlyList<TaskAnchor> Anchors { get; set; } = System.Array.Empty<TaskAnchor>();
 
     public override void _Ready()
     {
         _link = new FusionHttpLink { Name = "FusionHttpLink" };
+        _link.FusionEndpoint = _fusionEndpoint;
         AddChild(_link);
         _ingress = new IntentIngress(
             new AsfdkGovernanceGate(),
@@ -67,6 +85,8 @@ public partial class AgentLoopDriver : Node
         var avatars = GetAvatars();
         foreach (var avatar in avatars)
         {
+            if (!string.Equals(avatar.AgentId, TargetAgentId, StringComparison.Ordinal))
+                continue;
             if (!_sincePost.TryGetValue(avatar.AgentId, out var t))
                 t = DecisionCadenceSeconds;
             t += (float)delta;
@@ -79,6 +99,8 @@ public partial class AgentLoopDriver : Node
             var perception = PerceptionBuilder.Build(
                 avatar, _tick, $"obs-{_tick}-{avatar.AgentId}-{_messageSeq++}",
                 Anchors, avatars);
+            GD.Print($"[AgentLoopDriver] perception tick={_tick}, agent={avatar.AgentId}, " +
+                $"position={avatar.GlobalPosition}, visible={perception.VisibleEntities.Count}");
             _link.RequestDecision(avatar, perception, _ingress, _tick);
         }
     }

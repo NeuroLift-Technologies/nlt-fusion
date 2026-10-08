@@ -1,8 +1,9 @@
 # Physical-World Agent Loop
 
 **Protocol:** [`nlt.agent-loop.v1`](contracts/agent-loop-v1.md)
-**Status:** protocol, engine governance/intent ingress, and async loopback HTTP path implemented;
-full in-scene Fusion-to-Godot loop remains incomplete.
+**Status:** protocol, engine governance/intent ingress, async loopback HTTP, and an opt-in
+single-avatar scene path are implemented. The local-GGUF end-to-end physical run still requires
+runtime verification on the test workstation.
 
 ## Purpose
 
@@ -54,8 +55,9 @@ loop.
 
 This governance stage is an implementation boundary, not a new `nlt.agent-loop.v1` wire message.
 If it denies an intent, the engine does not apply physical effects and returns an explicit rejection.
-The gate is wired into `IntentIngress`; however, the loop driver is not yet instantiated in the
-running Godot scene.
+The gate is wired into `IntentIngress`. It fails closed if evaluation throws; an explicit
+`OpenGovernanceGate` remains available only for test harnesses or a separately approved
+unavailable-gate policy.
 
 ## Messages and actions
 
@@ -112,19 +114,49 @@ Implemented:
   unauthorized actions, results, and rejection reasons.
 - Build and harness verification: `dotnet build world-engine-godot/world-engine-godot.csproj`
   succeeded; `dotnet run --project world-engine-godot/AgentHarness/AgentHarness.csproj` passed
-  36/36. A cross-process HTTP smoke test returned a correlated intent and rejected malformed input
+  38/38. A cross-process HTTP smoke test returned a correlated intent and rejected malformed input
   with HTTP 422; the smoke test used Fusion's deterministic fallback, not the local GGUF.
 
 Not implemented yet:
 
-- `AgentLoopDriver` and `FusionHttpLink` are not instantiated in `Main.tscn`; the runtime scene
-  does not yet run the loop.
-- Fusion's decision seam is not connected to `SessionOrchestrator`, and the configured local GGUF
-  is not yet used as the decision source.
-- A full in-scene run through governance, Jolt movement, and subsequent perception has not been
-  verified. The HTTP smoke test is not that end-to-end test.
+- The loop remains disabled by default. Enable it for a local run with
+  `NLT_AGENT_LOOP_ENABLED=1`; this spawns only the dedicated `__local_avatar__`, creates a visible
+  `agent_loop_test_target` five metres away, and routes only that avatar through `AgentLoopDriver`.
+  Feed avatars remain observer-only for this test.
+- Fusion's decision seam is not connected to `SessionOrchestrator`; the local agent-loop endpoint
+  uses its own decision source configured through `FUSION_GGUF_MODEL`.
+- A full in-scene run through governance, Jolt movement, and subsequent perception has not yet
+  been verified after adding the opt-in scene composition. The HTTP smoke test is not that
+  end-to-end test.
 - The cross-process smoke test is not automated in CI, and production observer-field composition
   remains separate work.
 
-The loopback HTTP path and engine-side ingress are implemented and smoke-tested, but a complete
-model-driven simulation loop is not yet running in the Godot scene.
+## Local end-to-end test
+
+Start Fusion from the Fusion repository in PowerShell:
+
+```powershell
+$env:FUSION_GGUF_MODEL = Join-Path $HOME 'Downloads\Qwen3-0.6B-Q8_0.gguf'
+$env:FUSION_AGENT_LOOP_PORT = '8001'
+$fusionVenv = '<path to your GGUF-enabled Python virtualenv>'
+$fusionPython = Join-Path $fusionVenv 'Scripts\python.exe'
+# If your GGUF environment does not already include the API dependencies:
+& $fusionPython -m pip install 'fastapi>=0.115.0' 'uvicorn>=0.30.0'
+& $fusionPython -m src.fusion.agent_loop_http
+```
+
+To use Fusion's deterministic control source instead, leave `FUSION_GGUF_MODEL` unset. Then start
+Godot from another PowerShell window with the repository root as the current directory:
+
+```powershell
+$env:NLT_AGENT_LOOP_ENABLED = '1'
+$env:NLT_AGENT_LOOP_ENDPOINT = 'http://127.0.0.1:8001/agent-loop/perception'
+& $env:GDA_GODOT --path .\world-engine-godot
+```
+
+The Godot log should report the endpoint and visible test-target id. Fusion's deterministic
+fallback approaches the test target; the GGUF may choose `approach` or `wait`. Godot logs whether
+each intent was accepted or rejected. For an approach, verify the local avatar moves toward the
+marker under Jolt and idles within its one-metre arrival radius. Stop with `Ctrl+C`; unset the
+environment variables afterward to restore the default observer-only run. The test target and
+single-avatar driver are created only when the opt-in flag is set.

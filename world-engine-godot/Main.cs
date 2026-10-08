@@ -26,14 +26,19 @@ public partial class Main : NltWorldEngine.WorldView
 	/// </summary>
 	[Export] public bool EnableLiveAvatars { get; set; } = false;
 
+	/// <summary>Enable the opt-in single local-avatar Fusion loop for end-to-end testing.</summary>
+	[Export] public bool EnableFusionAgentLoop { get; set; } = false;
+
 	private PackedScene? _avatarScene;
 
 	private readonly System.Collections.Generic.Dictionary<string, AvatarCharacter> _avatars = new();
+	private AgentLoopDriver? _agentLoopDriver;
 
 
 	public override void _Ready()
 	{
 		base._Ready();
+		EnableFusionAgentLoop |= OS.GetEnvironment("NLT_AGENT_LOOP_ENABLED") == "1";
 
 		_feed = new FeedTransport { Name = "FeedTransport" };
 		AddChild(_feed);
@@ -48,6 +53,9 @@ public partial class Main : NltWorldEngine.WorldView
 		// The observer loads its fixture during its own _Ready, which runs before we subscribe, so seed
 		// the scene and the residents from whatever is already current rather than waiting a tick.
 		OnDocumentChanged(_feed.Current);
+
+		if (EnableFusionAgentLoop)
+			StartFusionAgentLoop();
 
 		// Inert unless --capture is passed; see ObserverCapture.
 		ObserverCapture.TryCreate(this);
@@ -172,6 +180,66 @@ public partial class Main : NltWorldEngine.WorldView
 		return null;
 	}
 
+	private void StartFusionAgentLoop()
+	{
+		if (!EnableLiveAvatars)
+			GD.PushWarning("Fusion agent loop is enabled; spawning only the local test avatar. " +
+				"Feed avatars remain observer-only.");
+
+		var avatar = _avatars.TryGetValue(LocalAvatarTargetId, out AvatarCharacter? local)
+			&& IsInstanceValid(local)
+				? local
+				: null;
+		if (avatar == null)
+		{
+			GD.PushError("Fusion agent loop requires the local test avatar, but it was not created.");
+			return;
+		}
+		avatar.Attach(new IdleController());
+
+		const string anchorId = "agent_loop_test_target";
+		var anchorPosition = avatar.GlobalPosition + new Vector3(5f, -1f, 0f);
+		var anchor = new TaskAnchor(
+			anchorId,
+			"Agent-loop test target",
+			new AffordanceAxes { Privacy = 0.8f, SocialDensity = 0.1f, NoiseLevel = 0.1f })
+		{
+			Position = anchorPosition,
+		};
+
+		var marker = new Node3D { Name = anchorId };
+		var markerMesh = new MeshInstance3D
+		{
+			Name = "Marker",
+			Mesh = new SphereMesh { Radius = 0.3f, Height = 0.6f },
+			Position = new Vector3(0f, 0.5f, 0f),
+		};
+		marker.AddChild(markerMesh);
+		var label = new Label3D
+		{
+			Name = "Label",
+			Text = "Fusion test target",
+			Position = new Vector3(0f, 1.1f, 0f),
+		};
+		marker.AddChild(label);
+		marker.GlobalPosition = anchorPosition;
+		AddChild(marker);
+
+		_agentLoopDriver = new AgentLoopDriver
+		{
+			Name = "AgentLoopDriver",
+			Enabled = true,
+			TargetAgentId = LocalAvatarTargetId,
+			Anchors = new[] { anchor },
+		};
+		var endpoint = OS.GetEnvironment("NLT_AGENT_LOOP_ENDPOINT");
+		if (!string.IsNullOrWhiteSpace(endpoint))
+			_agentLoopDriver.FusionEndpoint = endpoint;
+		AddChild(_agentLoopDriver);
+		GD.Print($"Fusion agent loop enabled for {LocalAvatarTargetId}; endpoint: " +
+			$"{_agentLoopDriver.FusionEndpoint}; visible target: {anchorId}");
+	}
+
 	/// <summary>
 	/// Spawn/sync one <see cref="AvatarCharacter"/> per feed agent when live avatars are
 	/// enabled. Feed <see cref="Resident"/> ghosts keep rendering unchanged — avatars are
@@ -180,7 +248,7 @@ public partial class Main : NltWorldEngine.WorldView
 	/// </summary>
 	private void SyncLiveAvatars(NltWorldEngine.StateFeed doc)
 	{
-		if (!EnableLiveAvatars)
+		if (!EnableLiveAvatars && !EnableFusionAgentLoop)
 			return;
 
 		_avatarScene ??= GD.Load<PackedScene>("res://Agents/avatar.tscn");
@@ -203,6 +271,9 @@ public partial class Main : NltWorldEngine.WorldView
 			localAvatar.Observe(localAvatar.GlobalPosition, new[] { 0.5f, 0.5f, 0.5f, 0.5f }, doc.Scene.Id);
 			_avatars[localId] = localAvatar;
 		}
+
+		if (!EnableLiveAvatars)
+			return;
 
 		var seen = new System.Collections.Generic.HashSet<string> { localId };
 		foreach (var agent in doc.Agents)

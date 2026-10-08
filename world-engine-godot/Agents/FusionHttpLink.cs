@@ -69,20 +69,32 @@ public partial class FusionHttpLink : Node
             using var content = new StringContent(body, Encoding.UTF8, "application/json");
             using var response = await _http.PostAsync(FusionEndpoint, content, cts.Token);
             if (!response.IsSuccessStatusCode)
+            {
+                ReportWarning($"Fusion returned HTTP {(int)response.StatusCode} for {perception.AgentId}; no intent applied.");
                 return;
+            }
             var json = await response.Content.ReadAsStringAsync(cts.Token);
-            if (!AgentLoopProtocol.TryParseIntent(json, perception, out var intent, out _)
+            if (!AgentLoopProtocol.TryParseIntent(json, perception, out var intent, out var parseError)
                 || intent == null)
+            {
+                ReportWarning($"Fusion intent rejected for {perception.AgentId}: {parseError}");
                 return;
+            }
             if (intent.ObservedTick != perception.Tick)
+            {
+                ReportWarning($"Fusion intent for {perception.AgentId} used stale tick {intent.ObservedTick}; " +
+                    $"expected {perception.Tick}. No intent applied.");
                 return;
-            await ingress.SubmitAsync(avatar, perception, intent, currentTick);
+            }
+            var result = await ingress.SubmitAsync(avatar, perception, intent, currentTick);
+            var status = result.Status == "accepted" ? "accepted" : "rejected";
+            var detail = string.IsNullOrWhiteSpace(result.Reason) ? "" : $": {result.Reason}";
+            ReportInfo($"Intent {intent.Verb} for {perception.AgentId} {status}{detail}");
         }
         catch (Exception e) when (e is System.Net.Http.HttpRequestException
             or TaskCanceledException or OperationCanceledException or JsonException)
         {
-            var message = $"[FusionHttpLink] transport failed closed for {perception.AgentId}: {e.GetType().Name}";
-            Callable.From(() => GD.PushWarning(message)).CallDeferred();
+            ReportWarning($"transport failed closed for {perception.AgentId}: {e.GetType().Name}");
         }
         catch (Exception e)
         {
@@ -100,4 +112,10 @@ public partial class FusionHttpLink : Node
         _http.Dispose();
         base._ExitTree();
     }
+
+    private static void ReportWarning(string message) =>
+        Callable.From(() => GD.PushWarning($"[FusionHttpLink] {message}")).CallDeferred();
+
+    private static void ReportInfo(string message) =>
+        Callable.From(() => GD.Print($"[FusionHttpLink] {message}")).CallDeferred();
 }
