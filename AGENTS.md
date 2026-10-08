@@ -117,7 +117,7 @@ nlt-world-engine/
 ├── world-engine-godot/                    ← Godot 4.7.2 (C#) — authoritative runtime
 │   ├── *.cs                              ← Authoritative physical runtime (implementation in progress)
 │   ├── assets/levels/                    ← Interior level geometry imported via ufbx FBX
-│   ├── addons/godot_ai/                  ← Third-party Godot↔MCP bridge (external, unapproved)
+│   ├── addons/godot_ai/                  ← Third-party Godot↔MCP bridge (approved under OTOI §4.4)
 │   └── MIGRATION-PLAN.md                 ← Migration plan, mirrored from .kilo/plans/
 │
 ├── _archive/                              ← Retired components (see file-structure.md)

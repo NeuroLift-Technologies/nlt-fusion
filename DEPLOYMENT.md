@@ -12,7 +12,7 @@
 
 ---
 
-## TL;DR
+## Historical UE 5.8 Deployment TL;DR
 
 A rendered simulation on the developer's machine is the primary build and spectator path, now on the Godot 4.7.2 desktop app. A headless server target is optional later infrastructure for running the same physical world without a rendered viewport.
 
