@@ -38,6 +38,7 @@ public partial class WorldView : Node3D
 	private float _yaw = 0.6f, _pitch = 0.42f, _dist = 78f;
 	private bool _dragging;
 	private Vector2 _last;
+	private const float PanSpeed = 24f;
 
 	// Focus / follow. The camera otherwise stays pinned on the settlement while the feed moves the
 	// agent away from it, so the agent's pins project off-frame and are culled. See FocusOn/Follow.
@@ -333,7 +334,7 @@ public partial class WorldView : Node3D
 			facing = Vector3.Back;
 		}
 
-		Vector3 markerPosition = pos;
+		var markerPosition = new Vector3(pos.X, 0f, pos.Z);
 		if (door != null)
 		{
 			// Authored doors sit in the wall plane; put the arch just inside the room so it is visible.
@@ -343,6 +344,10 @@ public partial class WorldView : Node3D
 		{
 			// The custom cafe door leaf sits just inside the north wall opening.
 			markerPosition = new Vector3(pos.X, 0f, pos.Z - 1.4f);
+		}
+		else
+		{
+			markerPosition.Y = 0f;
 		}
 
 		var marker = PortalMarker.Build("Exit", new Color("e6edf3"));
@@ -355,7 +360,7 @@ public partial class WorldView : Node3D
 			marker.RotationDegrees = new Vector3(0f, 180f, 0f);
 		root.AddChild(marker);
 
-		_interiorPortal = new Portal("Exit", "Exit", "", pos, facing);
+		_interiorPortal = new Portal("Exit", "Exit", "", new Vector3(pos.X, 0f, pos.Z), facing);
 	}
 
 	/// <summary>
@@ -433,19 +438,15 @@ public partial class WorldView : Node3D
 		});
 	}
 
-	/// <summary>Outward direction from an authored door, derived from its local basis.</summary>
+	/// <summary>Outward direction from an authored door, from the door's position relative to the room centre.</summary>
 	private static Vector3 DoorFacing(Node3D door)
 	{
-		Vector3 forward = -door.GlobalTransform.Basis.Z;
-		forward.Y = 0f;
-		if (forward.LengthSquared() < 0.01f)
-			return Vector3.Back;
-		forward = forward.Normalized();
-		// FBX import nodes can have a -90° basis rotation independent of the room's perimeter.
-		// Use the door's position against the room centre to choose its outward direction.
-		if (Mathf.Abs(door.GlobalPosition.Z) > Mathf.Abs(door.GlobalPosition.X))
-			return door.GlobalPosition.Z < 0f ? Vector3.Back : Vector3.Forward;
-		return door.GlobalPosition.X < 0f ? Vector3.Left : Vector3.Right;
+		// Door FBX nodes use a Z-up basis in every NLT level, so the basis cannot tell us
+		// the horizontal facing — derive outward from where the door sits vs the room centre.
+		Vector3 door_pos = door.GlobalPosition;
+		if (Mathf.Abs(door_pos.Z) >= Mathf.Abs(door_pos.X))
+			return door_pos.Z < 0f ? Vector3.Forward : Vector3.Back;
+		return door_pos.X < 0f ? Vector3.Left : Vector3.Right;
 	}
 
 	/// <summary>First visible door mesh that is not a cupboard: skips <c>UCX_*</c>, wardrobe and washer.</summary>
@@ -641,6 +642,26 @@ public partial class WorldView : Node3D
 		// Keep the camera on the followed agent before the sky/water uniforms are read, so a focus
 		// change lands on the same frame it was asked for.
 		PollFollow();
+
+		Vector2 pan = Vector2.Zero;
+		if (Input.IsKeyPressed(Key.A) || Input.IsKeyPressed(Key.Left))
+			pan.X -= 1f;
+		if (Input.IsKeyPressed(Key.D) || Input.IsKeyPressed(Key.Right))
+			pan.X += 1f;
+		if (Input.IsKeyPressed(Key.W) || Input.IsKeyPressed(Key.Up))
+			pan.Y -= 1f;
+		if (Input.IsKeyPressed(Key.S) || Input.IsKeyPressed(Key.Down))
+			pan.Y += 1f;
+		if (pan.LengthSquared() > 0f)
+		{
+			pan = pan.Normalized();
+			var forward = new Vector3(-MathF.Sin(_yaw), 0f, -MathF.Cos(_yaw));
+			var right = new Vector3(MathF.Cos(_yaw), 0f, -MathF.Sin(_yaw));
+			_target += (right * pan.X + forward * -pan.Y) * PanSpeed * (float)delta;
+			if (_following)
+				Follow(null);
+			UpdateCamera();
+		}
 
 		// Drive Sky3D's clock from sim elapsed time.
 		// DayLen = 260 s → one full 24-hour cycle = 260 s real time.

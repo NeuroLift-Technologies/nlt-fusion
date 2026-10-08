@@ -54,9 +54,6 @@ public partial class Main : NltWorldEngine.WorldView
 		// the scene and the residents from whatever is already current rather than waiting a tick.
 		OnDocumentChanged(_feed.Current);
 
-		if (EnableFusionAgentLoop)
-			StartFusionAgentLoop();
-
 		// Inert unless --capture is passed; see ObserverCapture.
 		ObserverCapture.TryCreate(this);
 		_observer.LevelChanged += ApplyRequestedLevel;
@@ -113,7 +110,10 @@ public partial class Main : NltWorldEngine.WorldView
 		}
 
 		if (string.IsNullOrEmpty(_followTargetId))
-			return FeedTransport.PrimaryAvatar(_feed.Current)?.Position3();
+			return _avatars.TryGetValue(LocalAvatarTargetId, out AvatarCharacter? defaultLocal)
+				&& IsInstanceValid(defaultLocal)
+				? defaultLocal.GlobalPosition
+				: FeedTransport.PrimaryAvatar(_feed.Current)?.Position3();
 
 		AgentState? selected = _feed.Current?.Agent(_followTargetId);
 		return selected?.Position3();
@@ -141,8 +141,11 @@ public partial class Main : NltWorldEngine.WorldView
 		Residents.Sync(doc, ReducedMotion);
 
 		SyncLiveAvatars(doc);
+		if (EnableFusionAgentLoop && _agentLoopDriver == null)
+			StartFusionAgentLoop();
 		ReconcileFollowTarget(doc);
-		_observer.SetFollowTargets(doc.Agents, _followTargetId, EnableLiveAvatars);
+		_observer.SetFollowTargets(doc.Agents, _followTargetId,
+			EnableLiveAvatars || EnableFusionAgentLoop);
 		if (_following)
 			Follow(CurrentFollowTargetPoint);
 	}
@@ -154,8 +157,7 @@ public partial class Main : NltWorldEngine.WorldView
 
 		if (_followTargetId == LocalAvatarTargetId)
 		{
-			if (EnableLiveAvatars
-				&& _avatars.TryGetValue(LocalAvatarTargetId, out AvatarCharacter? selectedLocal)
+			if (_avatars.TryGetValue(LocalAvatarTargetId, out AvatarCharacter? selectedLocal)
 				&& IsInstanceValid(selectedLocal))
 				return;
 		}
@@ -166,11 +168,7 @@ public partial class Main : NltWorldEngine.WorldView
 
 		_followTargetId = FeedTransport.PrimaryAvatar(doc)?.Id
 			?? FirstAgentId(doc)
-			?? (EnableLiveAvatars
-				&& _avatars.TryGetValue(LocalAvatarTargetId, out AvatarCharacter? fallbackLocal)
-				&& IsInstanceValid(fallbackLocal)
-					? LocalAvatarTargetId
-					: "__none__");
+			?? "__none__";
 	}
 
 	private static string? FirstAgentId(NltWorldEngine.StateFeed doc)
@@ -222,8 +220,8 @@ public partial class Main : NltWorldEngine.WorldView
 			Position = new Vector3(0f, 1.1f, 0f),
 		};
 		marker.AddChild(label);
-		marker.GlobalPosition = anchorPosition;
 		AddChild(marker);
+		marker.GlobalPosition = anchorPosition;
 
 		_agentLoopDriver = new AgentLoopDriver
 		{
