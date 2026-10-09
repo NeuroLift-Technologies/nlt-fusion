@@ -1,0 +1,6 @@
+@AgentLoopEndpoint_HostAddress = http://localhost:5044
+
+GET {{AgentLoopEndpoint_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

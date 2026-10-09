@@ -2,7 +2,7 @@
 
 The **authoritative world engine**, replacing the UE 5.8 runtime in its entirety per Joshua's ENG-002 decision (2026-10-07). The UE tree is retained only as a frozen, non-authoritative reference. Runs on Godot 4.7.2 (.NET / mono) with .NET 8.
 
-> Godot owns the physical simulation. Fusion owns semantic cognition and intents. Historical migration and renderer plans are superseded by ENG-002; they are not current architecture or implementation instructions.
+> Godot owns the physical simulation. Fusion owns semantic cognition and intents. The ASFDK-C# gate and async loopback HTTP client are implemented, with an opt-in single-avatar loop driver in the running scene; it remains disabled by default. Historical migration and renderer plans are superseded by ENG-002; they are not current architecture or implementation instructions.
 
 ## Run
 
@@ -38,4 +38,4 @@ Open this folder (`world-engine-godot/`) as a project in **Godot 4.7.2 .NET (mon
 
 ## Status (2026-10-08)
 
-Godot is authoritative. The transport-neutral semantic/physical agent-loop contract is in place, but live transport, runtime wiring, and physical action execution are incomplete; see [`../docs/active-threads.md`](../docs/active-threads.md) and [`../docs/agent-loop.md`](../docs/agent-loop.md).
+Godot is authoritative. The async loopback HTTP transport client, engine-side intent ingress, and ASFDK-C# governance gate are implemented. Set `NLT_AGENT_LOOP_ENABLED=1` to run the opt-in local-avatar test path; default runs are unchanged. Fusion is not wired through `SessionOrchestrator`, and the local GGUF in-scene loop still needs end-to-end verification. See [`../docs/active-threads.md`](../docs/active-threads.md) and [`../docs/agent-loop.md`](../docs/agent-loop.md).

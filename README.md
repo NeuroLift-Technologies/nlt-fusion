@@ -20,7 +20,7 @@ Humans are not passive observers of AI development here. They are active partici
 
 [`docs/Human-Role-in-Supervised-Simulation.md`](docs/Human-Role-in-Supervised-Simulation.md) — `NLT-SIM-HUMAN-ROLE-1.0.0`, *Draft / Proposed Architectural Standard*, governance: Solidarity Framework | ASFDK — defines that participation model. Six human roles: **Supervisor, Observer, Evaluator, Scenario Designer, Instructor/Guide, Governance Authority**. Four interaction modes: **Observation, Supervision, Intervention, Evaluation**. Its `Scope` field reads `NLT World Engine | AI-Fusion Framework`, so it binds **both** repos.
 
-**What this repo implements today.** Godot is the authoritative physical simulation runtime; Fusion owns semantic cognition and intents. The transport-neutral boundary is documented in [`docs/agent-loop.md`](docs/agent-loop.md). Live transport, runtime wiring, and engine-side physical action execution remain incomplete. Observer and supervised-simulation capabilities are also in progress; the legacy UE implementation is reference material only and does not define current runtime behavior.
+**What this repo implements today.** Godot is the authoritative physical simulation runtime; Fusion owns semantic cognition and intents. The transport-neutral boundary is documented in [`docs/agent-loop.md`](docs/agent-loop.md). An opt-in single-avatar test scene now connects the async HTTP client, Fusion endpoint, engine-side governance, and physical ingress; production orchestration and full in-scene verification remain incomplete. Observer and supervised-simulation capabilities are also in progress; the legacy UE implementation is reference material only and does not define current runtime behavior.
 
 **Observer audience — a standing requirement.** People with ADHD must be able to **watch and understand the simulation without needing to parse a dense analytics dashboard.** This is a design constraint, not a later pass: it governs the observation surface, its accessibility settings, and its reading levels.
 
@@ -34,25 +34,29 @@ Fusion (neurolift-ai-fusion)                   NLT World Engine (this repo)
   and semantic action intents                    physical world, perception, validation,
                     │                             movement, collision, consequences
                     └── nlt.agent-loop.v1 ──────►
-                        transport-neutral contract; runtime transport is not wired
+                        async loopback HTTP client implemented; scene wiring remains
 
 UE 5.8 (WorldEngine/) — frozen historical reference, not authoritative
 ```
 
 ## Physical-World Agent Loop
 
-The `nlt.agent-loop.v1` contract defines how Fusion semantics and Godot's physical simulation are
-intended to work together: the engine reports what an agent can physically perceive, Fusion returns
-a semantic action intent, and the engine validates and executes it. The engine owns physical state
-and consequences; Fusion owns cognition and meaning. This is separate from `nlt.state-feed.v1`,
-which remains an observer/presentation feed.
+The `nlt.agent-loop.v1` contract defines how Fusion semantics and Godot's physical simulation work
+together: the engine reports what an agent can physically perceive, Fusion returns a semantic action
+intent, the engine-side ASFDK-C# governance boundary checks it, and the engine validates and
+executes it physically. The engine owns physical state and consequences; Fusion owns cognition and
+meaning; ASFDK supplies a cross-cutting governance boundary. This is separate from
+`nlt.state-feed.v1`, which remains an observer/presentation feed.
 
-The contract, allowed verbs, message examples, validation rules, and current implementation status
-are described in the [agent-loop feature overview](docs/agent-loop.md) and
-[protocol specification](docs/contracts/agent-loop-v1.md). The protocol and validation seams exist,
-but this is **not yet a live Fusion ↔ Godot runtime connection**: transport is undecided, Fusion and
-Godot runtime dispatch are not wired, and physical interaction/collision execution is incomplete.
-No transport dependency, listener, or port is introduced by the contract.
+The contract, allowed verbs, message examples, validation rules, ASFDK governance placement, and
+current implementation status are described in the [agent-loop feature overview](docs/agent-loop.md)
+and [protocol specification](docs/contracts/agent-loop-v1.md). The Godot async HTTP client, cadence driver, opt-in single-avatar scene composition, Fusion endpoint,
+engine-side intent ingress, and governance gate are implemented. The scene path is disabled by
+default; set `NLT_AGENT_LOOP_ENABLED=1` to spawn the dedicated local test avatar and visible target.
+Fusion can use the local GGUF through `FUSION_GGUF_MODEL`, or its deterministic fallback when unset.
+A cross-process HTTP smoke test using the fallback passed; a full in-scene model-to-world run still
+needs verification on the test workstation. See [`docs/agent-loop.md`](docs/agent-loop.md) for
+startup steps. The versioned contract remains transport-agnostic.
 
 ## Quick Start — Godot 4.7.2 (authoritative engine)
 
@@ -62,11 +66,15 @@ No transport dependency, listener, or port is introduced by the contract.
 # Open the project in Godot 4.7.2 .NET (mono)
 godot --path world-engine-godot
 
-# Build and run the C# agent/protocol harness:
+# Build the Godot assembly, then run its out-of-engine assertion runner:
+dotnet build world-engine-godot/world-engine-godot.csproj
 dotnet run --project world-engine-godot/AgentHarness/AgentHarness.csproj
 ```
 
-**Status:** Godot is the authoritative physical simulation runtime. Contract DTOs, validation, and agent-control harnesses exist; live Fusion transport, complete scene integration, and engine-owned interaction execution remain in progress. See [the agent-loop overview](docs/agent-loop.md).
+`AgentHarness` is a .NET console runner for agent-action and protocol assertions. It does not start
+the Godot scene or connect to Fusion, so passing it does not demonstrate a live simulation loop.
+
+**Status:** Godot is the authoritative physical simulation runtime. Contract DTOs, validation, and agent-control assertions exist; live Fusion transport, complete scene integration, and engine-owned interaction execution remain in progress. See [the agent-loop overview](docs/agent-loop.md).
 
 ## Historical Reference — Unreal Engine 5.8
 

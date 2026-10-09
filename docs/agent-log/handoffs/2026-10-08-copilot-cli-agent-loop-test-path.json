@@ -1,0 +1,51 @@
+{
+  "handoff_record": {
+    "session_id": "92e7cf1a-7135-4f27-87d3-99e4826f528f",
+    "agent_name": "GitHub Copilot CLI",
+    "date": "2026-10-08",
+    "otoi_version": "ORG-DEV-OTOI-1.0.3",
+    "repo": "NeuroLift-Technologies/nlt-world-engine",
+    "branch": "feat/godot-agent-loop-http-20261008",
+    "work_completed": [
+      "Added an opt-in one-avatar Godot test composition, visible target marker, and endpoint override without changing the default observer-only run.",
+      "Restricted agent-loop decisions to the dedicated local avatar and added perception, transport, and ingress outcome logging.",
+      "Updated local test instructions and thread status with the remaining end-to-end gate and environment constraints.",
+      "Used GDA scene validation and preflight to find and fix two opt-in startup issues: the driver ran before the feed spawned the local avatar, and the marker global transform was assigned before entering the scene tree."
+    ],
+    "work_in_progress": [
+      "Verify visible Jolt movement, arrival stop, and updated subsequent perception in an interactive runtime; GDA live daemon is unavailable on Windows."
+    ],
+    "blockers": [
+      "The GDA headless GGUF run verified scene startup and HTTP 200 response, but does not expose whether Godot accepted the returned intent or whether the avatar visibly moved and arrived under Jolt."
+    ],
+    "decisions_made": [
+      "Keep the single-avatar Fusion loop disabled by default and enable it only with NLT_AGENT_LOOP_ENABLED=1.",
+      "Keep feed avatars observer-only during the local test; only __local_avatar__ receives Fusion decisions."
+    ],
+    "decisions_pending": [],
+    "escalations": [],
+    "next_agent_notes": "GDA 0.22.0 scene validate reported Main.tscn valid. Default and opt-in GDA preflights reported started=true/status=ready; the GGUF-backed opt-in run sent a perception to Fusion and the server recorded HTTP 200. A direct request to the same configured model returned a correlated approach intent targeting agent_loop_test_target. GDA exposed two startup defects, both fixed: loop driver now starts after feed sync creates the avatar, and marker GlobalPosition is set after AddChild. Build succeeded with 0 errors and 2 existing WorldView nullable warnings; AgentHarness passed 38/38. GDA prints an existing 'Capture not registered: beehave' engine error on default and opt-in preflights, though no runtime diagnostics were recognized. The headless CLI cannot prove intent acceptance, visible Jolt movement/arrival, or the next perception's position. GDA live daemon is unsupported on Windows; verify physical outcomes interactively. Fusion SessionOrchestrator integration and CI smoke automation remain separate work.",
+    "files_modified": [
+      "world-engine-godot/Main.cs",
+      "world-engine-godot/Agents/AgentLoopDriver.cs",
+      "world-engine-godot/Agents/FusionHttpLink.cs",
+      "docs/agent-loop.md",
+      "docs/active-threads.md",
+      "docs/agent-log/handoffs/2026-10-08-copilot-cli-agent-loop-test-path.json"
+    ],
+    "tests_run": [
+      "dotnet build .\\world-engine-godot\\world-engine-godot.csproj --no-restore — passed, 0 errors; 2 pre-existing WorldView.cs nullable warnings.",
+      "dotnet run --no-restore --project .\\world-engine-godot\\AgentHarness\\AgentHarness.csproj — passed, 38/38 assertions.",
+      "GDA 0.22.0 `scene validate res://Main.tscn` — valid=true.",
+      "GDA default and opt-in `scene preflight res://Main.tscn` — started=true/status=ready; the opt-in run sent two POSTs to Fusion deterministic fallback, both HTTP 200.",
+      "GDA preflight stderr includes the pre-existing `Capture not registered: 'beehave'` engine error on both default and opt-in runs; structured result diagnostics were empty.",
+      "Installed FastAPI/Uvicorn into the GGUF Python 3.11 virtualenv; local model endpoint started successfully.",
+      "GDA opt-in preflight against GGUF endpoint — started=true/status=ready; Fusion recorded one HTTP 200 perception request.",
+      "Direct request to the GGUF endpoint — HTTP 200 with correlated approach intent targeting agent_loop_test_target.",
+      "Stopped the GGUF server after the test; confirmed port 8001 closed and 2.16 GB RAM free.",
+      "git diff --check — passed. Visible Jolt movement/arrival and subsequent perception remain unverified."
+    ],
+    "tests_passing": true,
+    "pr_url": "https://github.com/NeuroLift-Technologies/nlt-world-engine/pull/89"
+  }
+}

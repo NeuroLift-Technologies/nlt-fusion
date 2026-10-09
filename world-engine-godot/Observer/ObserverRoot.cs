@@ -435,7 +435,7 @@ public partial class ObserverRoot : Control
         // the agent" shows none of it. A toggle, so the pressed state and the wording both say whether
         // following is on — colour is never the only channel.
         _focusButton = Ui.Toggle("◎  Focus", false, _a11y.Font(Ui.SmallFont), _a11y.Palette.Text);
-        _focusButton.TooltipText = "Keep the camera on the agent the feed is showing (F)";
+        _focusButton.TooltipText = "Follow the selected target (F). Pan with WASD or arrow keys.";
         _focusButton.WithShortcut(Key.F);
         _focusButton.Pressed += () => FocusRequested?.Invoke();
         row.AddChild(_focusButton);

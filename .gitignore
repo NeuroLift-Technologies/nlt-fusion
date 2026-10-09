@@ -187,3 +187,18 @@ WorldEngine/Imports/FabCity/
 # Godot-side copies of the same art, staged for local scene building.
 world-engine-godot/assets/props/
 world-engine-godot/assets/props-cc0/
+
+# --- Build output and local scratch (never source) -------------------------
+# dotnet build/obj output for the Godot .NET assembly and the out-of-engine harness.
+world-engine-godot/AgentLoopEndpoint/obj/
+world-engine-godot/AgentLoopEndpoint/bin/
+
+# Compiled GDExtension probe outputs (nlt.windows.template_debug.*).
+world-engine-godot/project/bin/
+
+# Local tooling/scratch: agent settings, captured screenshots, editor templates,
+# and one-off imported sample assets.
+world-engine-godot/.poolside/
+world-engine-godot/screenshots/
+world-engine-godot/script_templates/
+world-engine-godot/sample map/
